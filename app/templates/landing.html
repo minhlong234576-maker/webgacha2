@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}JellyVale — Mở rương Minecraft, nhận đồ thật trên server{% endblock %}
+{% block page_class %}landing{% endblock %}
+
+{% block content %}
+<section class="lp-hero">
+  <div class="lp-hero-glow" aria-hidden="true"></div>
+  <div class="lp-hero-grid">
+    <div class="lp-copy">
+      <p class="lp-kicker">Quầy rương Minecraft · <span class="lp-live"><i></i> đang hoạt động</span></p>
+      <h1>Một chiếc rương.<br><span class="lp-h1-sub">Một món đồ thật trong túi.</span></h1>
+      <p class="lp-lead">
+        JellyVale quay rương ngay trên server Minecraft của bạn. Tiền nằm trong ExcellentEconomy,
+        đồ nằm trong túi — bán lại, nâng cấp, hoặc rút thẳng vào game bằng lệnh <code>nexo give</code>.
+      </p>
+      <div class="lp-actions">
+        <a class="cf-btn-primary lp-btn-lg" href="/gacha">Xem các rương</a>
+        {% if player %}
+        <a class="cf-btn-ghost lp-btn-lg" href="/inventory">Mở túi đồ</a>
+        {% else %}
+        <a class="cf-btn-ghost lp-btn-lg" href="/login">Đăng nhập Minecraft</a>
+        {% endif %}
+      </div>
+      <p class="lp-note">Không cần cài thêm gì. Chỉ cần nick và mật khẩu bạn đã đặt trong game.</p>
+    </div>
+
+    <div class="lp-stage" aria-hidden="true">
+      <div class="lp-crate">
+        <div class="lp-crate-lid"></div>
+        <div class="lp-crate-body">
+          <div class="lp-crate-band"></div>
+          <div class="lp-crate-glow"></div>
+        </div>
+        <div class="lp-crate-shadow"></div>
+      </div>
+      <div class="lp-rays"></div>
+      <div class="lp-coin lp-coin-a">◎</div>
+      <div class="lp-coin lp-coin-b">◎</div>
+      <div class="lp-coin lp-coin-c">◎</div>
+    </div>
+  </div>
+</section>
+
+<section class="lp-numbers" aria-label="Thống kê hoạt động">
+  <dl>
+    <div><dt>Rương</dt><dd>{{ site.cases }}</dd></div>
+    <div><dt>Món đồ</dt><dd>{{ site.item_count }}</dd></div>
+    <div><dt>Lượt mở</dt><dd>{{ site.pulls }}</dd></div>
+    <div><dt>Tài khoản</dt><dd>{{ site.users }}</dd></div>
+  </dl>
+</section>
+
+<section class="lp-block">
+  <h2>Cách chơi</h2>
+  <ol class="lp-steps">
+    <li>
+      <span class="lp-step-n">1</span>
+      <div>
+        <h3>Đăng nhập</h3>
+        <p>Dùng đúng nick và mật khẩu bạn gõ <code>/login</code> trong game. Web kiểm tra qua AuthMe trên chính server, không cần API key riêng.</p>
+      </div>
+    </li>
+    <li>
+      <span class="lp-step-n">2</span>
+      <div>
+        <h3>Chọn rương và quay</h3>
+        <p>Coin trừ ngay trong game trước khi rương mở. Món trúng thắng nằm trong túi đồ của bạn, kèm ảnh và tỉ lệ trúng thật.</p>
+      </div>
+    </li>
+    <li>
+      <span class="lp-step-n">3</span>
+      <div>
+        <h3>Bán, nâng cấp hoặc rút</h3>
+        <p>Bán đồ lấy Coin, nâng cấp 2 món thành 1 món đắt hơn, hoặc rút thẳng vào Minecraft bằng <code>nexo give</code>.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<section class="lp-block">
+  <h2>Trò chơi bên cạnh</h2>
+  <div class="lp-modes">
+    <a class="lp-mode" href="/roulette">
+      <h3>Coinflip Roulette</h3>
+      <p>Đoán Ngôi Làng, Steve hay Pillager. Mỗi vòng có hash commit trước khi quay để kiểm chứng kết quả.</p>
+      <span class="lp-mode-cta">Vào vòng quay</span>
+    </a>
+    <a class="lp-mode" href="/battles">
+      <h3>Case Battle</h3>
+      <p>Ngồi vào bàn với bot. Người tổng đồ cao hơn thắng và mang hết đồ về. Tối đa 30 vòng mỗi trận.</p>
+      <span class="lp-mode-cta">Tạo trận</span>
+    </a>
+    <a class="lp-mode" href="/upgrade">
+      <h3>Nâng cấp đồ</h3>
+      <p>Cược hai món rẻ để đổi lấy một món đắt hơn. Cơ chế 2 món lên 1 món, chống trùng id và chống clone item.</p>
+      <span class="lp-mode-cta">Nâng cấp</span>
+    </a>
+  </div>
+</section>
+
+<section class="lp-block">
+  <h2>Bảng giá rương</h2>
+  <div class="lp-table-wrap">
+    <table class="lp-table">
+      <caption class="visually-hidden">Danh sách rương và giá mỗi lượt</caption>
+      <thead>
+        <tr>
+          <th scope="col">Rương</th>
+          <th scope="col">Số món</th>
+          <th scope="col">Giá mỗi lượt</th>
+          <th scope="col"><span class="visually-hidden">Mở</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for case in cases %}
+        <tr>
+          <th scope="row">
+            <img src="{{ case.image }}" alt="" width="34" height="34" loading="lazy">
+            <span>{{ case.name }}</span>
+          </th>
+          <td>{{ case.loot|length }}</td>
+          <td class="lp-price">{{ case.cost_fmt }} Coin</td>
+          <td><a class="lp-open" href="/case/{{ case.id }}">Mở<span class="visually-hidden"> rương {{ case.name }}</span></a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="lp-cta">
+  <div>
+    <h2>Sẵn sàng mở rương?</h2>
+    <p>Đăng nhập bằng tài khoản Minecraft của bạn và bắt đầu quay ngay.</p>
+  </div>
+  {% if player %}
+  <a class="cf-btn-primary lp-btn-lg" href="/gacha">Đến quầy rương</a>
+  {% else %}
+  <a class="cf-btn-primary lp-btn-lg" href="/login">Đăng nhập để chơi</a>
+  {% endif %}
+</section>
+{% endblock %}

@@ -21,10 +21,13 @@ Read `CONSTRAINTS.md` before writing code. Do not weaken it to make a change pas
  - `.\.venv\Scripts\python.exe tests\test_upgrade_two_to_one.py`
  - `.\.venv\Scripts\python.exe tests\test_paths_static.py`
 - **Run full suite (requires live test servers on 8080/8099/8101):** `.\.venv\Scripts\python.exe tests\run_all.py`
+- **Run live-account suite (needs real password, uses real money):**
+  `$env:JV_TEST_USER="<name>"; $env:JV_TEST_PASS="<pass>"; .\.venv\Scripts\python.exe tests\test_live_account_browser.py 8080`
 - **Frontend pattern check:** `npx.cmd -y modern-web-guidance@latest legacy-scan app --json`
 
 ## Architecture Map
 - `app/main.py` — FastAPI routes, middleware (`SafeSessionMiddleware`, security headers), request validation.
+- `app/templates/landing.html` + `app/static/landing.css` — landing page `/` (rương 3D CSS, bảng giá rương). CSS riêng, chỉ nạp khi render landing.
 - `app/security.py` — AuthMe SHA256 verification, IP rate limiting, CSRF tokens, `SafeSessionMiddleware`, `is_same_origin`.
 - `app/game.py` — Case opening, selling, upgrading, battles, daily bonus rules.
 - `app/store.py` — SQLite schema, atomic `debit`/`credit`, battle CAS lock (`try_claim_battle_start`).

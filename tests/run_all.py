@@ -43,6 +43,7 @@ SUITES = [
     ("Quyen admin realtime (doc OP tu PikaMC)", "test_admin_realtime.py", False, None),
     ("Quyen admin realtime - HTTP", "test_admin_http.py", True, 8101),
     ("Dang nhap thuc", "test_login_browser.py", True, 8080),
+    ("Tai khoan that (mo ruong, ban do, rut do)", "test_live_account_browser.py", True, 8080),
 ]
 
 # Port -> (dry_run, arg) cho server test.
@@ -136,6 +137,12 @@ def main():
             if not path.exists():
                 results.append((name, "KHONG CO", 0))
                 continue
+            # Suite tai khoan that can mat khau -> thieu thi SKIP, khong FAIL.
+            if script == "test_live_account_browser.py" and not os.getenv("JV_TEST_PASS"):
+                print(f"\n{'=' * 70}\n  {name}  ({script})\n{'=' * 70}")
+                print("  --> SKIP  (thieu bien moi truong JV_TEST_PASS)")
+                results.append((name, "SKIP", 0.0))
+                continue
             if needs_server and port and port not in needed_ports:
                 results.append((name, "SKIP", 0))
                 continue
@@ -145,7 +152,8 @@ def main():
             t0 = time.perf_counter()
             proc = subprocess.run(
                 [sys.executable, str(path),
-                 *(["8080"] if script == "test_login_browser.py"
+                 *(["8080"] if script in ("test_login_browser.py",
+                                         "test_live_account_browser.py")
                    else [str(port)] if script in ("test_all_features.py",
                                                  "test_ui_menu.py",
                                                  "test_admin_http.py",
@@ -205,13 +213,16 @@ def main():
     print("  TONG KET")
     print("=" * 70)
     for name, status, dt in results:
-        mark = "OK " if status == "PASS" else "XX "
+        mark = "OK " if status == "PASS" else ("-- " if status == "SKIP" else "XX ")
         print(f"  [{mark}] {name:<34} {status:<10} {dt:>5.1f}s")
-    failed = [r for r in results if r[1] != "PASS"]
+    failed = [r for r in results if r[1] not in ("PASS", "SKIP")]
+    skipped = [r[0] for r in results if r[1] == "SKIP"]
     print()
     if failed:
         print(f"  !!! {len(failed)} suite FAIL: {[f[0] for f in failed]}")
         sys.exit(1)
+    if skipped:
+        print(f"  (BO QUA: {skipped})")
     print(f"  >>> TAT CA {len(results)} SUITE PASS ({total_pass} assertions)")
 
 

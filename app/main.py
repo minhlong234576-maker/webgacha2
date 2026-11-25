@@ -186,6 +186,8 @@ def render(request: Request, name: str, **context) -> HTMLResponse:
     request.session["csrf"] = token
     context.setdefault("csrf", token)
     context.setdefault("player", None)
+    # Trang landing riêng CSS riêng -> khong nap thua vao moi trang.
+    context.setdefault("landing", name == "landing.html")
     return templates.TemplateResponse(request, name, context)
 
 
@@ -387,7 +389,15 @@ def api_auth(request: Request, *, csrf: bool = False) -> str | JSONResponse:
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return RedirectResponse("/gacha", status_code=303)
+    """Trang chủ (landing page) — giới thiệu dự án cho khách chưa đăng nhập."""
+    ctx = await optional_ctx(request)
+    return render(
+        request,
+        "landing.html",
+        **ctx,
+        cases=[case_view(item) for item in load_cases()],
+        site=game.site_stats_bar(),
+    )
 
 
 @app.get("/login", response_class=HTMLResponse)

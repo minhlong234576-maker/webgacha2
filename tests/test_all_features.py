@@ -84,9 +84,12 @@ async def main():
     async with httpx.AsyncClient(base_url=BASE, timeout=30) as c:
         print("=== 1. TAT CA TRANG CONG (khong can dang nhap) ===")
         r = await c.get("/", follow_redirects=False)
-        check("GET / -> 303 ve /gacha",
-              r.status_code == 303 and "/gacha" in r.headers.get("location", ""),
-              f"{r.status_code} {r.headers.get('location')}")
+        check("GET / -> 200 landing page", r.status_code == 200, str(r.status_code))
+        check("landing co h1", "<h1>" in r.text)
+        check("landing nap landing.css", "/static/landing.css" in r.text)
+        r = await c.get("/gacha", follow_redirects=False)
+        check("GET /gacha -> 200 (khong con redirect tu /)",
+              r.status_code == 200, str(r.status_code))
 
         for path, must in [
             ("/login", "Đăng nhập"),

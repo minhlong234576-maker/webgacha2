@@ -9,6 +9,7 @@ và [`HUONG_DAN_DU_AN.md`](HUONG_DAN_DU_AN.md) cho hướng dẫn thiết kế/h
 
 ## Tính năng
 
+- **Landing page** (`/`) — giới thiệu dự án: rương 3D CSS thuần, bảng giá rương, hướng dẫn 3 bước.
 - **Đăng nhập AuthMe** — verify SHA256, CSRF token, giới hạn 8 lần sai / 10 phút / IP.
 - **Mở rương** — 7 rương, mở 1x–5x, dải quay ngang/dọc nhiều dải.
 - **Túi đồ & bán** — bán lẻ hoặc bán tất cả, nhận lại Coin.
@@ -17,6 +18,7 @@ và [`HUONG_DAN_DU_AN.md`](HUONG_DAN_DU_AN.md) cho hướng dẫn thiết kế/h
 - **Coinflip Roulette** — 3 phe (Làng x2, Pillager x2, Steve x14), 15s cược / 6s quay / 4s chốt.
 - **Live drop** — dải đồ rơi realtime qua WebSocket-free polling.
 - **Bonus ngày**, **ví web** (`/vi`), **thống kê admin** (`/admin`).
+- **Hiệu ứng 3D & chuyển cảnh** — nghiêng thẻ theo con trỏ, view transition giữa trang, confetti khi thắng (tôn trọng `prefers-reduced-motion`).
 
 ## Yêu cầu
 
@@ -64,7 +66,7 @@ start.bat
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8080
 ```
 
-Truy cập <http://127.0.0.1:8080/gacha>.
+Truy cập <http://127.0.0.1:8080/> (landing) hoặc <http://127.0.0.1:8080/gacha> (quầy rương).
 
 ## Bật tiền thật (`GACHA_DRY_RUN=false`)
 
@@ -102,7 +104,7 @@ app/
   templates/    Jinja2
   static/       CSS, JS, ảnh rương/đồ
 gacha.json      Rương, tỉ lệ, giá
-tests/          14 suite tự động
+tests/          21 suite tự động
 ```
 
 ## Test
@@ -113,6 +115,13 @@ python tests/run_all.py
 
 Một số suite cần server chạy sẵn ở port `8080` / `8099` / `8101` — xem
 `tests/run_all.py` để biết chi tiết.
+
+Suite tài khoản thật (`tests/test_live_account_browser.py`) cần mật khẩu thật
+và **dùng tiền thật** — chạy tay, không tự chạy trong `run_all.py`:
+
+```bash
+JV_TEST_USER=ten JV_TEST_PASS=matkhau python tests/test_live_account_browser.py 8080
+```
 
 ## Triển khai
 

@@ -122,6 +122,28 @@ async def main():
         for want in ["Rương", "Roulette", "Battle", "Nâng cấp", "Bonus"]:
             check(f"menu co '{want}'", want in nav_text)
 
+        print()
+        print("=== 6. LANDING PAGE ===")
+        await page.goto(f"{BASE}/", wait_until="load")
+        h1 = await page.locator("h1").count()
+        check("landing co duy nhat 1 h1", h1 == 1, str(h1))
+        check("landing co rung 3D", await page.locator(".lp-crate").count() == 1)
+        check("landing co bang gia ruong",
+              await page.locator(".lp-table tbody tr").count() >= 5)
+        check("landing co 3 buoc", await page.locator(".lp-steps li").count() == 3)
+        check("landing co 3 che do", await page.locator(".lp-mode").count() == 3)
+        check("landing nap landing.css",
+              await page.locator('link[href="/static/landing.css"]').count() == 1)
+        errors.clear()
+        await page.wait_for_timeout(600)
+        check("landing khong co loi JS console", not errors, str(errors[:2]))
+        # Khong dung game vi nguoi choi -> khong duoc co link Admin
+        await page.goto(f"{BASE}/", wait_until="load")
+        landing_text = await page.inner_text("body")
+        check("landing co CTA dang nhap hoac vao ruong",
+              "Đăng nhập" in landing_text or "quầy rương" in landing_text.lower(),
+              landing_text[:80])
+
         await page.screenshot(path=str(ROOT / "_menu.png"))
 
         await browser.close()
