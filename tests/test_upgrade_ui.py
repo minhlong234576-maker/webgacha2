@@ -49,6 +49,32 @@ def make_cookie(user):
 
 async def main():
     cookie = make_cookie(QA_PLAYER)
+    # Dam bao QA_Tester_01 co it nhat 4 mon trong tui (UI test can >= 3
+    # checkbox de kiem tra gioi han "chi 2 mon"). Server va test process
+    # cung dung mot file DB (GACHA_DB_PATH) nen ghi truc tiep vao do.
+    import sqlite3
+
+    db_path = os.getenv("GACHA_DB_PATH") or str(ROOT / "data" / "gacha.db")
+    con = sqlite3.connect(db_path)
+    have = con.execute(
+        "SELECT COUNT(*) FROM inventory WHERE player = ? AND status = 'held'",
+        (QA_PLAYER,),
+    ).fetchone()[0]
+    if have < 4:
+        from app.gacha import load_cases
+
+        case = load_cases()[0]
+        for item in case.items[: 4 - have]:
+            con.execute(
+                "INSERT INTO inventory (player, item_id, name, rarity, value,"
+                " image, color, source, status, case_id, created_at)"
+                " VALUES (?, ?, ?, ?, ?, ?, ?, 'test', 'held', ?, ?)",
+                (QA_PLAYER, item.id, item.name, item.rarity, item.coin,
+                 item.image, item.color, case.id, int(__import__("time").time())),
+            )
+        con.commit()
+    con.close()
+
     async with async_playwright() as pw:
         browser = await pw.chromium.launch()
         ctx = await browser.new_context()

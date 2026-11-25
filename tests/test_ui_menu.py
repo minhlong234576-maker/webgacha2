@@ -56,7 +56,9 @@ async def main():
     cookie = make_cookie(QA_PLAYER)
     # Dam bao player QA ton tai trong DB (vi khong can login that)
     import sqlite3
-    con = sqlite3.connect(str(ROOT / "data" / "gacha.db"))
+    con = sqlite3.connect(
+        os.getenv("GACHA_DB_PATH") or str(ROOT / "data" / "gacha.db")
+    )
     con.execute(
         "INSERT INTO wallets (player, balance, is_bot, created_at) "
         "VALUES (?, 500000, 0, 0) ON CONFLICT(player) DO UPDATE SET balance = 500000",

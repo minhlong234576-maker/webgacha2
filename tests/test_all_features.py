@@ -62,7 +62,7 @@ def reset_player(name, coin=500_000):
     Dry-run: Coin la 'a o' trong DB web nen nap truc tiep vao SQLite.
     """
     import sqlite3
-    db = str(ROOT / "data" / "gacha.db")
+    db = os.getenv("GACHA_DB_PATH") or str(ROOT / "data" / "gacha.db")
     con = sqlite3.connect(db)
     con.execute(
         "INSERT INTO wallets (player, balance, is_bot, created_at) "
@@ -246,8 +246,12 @@ async def main():
                      headers={"X-CSRF": "test-csrf"})
 
         r = await c.get("/upgrade")
-        # .stake co data-id (id mon) va data-value (gia tri)
-        stakes = re.findall(r'data-id="(\d+)"[^>]*data-value="(\d+)"', r.text)
+        # Template moi dung checkbox: <input type="checkbox" name="stake"
+        # value="<id>" data-value="<gia tri>">.
+        stakes = re.findall(
+            r'<input type="checkbox"[^>]*name="stake"[^>]*value="(\d+)"[^>]*data-value="(\d+)"',
+            r.text,
+        )
         ids = [int(a) for a, _ in stakes]
         stake_value = int(stakes[0][1]) if stakes else 0
         check("trang /upgrade co mon de cuoc", len(stakes) > 0,
@@ -293,6 +297,11 @@ async def main():
 
             r = await c.post(f"/api/battles/{battle_id}/start", json={},
                              headers={"X-CSRF": "test-csrf"})
+            # Bot loop trong background co the da settle tran truoc -> tra 400
+            # "Trận đã xong.". Trong ca hai truong hop, GET lai tran phai ra
+            # FINISHED (khong trung giu, khong roll 2 lan).
+            if r.status_code != 200:
+                r = await c.get(f"/api/battles/{battle_id}")
             ok = r.status_code == 200 and r.json().get("status") == "FINISHED"
             check("POST /api/battles/{id}/start -> FINISHED", ok,
                   f"{r.status_code} {r.text[:80]}")
@@ -386,7 +395,7 @@ async def main():
 
     # Don dep: xoa hoan toan du lieu test cua player QA
     import sqlite3
-    db = str(ROOT / "data" / "gacha.db")
+    db = os.getenv("GACHA_DB_PATH") or str(ROOT / "data" / "gacha.db")
     con = sqlite3.connect(db)
     for tbl in ("inventory", "bonus", "pulls", "drops", "tx", "upgrades"):
         con.execute(f"DELETE FROM {tbl} WHERE player = ?", (QA_PLAYER,))

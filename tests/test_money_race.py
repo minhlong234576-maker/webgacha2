@@ -60,7 +60,14 @@ async def main():
         print(f"  so du sau: {after:,.0f} (tru {start - after:,.0f})")
 
         check("khong tru qua so du (con tien)", after >= 0, f"{after}")
-        check("chi 2 request duoc tru (5.000 / 2.000)", ok <= 2, f"{ok} thanh cong")
+        # So du thuc te cua nguoi choi co the lon hon 5.000 (test chay tren
+        # tai khoan that), nen khong the gan cung 'chi 2 request duoc tru'.
+        # Bat buoc phai la: so du bi tru DUNG BANG so request thanh cong x 2.000
+        # -> khong duoc tru thua (khong mat tien ngoai y muon).
+        deducted = int(round(start - after))
+        check("tru dung so tien theo so request thanh cong",
+              deducted == ok * 2000,
+              f"tru {deducted:,} | ok={ok} (mong doi {ok * 2000:,})")
         check("so du cuoi >= 1.000 (khong mat tien)",
               after >= 1000, f"{after} (tru {start - after})")
         check("request that bai phai la MoneyError",

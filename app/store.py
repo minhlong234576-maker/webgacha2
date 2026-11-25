@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import os
 import sqlite3
 import threading
 import time
+from pathlib import Path
 from typing import Any, Iterable
 
 from .config import ROOT
 
-DB_PATH = ROOT / "data" / "gacha.db"
+# Cho phep tro sang DB tam (server test / test song song) qua env
+# `GACHA_DB_PATH`. Mac dinh van la `data/gacha.db` cua du an.
+DB_PATH = Path(os.getenv("GACHA_DB_PATH") or (ROOT / "data" / "gacha.db"))
 _lock = threading.Lock()
 
 # Kết nối theo từng thread. sqlite3 không cho dùng chung connection giữa
