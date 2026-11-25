@@ -120,12 +120,14 @@ print("=== 4. RACE: 2 REQUEST SONG SONG DUNG CUNG 2 MON ===")
 p = "UpRace1"
 r1, r2 = make_item(p, 1000), make_item(p, 1000)
 outcomes: list[str] = []
+won_flags: list[bool] = []
 
 
 def worker() -> None:
     try:
         res = game.do_upgrade(p, [r1, r2], TARGET.id, TARGET.coin)
         outcomes.append("OK")
+        won_flags.append(bool(res["won"]))
     except game.GameError:
         outcomes.append("ERR")
 
@@ -138,10 +140,19 @@ for t in threads:
 
 ok_count = outcomes.count("OK")
 check("race: chi 1 request duoc thanh cong", ok_count == 1, f"outcomes={outcomes}")
+# Khong clone: 2 mon cược deu bi tieu, chi ton tai MOT mon dich khi thang.
+#   thang -> 2 - 2 + 1 = 1 mon 'held'
+#   thua  -> 2 - 2 + 0 = 0 mon 'held'
+expected_held = 1 if (won_flags and won_flags[0]) else 0
 check(
     "race: khong clone item (khong con 2 mon dich)",
-    held_count(p) == (1 if outcomes.count("OK") else 0),
-    f"held={held_count(p)}",
+    held_count(p) == expected_held,
+    f"held={held_count(p)} expected={expected_held} won={won_flags}",
+)
+check(
+    "race: ca 2 mon cược deu da bi dung",
+    status_of(r1) == "upgraded" and status_of(r2) == "upgraded",
+    f"r1={status_of(r1)} r2={status_of(r2)}",
 )
 
 print()
