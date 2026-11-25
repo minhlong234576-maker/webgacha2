@@ -55,17 +55,16 @@
     <div class="pick-grid" id="targets"><p class="meta">Chọn 1+ món cược trước.</p></div>
   </section>
 </div>
-<script src="/static/upgrade.js"></script>
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
+
+<script src="/static/upgrade.js" defer></script>
+<script defer>
+  (function() {
     const csrf = document.querySelector("meta[name=csrf]").content;
-    const gauge = mountGauge(document.getElementById("gauge"));
-    
-    function setupUpgrade() {
     let stakeIds = [];
     let totalValue = 0;
     let target = null;
     let allTargets = [];
+    let gauge;
     
     function slotHtml(item) {
       return `<img src="${item.image}" alt=""><div class="name">${item.name}</div><div class="price">${item.fmt} Coin</div>`;
@@ -202,14 +201,16 @@
       });
     });
     
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", setupUpgrade);
-    } else {
-      setupUpgrade();
-    }
+    function setup() {
+      gauge = mountGauge(document.getElementById("gauge"));
+      initStakes();
     }
     
-    setupUpgrade();
-  });
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", setup);
+    } else {
+      setup();
+    }
+  })();
 </script>
 {% endblock %}
