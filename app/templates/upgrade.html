@@ -3,12 +3,12 @@
 {% block content %}
 <p class="eyebrow"><i></i> Upgrade · RTP 90%</p>
 <h1>Nâng cấp đồ</h1>
-<p class="lead">Cược một món. Thắng thì đổi món đắt hơn, thua thì mất món. Tỉ lệ = 90% × giá cược / giá đích.</p>
+<p class="lead">Chọn 1 hoặc nhiều món cược, chọn 1 món đích đắt hơn. Tỉ lệ = 90% × tổng cược / giá đích.</p>
 
 <div class="upgrade-stage">
-  <div id="stake-slot" class="slot-card">
+  <div id="stakes-slot" class="slot-card">
     <span class="eyebrow" style="margin:0">Cược</span>
-    <span class="meta">Chọn món bên dưới</span>
+    <span class="meta" id="stakes-info">Chọn 1+ món</span>
   </div>
   <div class="gauge-wrap">
     <div id="gauge"></div>
@@ -24,6 +24,9 @@
 <div class="upgrade-lists">
   <section>
     <h2 style="margin-top:0">Đồ của tôi</h2>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <input id="stakes-search" type="text" placeholder="Tìm đồ cược..." style="flex:1;min-width:150px;padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px">
+    </div>
     <div class="pick-grid" id="stakes">
       {% for item in items %}
       <button class="item-card pick stake" type="button" data-id="{{ item.id }}" data-value="{{ item.value }}" data-name="{{ item.name }}" data-image="{{ item.image }}" data-color="{{ item.color }}" data-fmt="{{ item.value_fmt }}" style="box-shadow:inset 0 -2px 0 0 {{ item.color }}">
@@ -37,67 +40,123 @@
     </div>
   </section>
   <section>
-    <h2 style="margin-top:0">Nâng thành</h2>
-    <div class="pick-grid" id="targets"><p class="meta">Chọn món cược trước.</p></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <h2 style="margin:0;flex:1">Nâng thành</h2>
+      <select id="target-sort" style="padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px">
+        <option value="low">Giá: Thấp → Cao</option>
+        <option value="high">Giá: Cao → Thấp</option>
+      </select>
+    </div>
+    <input id="target-search" type="text" placeholder="Tìm đồ nâng..." style="width:100%;padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px;margin-bottom:12px">
+    <div class="pick-grid" id="targets"><p class="meta">Chọn 1+ món cược trước.</p></div>
   </section>
 </div>
 <script type="module">
   import { mountGauge } from "/static/upgrade.js";
   const csrf = document.querySelector("meta[name=csrf]").content;
   const gauge = mountGauge(document.getElementById("gauge"));
-  let stakeId = 0;
+  let stakeIds = [];
+  let totalValue = 0;
   let target = null;
-
+  let allTargets = [];
+  
   function slotHtml(item) {
     return `<img src="${item.image}" alt=""><div class="name">${item.name}</div><div class="price">${item.fmt} Coin</div>`;
   }
 
+  // Multi-select stakes
   document.querySelectorAll(".stake").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      document.querySelectorAll(".stake").forEach((el) => el.classList.remove("on"));
-      btn.classList.add("on");
-      stakeId = Number(btn.dataset.id);
-      target = null;
-      document.getElementById("go").disabled = true;
-      document.getElementById("stake-slot").innerHTML = slotHtml({
-        image: btn.dataset.image, name: btn.dataset.name, fmt: btn.dataset.fmt
+    btn.addEventListener("click", () => {
+      btn.classList.toggle("on");
+      
+      // Collect selected
+      stakeIds = [];
+      totalValue = 0;
+      let html = "";
+      document.querySelectorAll(".stake.on").forEach((el) => {
+        stakeIds.push(Number(el.dataset.id));
+        totalValue += Number(el.dataset.value);
+        html += slotHtml({ image: el.dataset.image, name: el.dataset.name, fmt: el.dataset.fmt }) + " ";
       });
-      document.getElementById("stake-slot").style.borderColor = btn.dataset.color;
-      const res = await fetch("/api/upgrade/targets?value=" + btn.dataset.value);
-      const data = await res.json();
-      const box = document.getElementById("targets");
-      if (!data.targets.length) {
-        box.innerHTML = "<p class='meta'>Không có món đích phù hợp.</p>";
+      
+      if (!stakeIds.length) {
+        document.getElementById("stakes-slot").innerHTML = '<span class="meta">Chọn 1+ món</span>';
+        document.getElementById("stakes-info").textContent = "Chọn 1+ món";
+        document.getElementById("targets").innerHTML = '<p class="meta">Chọn 1+ món cược trước.</p>';
+        target = null;
+        document.getElementById("go").disabled = true;
         return;
       }
-      box.innerHTML = data.targets.map((item) => `
-        <button class="item-card pick tgt" type="button" data-id="${item.id}" data-coin="${item.coin}" data-chance="${item.chance}" data-name="${item.name}" data-image="${item.image}" data-color="${item.color}" data-fmt="${item.coin_fmt}" style="box-shadow:inset 0 -2px 0 0 ${item.color}">
-          <img src="${item.image}" alt="${item.name}">
-          <div class="name">${item.name}</div>
-          <div class="chance">${item.chance}% · ${item.coin_fmt}</div>
-        </button>`).join("");
-      box.querySelectorAll(".tgt").forEach((el) => {
-        el.addEventListener("click", () => {
-          box.querySelectorAll(".tgt").forEach((n) => n.classList.remove("on"));
-          el.classList.add("on");
-          target = { id: el.dataset.id, coin: Number(el.dataset.coin), chance: Number(el.dataset.chance), name: el.dataset.name, image: el.dataset.image, fmt: el.dataset.fmt, color: el.dataset.color };
-          document.getElementById("target-slot").innerHTML = slotHtml(target);
-          document.getElementById("target-slot").style.borderColor = target.color;
-          gauge.setChance(target.chance / 100);
-          document.getElementById("go").disabled = false;
-        });
+      
+      document.getElementById("stakes-slot").innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap">${html}</div>`;
+      document.getElementById("stakes-info").textContent = `${stakeIds.length} món · ${totalValue.toLocaleString("vi-VN")} Coin`;
+      
+      // Load targets
+      (async () => {
+        const res = await fetch(`/api/upgrade/targets?value=${totalValue}`);
+        const data = await res.json();
+        allTargets = data.targets || [];
+        renderTargets();
+      })();
+    });
+  });
+  
+  function renderTargets() {
+    const sort = document.getElementById("target-sort").value;
+    const search = document.getElementById("target-search").value.toLowerCase();
+    const box = document.getElementById("targets");
+    
+    let filtered = allTargets.filter(item => item.name.toLowerCase().includes(search));
+    filtered.sort((a, b) => {
+      if (sort === "low") return a.coin - b.coin;
+      if (sort === "high") return b.coin - a.coin;
+      return 0;
+    });
+    
+    if (!filtered.length) {
+      box.innerHTML = "<p class='meta'>Không có món đích phù hợp.</p>";
+      return;
+    }
+    
+    box.innerHTML = filtered.map((item) => `
+      <button class="item-card pick tgt" type="button" data-id="${item.id}" data-coin="${item.coin}" data-chance="${item.chance}" data-name="${item.name}" data-image="${item.image}" data-color="${item.color}" data-fmt="${item.coin_fmt}" style="box-shadow:inset 0 -2px 0 0 ${item.color}">
+        <img src="${item.image}" alt="${item.name}">
+        <div class="name">${item.name}</div>
+        <div class="chance">${item.chance}% · ${item.coin_fmt}</div>
+      </button>`).join("");
+    
+    box.querySelectorAll(".tgt").forEach((el) => {
+      el.addEventListener("click", () => {
+        box.querySelectorAll(".tgt").forEach((n) => n.classList.remove("on"));
+        el.classList.add("on");
+        target = { id: el.dataset.id, coin: Number(el.dataset.coin), chance: Number(el.dataset.chance), name: el.dataset.name, image: el.dataset.image, fmt: el.dataset.fmt, color: el.dataset.color };
+        document.getElementById("target-slot").innerHTML = slotHtml(target);
+        document.getElementById("target-slot").style.borderColor = target.color;
+        gauge.setChance(target.chance / 100);
+        document.getElementById("go").disabled = false;
       });
+    });
+  }
+  
+  document.getElementById("target-sort").addEventListener("change", renderTargets);
+  document.getElementById("target-search").addEventListener("input", renderTargets);
+  
+  // Search stakes
+  document.getElementById("stakes-search").addEventListener("input", (e) => {
+    const search = e.target.value.toLowerCase();
+    document.querySelectorAll(".stake").forEach(el => {
+      el.style.display = el.dataset.name.toLowerCase().includes(search) ? "" : "none";
     });
   });
 
   document.getElementById("go").addEventListener("click", async () => {
-    if (!stakeId || !target) return;
+    if (!stakeIds.length || !target) return;
     const btn = document.getElementById("go");
     btn.disabled = true;
     const res = await fetch("/api/upgrade", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CSRF": csrf },
-      body: JSON.stringify({ inventory_id: stakeId, target_id: target.id, target_coin: target.coin })
+      body: JSON.stringify({ inventory_ids: stakeIds, target_id: target.id, target_coin: target.coin })
     });
     const data = await res.json();
     const box = document.getElementById("up-result");

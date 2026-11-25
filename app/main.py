@@ -601,9 +601,15 @@ async def upgrade_run(request: Request):
         return user
     body = await request.json()
     try:
+        # Support both single (inventory_id) and multi (inventory_ids)
+        inv_id = body.get("inventory_id")
+        inv_ids = body.get("inventory_ids", [])
+        if inv_id:
+            inv_ids = [inv_id]
+        
         result = game.do_upgrade(
             user,
-            int(body.get("inventory_id") or 0),
+            inv_ids,
             str(body.get("target_id") or ""),
             int(body.get("target_coin") or 0),
         )

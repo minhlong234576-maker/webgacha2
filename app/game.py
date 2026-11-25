@@ -199,9 +199,26 @@ def upgrade_targets(stake_value: int) -> list[dict]:
 
 
 def do_upgrade(player: str, inventory_id: int, target_id: str, target_coin: int) -> dict:
-    stake = store.get_inventory_item(inventory_id)
-    if not stake or stake["player"] != player or stake["status"] != "held":
-        raise GameError("Không dùng được món này.")
+    # Support both single int and list of ints
+    if isinstance(inventory_id, list):
+        inventory_ids = inventory_id
+    else:
+        inventory_ids = [inventory_id]
+    
+    if not inventory_ids or len(inventory_ids) == 0:
+        raise GameError("Chọn ít nhất 1 món cược.")
+    
+    # Validate all stakes
+    stakes = []
+    total_value = 0
+    for inv_id in inventory_ids:
+        stake = store.get_inventory_item(inv_id)
+        if not stake or stake["player"] != player or stake["status"] != "held":
+            raise GameError(f"Không dùng được món này.")
+        stakes.append(stake)
+        total_value += int(stake["value"])
+    
+    # Find target
     target = None
     for item in market_listings():
         if item.id == target_id and item.coin == target_coin:
@@ -209,22 +226,32 @@ def do_upgrade(player: str, inventory_id: int, target_id: str, target_coin: int)
             break
     if not target:
         raise GameError("Không có món đích này.")
-    odds = upgrade_odds(int(stake["value"]), target.coin)
+    
+    # Calc odds: 90% × tổng_cược / giá_đích
+    odds = upgrade_odds(total_value, target.coin)
     if not odds["ok"]:
         raise GameError(odds["reason"])
+    
     roll_v = random.random()
     won = roll_v < odds["chance"]
-    store.set_inventory_status([inventory_id], "upgraded")
+    
+    # Mark all stakes as upgraded
+    store.set_inventory_status(inventory_ids, "upgraded")
+    
     reward_id = None
     if won:
         reward_id = store.add_inventory(player, target, "upgrade")
         store.record_drop(player, target, "upgrade", is_bot=False)
-    store.record_upgrade(player, {"name": stake["name"], "coin": stake["value"]}, target.as_public(), odds["chance"], roll_v, won)
+    
+    # Record upgrade (stake = combined list)
+    stake_desc = " + ".join([s["name"] for s in stakes])
+    store.record_upgrade(player, {"name": stake_desc, "coin": total_value}, target.as_public(), odds["chance"], roll_v, won)
+    
     return {
         "won": won,
         "chance": round(odds["chance"] * 100, 2),
         "roll": round(roll_v * 100, 2),
-        "stake": stake,
+        "stakes": stakes,
         "target": target.as_public(),
         "reward_id": reward_id,
         "balance": store.get_balance(player),
