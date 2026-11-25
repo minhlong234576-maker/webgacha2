@@ -55,12 +55,13 @@
     <div class="pick-grid" id="targets"><p class="meta">Chọn 1+ món cược trước.</p></div>
   </section>
 </div>
-<script type="module">
-  import { mountGauge } from "/static/upgrade.js";
-  
-  function setupUpgrade() {
+<script src="/static/upgrade.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
     const csrf = document.querySelector("meta[name=csrf]").content;
     const gauge = mountGauge(document.getElementById("gauge"));
+    
+    function setupUpgrade() {
     let stakeIds = [];
     let totalValue = 0;
     let target = null;
@@ -202,12 +203,13 @@
     });
     
     if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", initStakes);
+      document.addEventListener("DOMContentLoaded", setupUpgrade);
     } else {
-      initStakes();
+      setupUpgrade();
     }
-  }
-  
-  setupUpgrade();
+    }
+    
+    setupUpgrade();
+  });
 </script>
 {% endblock %}
