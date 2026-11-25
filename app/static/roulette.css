@@ -533,6 +533,9 @@ html.dark .bet-row .bet-val {
   border-color: #f59e0b;
 }
 .bet-row.is-me .player-name {
-  color: #d97706;
+  color: hsl(var(--accent-text, var(--accent)));
   font-weight: 800;
+}
+html.dark .bet-row.is-me .player-name {
+  color: hsl(var(--accent));
 }

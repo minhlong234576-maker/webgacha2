@@ -7,14 +7,20 @@
 <div class="banner">Chế độ tiền thật — Coin in-game sẽ bị trừ ngay khi mở rương.</div>
 {% endif %}
 
-<div class="case-head">
-  <img src="{{ case.image }}" alt="{{ case.name }}">
-  <div>
+<section class="case-head">
+  <div class="case-head-art">
+    <img src="{{ case.image }}" alt="{{ case.name }}">
+  </div>
+  <div class="case-head-copy">
+    <p class="eyebrow"><i></i> {{ case.loot|length }} món · roll trên server</p>
     <h1>{{ case.name }}</h1>
     <p class="lead">{{ case.description }}</p>
-    <p class="price" style="color:hsl(var(--accent-text, var(--accent)));font-weight:700;margin:0">{{ case.cost_fmt }} Coin / lượt</p>
+    <div class="case-head-meta">
+      <span class="price-chip">{{ case.cost_fmt }} Coin <small>/ lượt</small></span>
+      {% if dry_run %}<span class="cf-chip">Chế độ thiết kế</span>{% else %}<span class="cf-chip">Tiền thật · in-game</span>{% endif %}
+    </div>
   </div>
-</div>
+</section>
 
 <section class="opener">
   <!-- SINGLE REEL (HORIZONTAL) -->
@@ -58,12 +64,15 @@
 <h2>Bên trong rương</h2>
 <div class="contents">
   {% for item in case.loot %}
-  <article class="item-card" style="box-shadow: inset 0 -2px 0 0 {{ item.color }}">
-    <div style="background:radial-gradient(ellipse 70% 60% at 50% 100%, {{ item.color }}22, transparent);padding:8px 0">
+  <article class="item-card loot-card" style="--rarity: {{ item.color }}; --rarity-glow: {{ item.color }}2e">
+    <div class="loot-art">
       <img src="{{ item.image }}" alt="{{ item.name }}" loading="lazy">
     </div>
-    <div class="name">{{ item.name }}</div>
-    <div class="chance">{{ item.weight }}% · {{ item.coin_fmt }} Coin</div>
+    <div class="name" title="{{ item.name }}">{{ item.name }}</div>
+    <div class="loot-meta">
+      <span class="loot-chance">{{ item.weight }}%</span>
+      <span class="loot-coin">{{ item.coin_fmt }} Coin</span>
+    </div>
   </article>
   {% endfor %}
 </div>

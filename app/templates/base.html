@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#12151d" media="(prefers-color-scheme: dark)">
   <script>
     (function() {
       try {
@@ -19,34 +21,36 @@
   <title>{% block title %}JellyVale{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
   <link rel="stylesheet" href="/static/roulette.css">
   {% if csrf %}<meta name="csrf" content="{{ csrf }}">{% endif %}
 </head>
 <body>
+  <a class="skip-link" href="#main">Bỏ qua điều hướng</a>
   <div id="live-drops" class="live-strip" aria-label="Drop trực tiếp"></div>
   <header class="site-header">
     <div class="header-inner">
       <a class="brand" href="/gacha">Jelly<span>Vale</span></a>
-      <nav>
+      <nav aria-label="Chính">
         {% set p = request.url.path %}
-        <a class="nav-link {% if p == '/gacha' or p.startswith('/case/') %}on{% endif %}" href="/gacha">Rương</a>
-        <a class="nav-link {% if p.startswith('/roulette') %}on{% endif %}" href="/roulette">Roulette</a>
-        <a class="nav-link {% if p.startswith('/battles') %}on{% endif %}" href="/battles">Battle</a>
-        <a class="nav-link {% if p.startswith('/upgrade') %}on{% endif %}" href="/upgrade">Nâng cấp</a>
-        <a class="nav-link {% if p.startswith('/bonus') %}on{% endif %}" href="/bonus">Bonus</a>
+        <a class="nav-link {% if p == '/gacha' or p.startswith('/case/') %}on{% endif %}" href="/gacha" {% if p == '/gacha' or p.startswith('/case/') %}aria-current="page"{% endif %}>Rương</a>
+        <a class="nav-link {% if p.startswith('/roulette') %}on{% endif %}" href="/roulette" {% if p.startswith('/roulette') %}aria-current="page"{% endif %}>Roulette</a>
+        <a class="nav-link {% if p.startswith('/battles') or p.startswith('/battle/') %}on{% endif %}" href="/battles" {% if p.startswith('/battles') or p.startswith('/battle/') %}aria-current="page"{% endif %}>Battle</a>
+        <a class="nav-link {% if p.startswith('/upgrade') %}on{% endif %}" href="/upgrade" {% if p.startswith('/upgrade') %}aria-current="page"{% endif %}>Nâng cấp</a>
+        <a class="nav-link {% if p.startswith('/bonus') %}on{% endif %}" href="/bonus" {% if p.startswith('/bonus') %}aria-current="page"{% endif %}>Bonus</a>
         {% if player %}
-        <a class="nav-link {% if p.startswith('/inventory') %}on{% endif %}" href="/inventory">Túi đồ{% if held %} {{ held }}{% endif %}</a>
+        <a class="nav-link {% if p.startswith('/inventory') %}on{% endif %}" href="/inventory" {% if p.startswith('/inventory') %}aria-current="page"{% endif %}>Túi đồ{% if held %} <span class="held-badge">{{ held }}</span>{% endif %}</a>
         {% endif %}
-        {% if is_admin %}<a class="nav-link {% if p.startswith('/admin') %}on{% endif %}" href="/admin">Admin</a>{% endif %}
+        {% if is_admin %}<a class="nav-link {% if p.startswith('/admin') %}on{% endif %}" href="/admin" {% if p.startswith('/admin') %}aria-current="page"{% endif %}>Admin</a>{% endif %}
       </nav>
       <div class="header-right">
         <button id="theme-toggle" class="theme-btn" type="button" title="Đổi giao diện Sáng / Tối" aria-label="Đổi giao diện Sáng / Tối">☀️</button>
         {% if player %}
-        <a class="coin-chip" href="/vi">
+        <a class="coin-chip" href="/vi" aria-label="Ví Coin: {{ money_fmt or money }} Coin — nạp thêm">
+          <span class="coin-glyph" aria-hidden="true">◎</span>
           <span id="coin-balance">{{ money_fmt or money }} Coin</span>
-          <span class="plus" title="Ví">+</span>
+          <span class="plus" aria-hidden="true">+</span>
         </a>
         <a class="avatar-link" href="/vi" title="{{ player }}">
           <span class="avatar">{{ (player[:2] if player else '?')|upper }}</span>
@@ -57,17 +61,17 @@
           <button class="signout" type="submit">Thoát</button>
         </form>
         {% else %}
-        <a class="cf-btn-primary" href="/login" style="padding:8px 16px">Đăng nhập</a>
+        <a class="cf-btn-primary signin-btn" href="/login">Đăng nhập</a>
         {% endif %}
       </div>
     </div>
   </header>
-  <main class="page {% block page_class %}{% endblock %}">
+  <main class="page {% block page_class %}{% endblock %}" id="main">
     {% block content %}{% endblock %}
   </main>
   <footer class="site-footer">
     <div class="footer-inner">
-      <span>JellyVale Case — phong cách tươi sáng, roll trên server, đồ Minecraft.</span>
+      <span>JellyVale Case — roll trên server, nhận đồ Minecraft.</span>
       <span class="live-dot"><i></i> Provably recorded</span>
     </div>
   </footer>
