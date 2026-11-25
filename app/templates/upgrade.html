@@ -57,152 +57,157 @@
 </div>
 <script type="module">
   import { mountGauge } from "/static/upgrade.js";
-  const csrf = document.querySelector("meta[name=csrf]").content;
-  const gauge = mountGauge(document.getElementById("gauge"));
-  let stakeIds = [];
-  let totalValue = 0;
-  let target = null;
-  let allTargets = [];
   
-  function slotHtml(item) {
-    return `<img src="${item.image}" alt=""><div class="name">${item.name}</div><div class="price">${item.fmt} Coin</div>`;
-  }
+  function setupUpgrade() {
+    const csrf = document.querySelector("meta[name=csrf]").content;
+    const gauge = mountGauge(document.getElementById("gauge"));
+    let stakeIds = [];
+    let totalValue = 0;
+    let target = null;
+    let allTargets = [];
+    
+    function slotHtml(item) {
+      return `<img src="${item.image}" alt=""><div class="name">${item.name}</div><div class="price">${item.fmt} Coin</div>`;
+    }
 
-  function initStakes() {
-    document.querySelectorAll(".stake").forEach((btn) => {
-      btn.addEventListener("click", function() {
-        console.log("Stake clicked:", this.dataset.name, this.dataset.value);
-        this.classList.toggle("on");
-        
-        stakeIds = [];
-        totalValue = 0;
-        let html = "";
-        document.querySelectorAll(".stake.on").forEach((el) => {
-          stakeIds.push(Number(el.dataset.id));
-          totalValue += Number(el.dataset.value);
-          html += slotHtml({ image: el.dataset.image, name: el.dataset.name, fmt: el.dataset.fmt }) + " ";
-        });
-        
-        console.log("Selected:", stakeIds, "Total:", totalValue);
-        
-        if (!stakeIds.length) {
-          document.getElementById("stakes-slot").innerHTML = '<span class="meta">Chọn 1+ món</span>';
-          document.getElementById("stakes-info").textContent = "Chọn 1+ món";
-          document.getElementById("targets").innerHTML = '<p class="meta">Chọn 1+ món cược trước.</p>';
-          target = null;
-          document.getElementById("go").disabled = true;
-          return;
-        }
-        
-        document.getElementById("stakes-slot").innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap">${html}</div>`;
-        document.getElementById("stakes-info").textContent = `${stakeIds.length} món · ${totalValue.toLocaleString("vi-VN")} Coin`;
-        
-        (async () => {
-          const url = `/api/upgrade/targets?value=${totalValue}`;
-          console.log("Fetching:", url);
-          const res = await fetch(url);
-          if (!res.ok) {
-            console.error(`API error ${res.status}`);
-            document.getElementById("targets").innerHTML = '<p class="meta">Lỗi tải danh sách.</p>';
+    function initStakes() {
+      document.querySelectorAll(".stake").forEach((btn) => {
+        btn.addEventListener("click", function() {
+          console.log("Stake clicked:", this.dataset.name, this.dataset.value);
+          this.classList.toggle("on");
+          
+          stakeIds = [];
+          totalValue = 0;
+          let html = "";
+          document.querySelectorAll(".stake.on").forEach((el) => {
+            stakeIds.push(Number(el.dataset.id));
+            totalValue += Number(el.dataset.value);
+            html += slotHtml({ image: el.dataset.image, name: el.dataset.name, fmt: el.dataset.fmt }) + " ";
+          });
+          
+          console.log("Selected:", stakeIds, "Total:", totalValue);
+          
+          if (!stakeIds.length) {
+            document.getElementById("stakes-slot").innerHTML = '<span class="meta">Chọn 1+ món</span>';
+            document.getElementById("stakes-info").textContent = "Chọn 1+ món";
+            document.getElementById("targets").innerHTML = '<p class="meta">Chọn 1+ món cược trước.</p>';
+            target = null;
+            document.getElementById("go").disabled = true;
             return;
           }
-          const data = await res.json();
-          console.log("API response:", data);
-          allTargets = data.targets || [];
-          renderTargets();
-        })();
+          
+          document.getElementById("stakes-slot").innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap">${html}</div>`;
+          document.getElementById("stakes-info").textContent = `${stakeIds.length} món · ${totalValue.toLocaleString("vi-VN")} Coin`;
+          
+          (async () => {
+            const url = `/api/upgrade/targets?value=${totalValue}`;
+            console.log("Fetching:", url);
+            const res = await fetch(url);
+            if (!res.ok) {
+              console.error(`API error ${res.status}`);
+              document.getElementById("targets").innerHTML = '<p class="meta">Lỗi tải danh sách.</p>';
+              return;
+            }
+            const data = await res.json();
+            console.log("API response:", data);
+            allTargets = data.targets || [];
+            renderTargets();
+          })();
+        });
       });
-    });
-  }
-  
-  function renderTargets() {
-    const sort = document.getElementById("target-sort").value;
-    const search = document.getElementById("target-search").value.toLowerCase();
-    const box = document.getElementById("targets");
-    
-    let filtered = search.trim() 
-      ? allTargets.filter(item => item.name.toLowerCase().includes(search))
-      : allTargets;
-    
-    if (!filtered.length) {
-      box.innerHTML = search.trim() 
-        ? "<p class='meta'>Không tìm thấy món nào.</p>"
-        : "<p class='meta'>Không có món phù hợp.</p>";
-      return;
     }
     
-    filtered.sort((a, b) => {
-      if (sort === "low") return a.coin - b.coin;
-      if (sort === "high") return b.coin - a.coin;
-      return 0;
+    function renderTargets() {
+      const sort = document.getElementById("target-sort").value;
+      const search = document.getElementById("target-search").value.toLowerCase();
+      const box = document.getElementById("targets");
+      
+      let filtered = search.trim() 
+        ? allTargets.filter(item => item.name.toLowerCase().includes(search))
+        : allTargets;
+      
+      if (!filtered.length) {
+        box.innerHTML = search.trim() 
+          ? "<p class='meta'>Không tìm thấy món nào.</p>"
+          : "<p class='meta'>Không có món phù hợp.</p>";
+        return;
+      }
+      
+      filtered.sort((a, b) => {
+        if (sort === "low") return a.coin - b.coin;
+        if (sort === "high") return b.coin - a.coin;
+        return 0;
+      });
+      
+      box.innerHTML = filtered.map((item) => `
+        <button class="item-card pick tgt" type="button" data-id="${item.id}" data-coin="${item.coin}" data-chance="${item.chance}" data-name="${item.name}" data-image="${item.image}" data-color="${item.color}" data-fmt="${item.coin_fmt}" style="box-shadow:inset 0 -2px 0 0 ${item.color}">
+          <img src="${item.image}" alt="${item.name}">
+          <div class="name">${item.name}</div>
+          <div class="chance">${item.chance}% · ${item.coin_fmt}</div>
+        </button>`).join("");
+      
+      box.querySelectorAll(".tgt").forEach((el) => {
+        el.addEventListener("click", function() {
+          box.querySelectorAll(".tgt").forEach((n) => n.classList.remove("on"));
+          this.classList.add("on");
+          target = { id: this.dataset.id, coin: Number(this.dataset.coin), chance: Number(this.dataset.chance), name: this.dataset.name, image: this.dataset.image, fmt: this.dataset.fmt, color: this.dataset.color };
+          document.getElementById("target-slot").innerHTML = slotHtml(target);
+          document.getElementById("target-slot").style.borderColor = target.color;
+          gauge.setChance(target.chance / 100);
+          document.getElementById("go").disabled = false;
+        });
+      });
+    }
+    
+    document.getElementById("target-sort").addEventListener("change", renderTargets);
+    
+    document.getElementById("target-search").addEventListener("focus", function() {
+      this.placeholder = "Nhập tên...";
+      this.style.width = "150px";
     });
     
-    box.innerHTML = filtered.map((item) => `
-      <button class="item-card pick tgt" type="button" data-id="${item.id}" data-coin="${item.coin}" data-chance="${item.chance}" data-name="${item.name}" data-image="${item.image}" data-color="${item.color}" data-fmt="${item.coin_fmt}" style="box-shadow:inset 0 -2px 0 0 ${item.color}">
-        <img src="${item.image}" alt="${item.name}">
-        <div class="name">${item.name}</div>
-        <div class="chance">${item.chance}% · ${item.coin_fmt}</div>
-      </button>`).join("");
+    document.getElementById("target-search").addEventListener("blur", function() {
+      this.placeholder = "🔍";
+      this.style.width = "30px";
+      this.value = "";
+    });
     
-    box.querySelectorAll(".tgt").forEach((el) => {
-      el.addEventListener("click", function() {
-        box.querySelectorAll(".tgt").forEach((n) => n.classList.remove("on"));
-        this.classList.add("on");
-        target = { id: this.dataset.id, coin: Number(this.dataset.coin), chance: Number(this.dataset.chance), name: this.dataset.name, image: this.dataset.image, fmt: this.dataset.fmt, color: this.dataset.color };
-        document.getElementById("target-slot").innerHTML = slotHtml(target);
-        document.getElementById("target-slot").style.borderColor = target.color;
-        gauge.setChance(target.chance / 100);
-        document.getElementById("go").disabled = false;
+    document.getElementById("target-search").addEventListener("input", renderTargets);
+    
+    document.getElementById("stakes-search").addEventListener("input", (e) => {
+      const search = e.target.value.toLowerCase();
+      document.querySelectorAll(".stake").forEach(el => {
+        el.style.display = el.dataset.name.toLowerCase().includes(search) ? "" : "none";
       });
     });
-  }
-  
-  document.getElementById("target-sort").addEventListener("change", renderTargets);
-  
-  document.getElementById("target-search").addEventListener("focus", function() {
-    this.placeholder = "Nhập tên...";
-    this.style.width = "150px";
-  });
-  
-  document.getElementById("target-search").addEventListener("blur", function() {
-    this.placeholder = "🔍";
-    this.style.width = "30px";
-    this.value = "";
-  });
-  
-  document.getElementById("target-search").addEventListener("input", renderTargets);
-  
-  document.getElementById("stakes-search").addEventListener("input", (e) => {
-    const search = e.target.value.toLowerCase();
-    document.querySelectorAll(".stake").forEach(el => {
-      el.style.display = el.dataset.name.toLowerCase().includes(search) ? "" : "none";
-    });
-  });
 
-  document.getElementById("go").addEventListener("click", async () => {
-    if (!stakeIds.length || !target) return;
-    const btn = document.getElementById("go");
-    btn.disabled = true;
-    const res = await fetch("/api/upgrade", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-CSRF": csrf },
-      body: JSON.stringify({ inventory_ids: stakeIds, target_id: target.id, target_coin: target.coin })
+    document.getElementById("go").addEventListener("click", async () => {
+      if (!stakeIds.length || !target) return;
+      const btn = document.getElementById("go");
+      btn.disabled = true;
+      const res = await fetch("/api/upgrade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF": csrf },
+        body: JSON.stringify({ inventory_ids: stakeIds, target_id: target.id, target_coin: target.coin })
+      });
+      const data = await res.json();
+      const box = document.getElementById("up-result");
+      if (!res.ok) { box.textContent = data.detail; btn.disabled = false; return; }
+      gauge.spin({ won: data.won, roll: data.roll / 100, chance: data.chance / 100 }, () => {
+        box.innerHTML = data.won
+          ? `<span style="color:hsl(var(--positive))">Thắng — ${data.target.name}</span>`
+          : `<span style="color:hsl(var(--negative))">Thua · roll ${data.roll} / ${data.chance}%</span>`;
+        setTimeout(() => location.reload(), 1400);
+      });
     });
-    const data = await res.json();
-    const box = document.getElementById("up-result");
-    if (!res.ok) { box.textContent = data.detail; btn.disabled = false; return; }
-    gauge.spin({ won: data.won, roll: data.roll / 100, chance: data.chance / 100 }, () => {
-      box.innerHTML = data.won
-        ? `<span style="color:hsl(var(--positive))">Thắng — ${data.target.name}</span>`
-        : `<span style="color:hsl(var(--negative))">Thua · roll ${data.roll} / ${data.chance}%</span>`;
-      setTimeout(() => location.reload(), 1400);
-    });
-  });
-  
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initStakes);
-  } else {
-    initStakes();
+    
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initStakes);
+    } else {
+      initStakes();
+    }
   }
+  
+  setupUpgrade();
 </script>
 {% endblock %}
