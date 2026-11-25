@@ -594,26 +594,6 @@ async def upgrade_targets(request: Request, value: int = 0):
     return {"targets": targets}
 
 
-@app.get("/api/upgrade/all-targets")
-async def upgrade_all_targets(request: Request):
-    """Trả tất cả targets khả dụng (sorted by price)"""
-    user = api_auth(request)
-    if isinstance(user, JSONResponse):
-        return user
-    targets = game.market_listings()
-    result = []
-    for item in targets:
-        # Mỗi item có thể là target nếu giá > 0
-        if item.coin > 0:
-            public = item.as_public()
-            public["coin_fmt"] = format_coin(item.coin)
-            # Không có "chance" vì chưa biết stake value
-            result.append(public)
-    # Sort by price
-    result.sort(key=lambda x: x["coin"])
-    return {"targets": result}
-
-
 @app.post("/api/upgrade")
 async def upgrade_run(request: Request):
     user = api_auth(request, csrf=True)

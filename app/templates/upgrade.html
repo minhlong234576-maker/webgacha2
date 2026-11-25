@@ -3,12 +3,12 @@
 {% block content %}
 <p class="eyebrow"><i></i> Upgrade · RTP 90%</p>
 <h1>Nâng cấp đồ</h1>
-<p class="lead">Chọn 1 món đích đắt hơn, sau đó chọn 1+ món cược. Tỉ lệ = 90% × tổng cược / giá đích.</p>
+<p class="lead">Cược một món. Thắng thì đổi món đắt hơn, thua thì mất món. Tỉ lệ = 90% × giá cược / giá đích.</p>
 
 <div class="upgrade-stage">
-  <div id="stakes-slot" class="slot-card">
+  <div id="stake-slot" class="slot-card">
     <span class="eyebrow" style="margin:0">Cược</span>
-    <span class="meta" id="stakes-info">Chọn 1+ món</span>
+    <span class="meta">Chọn món bên dưới</span>
   </div>
   <div class="gauge-wrap">
     <div id="gauge"></div>
@@ -17,31 +17,13 @@
   </div>
   <div id="target-slot" class="slot-card">
     <span class="eyebrow" style="margin:0">Đích</span>
-    <span class="meta">Chọn 1 món đắt hơn</span>
+    <span class="meta">Chọn món đắt hơn</span>
   </div>
 </div>
 
 <div class="upgrade-lists">
   <section>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-      <h2 style="margin:0;flex:1">Nâng thành</h2>
-      <select id="target-sort" style="padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px">
-        <option value="low">Giá: Thấp → Cao</option>
-        <option value="high">Giá: Cao → Thấp</option>
-      </select>
-      <div style="position:relative">
-        <input id="target-search" type="text" placeholder="🔍" style="width:30px;padding:6px 8px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px;text-align:center;cursor:pointer" title="Tìm đồ nâng">
-      </div>
-    </div>
-    <div class="pick-grid" id="targets"><p class="meta">Đang tải danh sách...</p></div>
-  </section>
-  <section>
     <h2 style="margin-top:0">Đồ của tôi</h2>
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <div style="flex:1;position:relative">
-        <input id="stakes-search" type="text" placeholder="🔍 Tìm đồ cược..." style="width:100%;padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px">
-      </div>
-    </div>
     <div class="pick-grid" id="stakes">
       {% for item in items %}
       <button class="item-card pick stake" type="button" data-id="{{ item.id }}" data-value="{{ item.value }}" data-name="{{ item.name }}" data-image="{{ item.image }}" data-color="{{ item.color }}" data-fmt="{{ item.value_fmt }}" style="box-shadow:inset 0 -2px 0 0 {{ item.color }}">
@@ -54,242 +36,78 @@
       {% endfor %}
     </div>
   </section>
+  <section>
+    <h2 style="margin-top:0">Nâng thành</h2>
+    <div class="pick-grid" id="targets"><p class="meta">Chọn món cược trước.</p></div>
+  </section>
 </div>
+<script type="module">
+  import { mountGauge } from "/static/upgrade.js";
+  const csrf = document.querySelector("meta[name=csrf]").content;
+  const gauge = mountGauge(document.getElementById("gauge"));
+  let stakeId = 0;
+  let target = null;
 
-<script defer>
-  (function() {
-    // Mount gauge - inline from upgrade.js
-    const SIZE = 200;
-    const CENTER = SIZE / 2;
-    const RADIUS = 82;
-    const STROKE = 14;
-    const CIRC = 2 * Math.PI * RADIUS;
-    const SPIN_MS = 3600;
-    const TURNS = 4;
+  function slotHtml(item) {
+    return `<img src="${item.image}" alt=""><div class="name">${item.name}</div><div class="price">${item.fmt} Coin</div>`;
+  }
 
-    function mountGauge(el) {
-      el.innerHTML = `<div class="relative" style="width:${SIZE}px;height:${SIZE}px;position:relative">
-        <svg width="${SIZE}" height="${SIZE}" style="transform:rotate(-90deg)">
-          <circle cx="${CENTER}" cy="${CENTER}" r="${RADIUS}" fill="none" stroke="#262626" stroke-width="${STROKE}"></circle>
-          <circle id="win-arc" cx="${CENTER}" cy="${CENTER}" r="${RADIUS}" fill="none" stroke="#10b981" stroke-width="${STROKE}" stroke-dasharray="0 ${CIRC}"></circle>
-        </svg>
-        <div id="needle" style="position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center">
-          <div style="margin-top:6px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:22px solid #fbbf24"></div>
-        </div>
-        <div id="gauge-label" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-          <span style="font-size:28px;font-weight:700;color:#34d399">0.0%</span>
-          <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:hsl(var(--text-faint))">Tỉ lệ</span>
-        </div>
-      </div>`;
-
-      const arc = el.querySelector("#win-arc");
-      const needle = el.querySelector("#needle");
-      const label = el.querySelector("#gauge-label");
-      let chance = 0;
-
-      return {
-        setChance(value) {
-          chance = Math.max(0, Math.min(0.85, value));
-          const win = chance * CIRC;
-          arc.setAttribute("stroke-dasharray", `${win} ${CIRC - win}`);
-          label.innerHTML = `<span style="font-size:28px;font-weight:700;color:#34d399">${(chance * 100).toFixed(1)}%</span>
-            <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:hsl(var(--text-faint))">Tỉ lệ</span>`;
-          needle.style.transition = "none";
-          needle.style.transform = "rotate(0deg)";
-        },
-        spin({ won, roll }, onEnd) {
-          const angle = TURNS * 360 + roll * 360;
-          needle.style.transition = "none";
-          needle.style.transform = "rotate(0deg)";
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              needle.style.transition = `transform ${SPIN_MS}ms cubic-bezier(0.12, 0.78, 0.1, 1)`;
-              needle.style.transform = `rotate(${angle}deg)`;
-            });
-          });
-          setTimeout(() => {
-            label.innerHTML = won
-              ? `<span style="font-size:22px;font-weight:700;color:#34d399">Thắng</span>`
-              : `<span style="font-size:22px;font-weight:700;color:#f87171">Trượt</span>`;
-            onEnd?.();
-          }, SPIN_MS);
-        },
-      };
-    }
-    
-    // Upgrade logic
-    const csrf = document.querySelector("meta[name=csrf]").content;
-    let stakeIds = [];
-    let totalValue = 0;
-    let selectedTarget = null;
-    let allTargets = [];
-    let allStakes = [];
-    let gauge;
-    
-    function slotHtml(item) {
-      return `<img src="${item.image}" alt=""><div class="name">${item.name}</div><div class="price">${item.fmt || item.coin_fmt || item.value_fmt} Coin</div>`;
-    }
-
-    async function loadAllTargets() {
-      try {
-        const res = await fetch("/api/upgrade/all-targets");
-        if (!res.ok) return;
-        const data = await res.json();
-        allTargets = data.targets || [];
-        renderTargets();
-      } catch (e) {
-        console.error("Failed to load targets:", e);
-      }
-    }
-
-    function renderTargets() {
-      const sort = document.getElementById("target-sort").value;
-      const search = document.getElementById("target-search").value.toLowerCase();
+  document.querySelectorAll(".stake").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      document.querySelectorAll(".stake").forEach((el) => el.classList.remove("on"));
+      btn.classList.add("on");
+      stakeId = Number(btn.dataset.id);
+      target = null;
+      document.getElementById("go").disabled = true;
+      document.getElementById("stake-slot").innerHTML = slotHtml({
+        image: btn.dataset.image, name: btn.dataset.name, fmt: btn.dataset.fmt
+      });
+      document.getElementById("stake-slot").style.borderColor = btn.dataset.color;
+      const res = await fetch("/api/upgrade/targets?value=" + btn.dataset.value);
+      const data = await res.json();
       const box = document.getElementById("targets");
-      
-      let filtered = search.trim() 
-        ? allTargets.filter(item => item.name.toLowerCase().includes(search))
-        : allTargets;
-      
-      if (!filtered.length) {
-        box.innerHTML = search.trim() 
-          ? "<p class='meta'>Không tìm thấy món nào.</p>"
-          : "<p class='meta'>Chưa có targets.</p>";
+      if (!data.targets.length) {
+        box.innerHTML = "<p class='meta'>Không có món đích phù hợp.</p>";
         return;
       }
-      
-      filtered.sort((a, b) => {
-        if (sort === "low") return a.coin - b.coin;
-        if (sort === "high") return b.coin - a.coin;
-        return 0;
-      });
-      
-      box.innerHTML = filtered.map((item) => `
-        <button class="item-card pick tgt" type="button" data-id="${item.id}" data-coin="${item.coin}" data-name="${item.name}" data-image="${item.image}" data-color="${item.color}" data-fmt="${item.coin_fmt}" style="box-shadow:inset 0 -2px 0 0 ${item.color}">
+      box.innerHTML = data.targets.map((item) => `
+        <button class="item-card pick tgt" type="button" data-id="${item.id}" data-coin="${item.coin}" data-chance="${item.chance}" data-name="${item.name}" data-image="${item.image}" data-color="${item.color}" data-fmt="${item.coin_fmt}" style="box-shadow:inset 0 -2px 0 0 ${item.color}">
           <img src="${item.image}" alt="${item.name}">
           <div class="name">${item.name}</div>
-          <div class="price">${item.coin_fmt}</div>
+          <div class="chance">${item.chance}% · ${item.coin_fmt}</div>
         </button>`).join("");
-      
       box.querySelectorAll(".tgt").forEach((el) => {
-        el.addEventListener("click", function() {
-          selectTarget(this);
+        el.addEventListener("click", () => {
+          box.querySelectorAll(".tgt").forEach((n) => n.classList.remove("on"));
+          el.classList.add("on");
+          target = { id: el.dataset.id, coin: Number(el.dataset.coin), chance: Number(el.dataset.chance), name: el.dataset.name, image: el.dataset.image, fmt: el.dataset.fmt, color: el.dataset.color };
+          document.getElementById("target-slot").innerHTML = slotHtml(target);
+          document.getElementById("target-slot").style.borderColor = target.color;
+          gauge.setChance(target.chance / 100);
+          document.getElementById("go").disabled = false;
         });
       });
-    }
-
-    function selectTarget(el) {
-      document.querySelectorAll(".tgt").forEach(n => n.classList.remove("on"));
-      el.classList.add("on");
-      selectedTarget = {
-        id: el.dataset.id,
-        coin: Number(el.dataset.coin),
-        name: el.dataset.name,
-        image: el.dataset.image,
-        fmt: el.dataset.fmt,
-        color: el.dataset.color
-      };
-      document.getElementById("target-slot").innerHTML = slotHtml(selectedTarget);
-      document.getElementById("target-slot").style.borderColor = selectedTarget.color;
-      updateStakes();
-      updateChance();
-    }
-
-    function initStakes() {
-      document.querySelectorAll(".stake").forEach((btn) => {
-        btn.addEventListener("click", function() {
-          this.classList.toggle("on");
-          updateStakes();
-          updateChance();
-        });
-      });
-    }
-
-    function updateStakes() {
-      stakeIds = [];
-      totalValue = 0;
-      let html = "";
-      document.querySelectorAll(".stake.on").forEach((el) => {
-        stakeIds.push(Number(el.dataset.id));
-        totalValue += Number(el.dataset.value);
-        html += slotHtml({ image: el.dataset.image, name: el.dataset.name, fmt: el.dataset.fmt }) + " ";
-      });
-      
-      if (!stakeIds.length) {
-        document.getElementById("stakes-slot").innerHTML = '<span class="meta">Chọn 1+ món</span>';
-        document.getElementById("stakes-info").textContent = "Chọn 1+ món";
-        document.getElementById("go").disabled = true;
-        return;
-      }
-      
-      document.getElementById("stakes-slot").innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap">${html}</div>`;
-      document.getElementById("stakes-info").textContent = `${stakeIds.length} món · ${totalValue.toLocaleString("vi-VN")} Coin`;
-      document.getElementById("go").disabled = !selectedTarget;
-    }
-
-    function updateChance() {
-      if (!selectedTarget || !stakeIds.length) {
-        gauge.setChance(0);
-        return;
-      }
-      const fair = totalValue / selectedTarget.coin;
-      const chance = Math.min(0.85, fair * 0.9);
-      gauge.setChance(chance);
-    }
-    
-    document.getElementById("target-sort").addEventListener("change", renderTargets);
-    
-    document.getElementById("target-search").addEventListener("focus", function() {
-      this.placeholder = "Nhập tên...";
-      this.style.width = "150px";
     });
-    
-    document.getElementById("target-search").addEventListener("blur", function() {
-      this.placeholder = "🔍";
-      this.style.width = "30px";
-      this.value = "";
-    });
-    
-    document.getElementById("target-search").addEventListener("input", renderTargets);
-    
-    document.getElementById("stakes-search").addEventListener("input", (e) => {
-      const search = e.target.value.toLowerCase();
-      document.querySelectorAll(".stake").forEach(el => {
-        el.style.display = el.dataset.name.toLowerCase().includes(search) ? "" : "none";
-      });
-    });
+  });
 
-    document.getElementById("go").addEventListener("click", async () => {
-      if (!stakeIds.length || !selectedTarget) return;
-      const btn = document.getElementById("go");
-      btn.disabled = true;
-      const res = await fetch("/api/upgrade", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-CSRF": csrf },
-        body: JSON.stringify({ inventory_ids: stakeIds, target_id: selectedTarget.id, target_coin: selectedTarget.coin })
-      });
-      const data = await res.json();
-      const box = document.getElementById("up-result");
-      if (!res.ok) { box.textContent = data.detail; btn.disabled = false; return; }
-      gauge.spin({ won: data.won, roll: data.roll / 100, chance: data.chance / 100 }, () => {
-        box.innerHTML = data.won
-          ? `<span style="color:hsl(var(--positive))">Thắng — ${data.target.name}</span>`
-          : `<span style="color:hsl(var(--negative))">Thua · roll ${data.roll} / ${data.chance}%</span>`;
-        setTimeout(() => location.reload(), 1400);
-      });
+  document.getElementById("go").addEventListener("click", async () => {
+    if (!stakeId || !target) return;
+    const btn = document.getElementById("go");
+    btn.disabled = true;
+    const res = await fetch("/api/upgrade", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRF": csrf },
+      body: JSON.stringify({ inventory_id: stakeId, target_id: target.id, target_coin: target.coin })
     });
-    
-    function setup() {
-      gauge = mountGauge(document.getElementById("gauge"));
-      initStakes();
-      loadAllTargets();
-    }
-    
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", setup);
-    } else {
-      setup();
-    }
-  })();
+    const data = await res.json();
+    const box = document.getElementById("up-result");
+    if (!res.ok) { box.textContent = data.detail; btn.disabled = false; return; }
+    gauge.spin({ won: data.won, roll: data.roll / 100, chance: data.chance / 100 }, () => {
+      box.innerHTML = data.won
+        ? `<span style="color:hsl(var(--positive))">Thắng — ${data.target.name}</span>`
+        : `<span style="color:hsl(var(--negative))">Thua · roll ${data.roll} / ${data.chance}%</span>`;
+      setTimeout(() => location.reload(), 1400);
+    });
+  });
 </script>
 {% endblock %}
