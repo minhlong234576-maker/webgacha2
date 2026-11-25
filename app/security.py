@@ -147,5 +147,15 @@ def record_failed_login(ip: str) -> None:
     _attempts[ip].append(time.time())
 
 
+def clear_failed_logins(ip: str) -> None:
+    """Xoa lich su login that bai cua IP (sau khi dang nhap THANH CONG).
+
+    Khong xoa thi mot nguoi choi go sai mat khau vai lan roi dang nhap dung
+    van bi chan `error=rate` trong 10 phut -> dang nhap that bi khoa o bat
+    thuong.
+    """
+    _attempts.pop(ip, None)
+
+
 def new_csrf_token() -> str:
     return secrets.token_urlsafe(32)

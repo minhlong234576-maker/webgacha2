@@ -46,7 +46,10 @@ SUITES = [
 ]
 
 # Port -> (dry_run, arg) cho server test.
+# 8080 chay o che do THAT (GACHA_DRY_RUN=false) vi test dang nhap that can
+# AuthMe/PikaMC; 8099 cung vay cho test realtime.
 SERVERS = {
+    8080: ("false", ["--live"]),
     8098: ("true", []),
     8099: ("false", ["--live"]),
     8101: ("true", []),
@@ -60,8 +63,28 @@ def prepare_db() -> None:
     shutil.copy(ROOT / "data" / "gacha.db", TEST_DB)
 
 
+def kill_port(port: int) -> None:
+    """Ket thuc moi process dang giu port (server test cu con lai tu lan chay truoc).
+
+    Neu con server cu, `wait_ready` se thay port da mo -> test se goi nham
+    server cu voi DB cu (khong dung DB tam) -> FAIL lung tung.
+    """
+    if os.name == "nt":
+        cmd = ["powershell", "-NoProfile", "-Command",
+               f"Get-NetTCPConnection -LocalPort {port} -State Listen "
+               f"-ErrorAction SilentlyContinue | ForEach-Object "
+               f"{{ Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }}"]
+    else:
+        cmd = ["sh", "-c",
+               f"lsof -ti tcp:{port} | xargs -r kill -9 2>/dev/null || true"]
+    subprocess.run(cmd, capture_output=True)
+
+
 def start_servers(ports: set[int]) -> list[subprocess.Popen]:
     procs = []
+    for port in sorted(ports):
+        kill_port(port)
+    time.sleep(1.5)
     for port in sorted(ports):
         dry_run, extra = SERVERS.get(port, ("true", []))
         env = dict(os.environ)

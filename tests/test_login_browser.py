@@ -182,6 +182,15 @@ async def main():
         await page.fill("input[name='password']", TEST_PASS)
         await page.click("button[type='submit']")
         await page.wait_for_load_state("load")
+        # `error=rate` = cham gioi han 8 lan login sai / 10 phut / 1 IP.
+        # Test vua dung mat khau sai o buoc 2 nen phai reset limiter truoc khi
+        # kiem tra dang nhap HOA/thuong, neu khong se FAIL lung tung.
+        if "error=rate" in page.url:
+            await page.goto(f"{BASE}/login", wait_until="load")
+            await page.fill("input[name='username']", TEST_USER.upper())
+            await page.fill("input[name='password']", TEST_PASS)
+            await page.click("button[type='submit']")
+            await page.wait_for_load_state("load")
         check("ten HOA/thuong van vao duoc", "/gacha" in page.url, page.url)
 
         print()

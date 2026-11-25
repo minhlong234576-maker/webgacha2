@@ -34,6 +34,7 @@ from .pika import (
 )
 from .security import (
     SafeSessionMiddleware,
+    clear_failed_logins,
     client_ip,
     is_same_origin,
     login_allowed,
@@ -427,6 +428,8 @@ async def login_submit(
     request.session.clear()
     request.session["user"] = row.get("realname") or row.get("username")
     request.session["login_name"] = row.get("username")
+    # Dang nhap thanh cong -> xoa gioi han so lan that bai cua IP nay.
+    clear_failed_logins(ip)
     return RedirectResponse("/gacha", status_code=303)
 
 
