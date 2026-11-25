@@ -97,6 +97,17 @@
   const grid = document.getElementById("cases-grid");
   const searchInput = document.getElementById("case-search");
   const sortSelect = document.getElementById("case-sort");
+
+  // Chọn số cột để lưới gần kín hàng: desktop ưu tiên 4 (chia hết), rồi 3; mobile 2.
+  (function fitCaseColumns() {
+    const total = grid.querySelectorAll(".case-card").length;
+    if (!total) return;
+    let cols = 2;
+    if (window.innerWidth >= 700) {
+      cols = total % 4 === 0 ? 4 : total % 3 === 0 ? 3 : 4;
+    }
+    grid.style.setProperty("--case-cols", String(cols));
+  })();
   
   function sortCases() {
     const cases = Array.from(grid.querySelectorAll(".case-card"));

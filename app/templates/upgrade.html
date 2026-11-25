@@ -61,6 +61,7 @@
 </div>
 <script type="module">
   import { mountGauge } from "/static/upgrade.js";
+  import { celebrate, stagePerspective } from "/static/fx.js";
 
   // Cơ chế "2 món lên 1 món": chọn đúng 2 món cược, đổi thành 1 món đích.
   const STAKE_COUNT = 2;
@@ -358,7 +359,11 @@
         return;
       }
       const won = Boolean(data.won);
+      stagePerspective({ intense: false });
+      document.querySelector(".upgrade-stage")?.classList.add(won ? "fx-stage-win" : "fx-stage-lose");
       gauge.spin({ won, roll: Number(data.roll) / 100 }, () => {
+        document.querySelector(".upgrade-stage")?.classList.remove("fx-stage-win", "fx-stage-lose");
+        if (won) celebrate({ wins: 1, tone: "mint" });
         result.innerHTML = won
           ? `<span style="color:hsl(var(--positive))">Thắng — ${esc(data.target.name)}</span>`
           : `<span style="color:hsl(var(--negative))">Thua · roll ${esc(data.roll)} / ${esc(data.chance)}%</span>`;

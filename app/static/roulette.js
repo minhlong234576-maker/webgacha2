@@ -1,3 +1,5 @@
+import { celebrate, stagePerspective } from "/static/fx.js";
+
 const H_TILE = 148;
 const V_TILE = 116;
 const GAP = 8;
@@ -15,15 +17,26 @@ function buildStrip(pool, winner) {
   return tiles;
 }
 
-function tileHtml(item, horizontal) {
-  const color = item.color || "#b0c3d9";
-  const src = item.image || "/static/items/_placeholder.svg";
+function tileNode(item, horizontal) {
+  const node = document.createElement("div");
+  node.className = "tile";
+  node.dataset.id = item.id;
+  node.style.borderBottomColor = item.color || "#b0c3d9";
   const w = horizontal ? H_TILE : "86%";
   const h = horizontal ? 140 : V_TILE;
-  return `<div class="tile" data-id="${item.id}" style="border-bottom-color:${color};width:${typeof w === "number" ? w + "px" : w};height:${h}px;flex:0 0 ${typeof w === "number" ? w + "px" : "auto"}">
-    <img src="${src}" alt="${item.name}" draggable="false" loading="eager">
-    <span>${item.name}</span>
-  </div>`;
+  node.style.width = typeof w === "number" ? `${w}px` : w;
+  node.style.height = `${h}px`;
+  node.style.flex = `0 0 ${typeof w === "number" ? `${w}px` : "auto"}`;
+
+  const img = document.createElement("img");
+  img.src = item.image || "/static/items/_placeholder.svg";
+  img.alt = "";
+  img.draggable = false;
+  img.loading = "eager";
+  const label = document.createElement("span");
+  label.textContent = item.name;
+  node.append(img, label);
+  return node;
 }
 
 export function spinReel({ pool, winner, onFinish, viewport, strip, orientation = "horizontal", index = 0 }) {
@@ -38,12 +51,17 @@ export function spinReel({ pool, winner, onFinish, viewport, strip, orientation 
   const tiles = buildStrip(pool, winner);
 
   stripEl.className = horizontal ? "reel-strip" : "reel-strip vertical";
-  stripEl.innerHTML = tiles.map((item) => tileHtml(item, horizontal)).join("");
+  stripEl.replaceChildren();
+  const frag = document.createDocumentFragment();
+  tiles.forEach((item) => frag.append(tileNode(item, horizontal)));
+  stripEl.append(frag);
   stripEl.style.transition = "none";
   stripEl.style.transform = "translate3d(0,0,0)";
   viewportEl.style.borderColor = "";
   viewportEl.style.boxShadow = "";
+  viewportEl.classList.remove("fx-win");
   if (!horizontal) viewportEl.style.height = "320px";
+  if (index === 0) stagePerspective({ intense: !horizontal });
 
   const jitter = (Math.random() - 0.5) * (tile * 0.22);
   const size = horizontal ? viewportEl.clientWidth : viewportEl.clientHeight;
@@ -70,6 +88,9 @@ export function spinReel({ pool, winner, onFinish, viewport, strip, orientation 
     });
     viewportEl.style.borderColor = winner.color;
     viewportEl.style.boxShadow = `0 0 26px -6px ${winner.color}`;
+    viewportEl.classList.add("fx-win");
+    // Chỉ lượt quay đầu tiên (hoặc reel đơn) mới bắn confetti để không rối mắt.
+    if (index === 0) celebrate({ wins: 1, tone: "gold", big: !horizontal });
     onFinish?.(winner);
   }, duration);
 }

@@ -22,7 +22,7 @@
   </div>
 </section>
 
-<section class="opener">
+<section class="opener js-stage">
   <!-- SINGLE REEL (HORIZONTAL) -->
   <div id="single-reel-wrap" class="reel-wrap">
     <div id="reel" class="reel">
@@ -269,6 +269,14 @@
 
     result.hidden = false;
     result.innerHTML = html;
+    result.classList.remove("fx-result-enter");
+    void result.offsetWidth;
+    result.classList.add("fx-result-enter");
+    // Ăn mừng khi ván này lãi thực sự (nhận > chi); nhiều món thắng thì mạnh hơn.
+    if (profit > 0) {
+      const wins = openings.filter((o) => (o.winner.coin || 0) > 0).length || 1;
+      celebrate({ wins, tone: openings.length > 1 ? "rose" : "gold", big: profit >= spent });
+    }
     hint.textContent = "Các món đã vào túi đồ. Bạn có thể bán ngay lấy Coin hoặc giữ lại.";
 
     // Single sell handler

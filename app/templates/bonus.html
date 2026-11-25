@@ -60,6 +60,8 @@
     setTimeout(() => {
       document.getElementById("prize").textContent = "+" + data.amount_fmt + " Coin";
       document.getElementById("hint").textContent = "Đã cộng vào ví.";
+      wheel.classList.add("fx-wheel-win");
+      globalThis.jvCelebrate?.({ wins: 1, tone: "mint" });
       document.dispatchEvent(new CustomEvent("jv:balance", { detail: data }));
     }, 4600);
   });

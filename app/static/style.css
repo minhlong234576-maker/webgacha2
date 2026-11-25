@@ -633,15 +633,15 @@ html.dark .hero-stat strong { color: hsl(var(--accent)); }
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 16px;
 }
-@media (min-width: 980px) {
-  /* 4 cột trên desktop: 8 rương xếp lưới 4×2 thay vì 7×2 lệch một ô. */
-  .case-grid { grid-template-columns: repeat(auto-fill, minmax(0, 1fr)); grid-auto-rows: 1fr; }
-  .case-grid > .case-card { grid-column: span 3; }
-}
+/* Lưới 4 cột đều trên desktop: số cột được <script> đầu trang tính theo số rương
+   (8 rương → 4×2) và đặt qua biến --case-cols; trình duyệt không hỗ trợ thì rơi
+   về auto-fill như cũ. */
+.case-grid { --case-cols: auto-fill; grid-template-columns: repeat(var(--case-cols), minmax(0, 1fr)); }
 .case-card {
   display: block;
   position: relative;
   overflow: hidden;
+  isolation: isolate;
   border: 1px solid hsl(var(--border-subtle));
   background: hsl(var(--surface-raised));
   border-radius: 16px;
@@ -1198,6 +1198,196 @@ th { color: hsl(var(--text-muted)); font-size: 12px; font-weight: 600; letter-sp
   border-top: 18px solid hsl(var(--accent));
 }
 
+/* ================================================================
+   FX: 3D, chuyển cảnh và ăn mừng (fx.js điều khiển khi có JS).
+   Mọi trạng thái dưới đây chỉ là trang trí — nội dung luôn đọc được
+   khi tắt JS hoặc bật prefers-reduced-motion.
+   ================================================================ */
+.case-grid { perspective: 1100px; }
+.case-card {
+  transform-origin: center;
+  transition: translate 0.25s var(--ease-spring), border-color 0.2s ease,
+    box-shadow 0.25s ease, transform 0.25s var(--ease-out);
+}
+.case-card.is-tilting,
+.case-card:hover {
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0);
+}
+.case-card::after {
+  /* Vệt sáng đi theo con trỏ: biến --mx/--my do fx.js đặt. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  background: radial-gradient(circle 130px at var(--mx, 50%) var(--my, 0%), hsl(0 0% 100% / 0.28), transparent 70%);
+}
+html.dark .case-card::after {
+  background: radial-gradient(circle 130px at var(--mx, 50%) var(--my, 0%), hsl(var(--accent) / 0.22), transparent 70%);
+}
+.case-card:hover::after,
+.case-card:focus-visible::after { opacity: 1; }
+.case-card:hover .case-art img { transform: scale(1.08) translateY(-2px); }
+.case-art img { transform: translateZ(24px); }
+.case-card > .body,
+.case-card > .case-line { transform: translateZ(10px); }
+
+/* Thẻ nghiêng chỉ trên thiết bị có chuột thật. */
+@media (hover: none), (pointer: coarse) {
+  .case-card:hover, .case-card.is-tilting { transform: none; }
+}
+
+/* Overlay sân khấu khi mở rương/quay */
+.js-stage {
+  transform-origin: 50% 30%;
+  transform-style: preserve-3d;
+  transition: transform 0.6s var(--ease-out), filter 0.4s ease;
+}
+.js-stage.fx-stage-lift {
+  animation: stage-lift 1.15s var(--ease-out) both;
+}
+@keyframes stage-lift {
+  0% { transform: perspective(1200px) rotateX(14deg) scale(0.96); filter: saturate(0.8) brightness(0.95); }
+  45% { transform: perspective(1200px) rotateX(4deg) scale(1.02); filter: saturate(1.15) brightness(1.04); }
+  100% { transform: none; filter: none; }
+}
+.upgrade-stage.fx-stage-win { animation: stage-win 0.9s var(--ease-spring) both; }
+.upgrade-stage.fx-stage-lose { animation: stage-lose 0.6s var(--ease-out) both; }
+@keyframes stage-win {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.03); filter: drop-shadow(0 0 18px hsl(var(--positive) / 0.5)); }
+  100% { transform: scale(1); filter: none; }
+}
+@keyframes stage-lose {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  55% { transform: translateX(4px); }
+  80% { transform: translateX(-2px); }
+}
+
+/* Ô thắng của dải quay: nảy + quầng theo màu độ hiếm */
+.tile.win { animation: tile-win 0.62s var(--ease-spring) both; }
+@keyframes tile-win {
+  0% { scale: 0.9; }
+  55% { scale: 1.12; }
+  100% { scale: 1.06; }
+}
+.reel.fx-win { animation: reel-win-glow 0.9s ease-out both; }
+@keyframes reel-win-glow {
+  0% { box-shadow: inset 0 0 0 0 transparent, 0 0 0 0 transparent; }
+  30% { box-shadow: inset 0 0 60px -10px hsl(var(--accent) / 0.35); }
+  100% { box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05); }
+}
+
+/* Kết quả mở rương trượt vào */
+.result-banner.fx-result-enter { animation: result-enter 0.55s var(--ease-spring) both; }
+@keyframes result-enter {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Bánh xe bonus thắng */
+.wheel.fx-wheel-win { animation: wheel-win 1s var(--ease-spring) both; }
+@keyframes wheel-win {
+  0% { box-shadow: 0 0 0 8px hsl(var(--surface-overlay)), 0 20px 50px hsl(var(--accent) / 0.12); }
+  40% { box-shadow: 0 0 0 10px hsl(var(--positive) / 0.35), 0 0 60px hsl(var(--positive) / 0.55); }
+  100% { box-shadow: 0 0 0 8px hsl(var(--surface-overlay)), 0 20px 50px hsl(var(--accent) / 0.12); }
+}
+
+/* Số dư: nhảy số + nhịp */
+.coin-chip.coin-pop-up { animation: coin-up 0.7s var(--ease-spring) both; }
+.coin-chip.coin-pop-down { animation: coin-down 0.55s var(--ease-out) both; }
+@keyframes coin-up {
+  0% { scale: 1; }
+  30% { scale: 1.07; box-shadow: 0 0 0 4px hsl(var(--positive) / 0.3); }
+  100% { scale: 1; box-shadow: none; }
+}
+@keyframes coin-down {
+  0% { scale: 1; }
+  30% { scale: 0.97; box-shadow: 0 0 0 4px hsl(var(--negative) / 0.22); }
+  100% { scale: 1; box-shadow: none; }
+}
+
+/* Reveal khi cuộn — chỉ phần tử được fx.js gắn .fx-wait (không ẩn sẵn trong HTML) */
+.fx-wait { opacity: 0; translate: 0 16px; }
+.fx-wait.fx-in { animation: reveal-in 0.6s var(--ease-out) both; }
+@keyframes reveal-in {
+  to { opacity: 1; translate: 0 0; }
+}
+/* Trình duyệt có scroll-driven animation: thuần CSS, không cần .fx-wait */
+@supports ((animation-timeline: view()) and (animation-range: entry)) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal-sd auto linear both;
+      animation-timeline: view();
+      animation-range: entry 8% contain 38%;
+    }
+    @keyframes reveal-sd {
+      from { opacity: 0; translate: 0 22px; scale: 0.985; }
+      to { opacity: 1; translate: 0 0; scale: 1; }
+    }
+  }
+}
+
+/* Confetti canvas: phủ toàn trang, không chặn tương tác */
+.fx-confetti {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 90;
+}
+
+/* Chuyển cảnh giữa trang (Cross-document View Transitions) */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 380ms;
+    animation-timing-function: var(--ease-out);
+  }
+  ::view-transition-old(root) {
+    animation-name: jv-page-out;
+  }
+  ::view-transition-new(root) {
+    animation-name: jv-page-in;
+  }
+  @keyframes jv-page-out {
+    to { opacity: 0; scale: 0.985; filter: blur(2px); }
+  }
+  @keyframes jv-page-in {
+    from { opacity: 0; scale: 1.012; filter: blur(2px); }
+  }
+  /* Nút quay lui: trượt ngược chiều */
+  :active-view-transition-type(back) {
+    &::view-transition-old(root) { animation-name: jv-page-in; }
+    &::view-transition-new(root) { animation-name: jv-page-out; }
+  }
+  /* Tiêu đề trang morph giữa hai trang khác nhau */
+  ::view-transition-old(page-title) { animation-duration: 260ms; }
+  ::view-transition-new(page-title) { animation-duration: 320ms; }
+
+  @media (hover: none) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) { animation-duration: 260ms; }
+  }
+
+  /* Chặn con lăn ngang khi thẻ nghiêng 3D chạm mép (clip chứ không cắt position:sticky). */
+  html, body { overflow-x: clip; }
+}
+
+/* Thẻ từ vựng trôi vào dải "drop trực tiếp" chỉ khi thẻ nằm trong vùng nhìn thấy */
+@supports ((animation-timeline: view()) and (animation-range: entry)) {
+  @media (prefers-reduced-motion: no-preference) {
+    .live-card.is-new { animation-range: entry 0% entry 60%; }
+  }
+}
+
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
@@ -1211,6 +1401,17 @@ th { color: hsl(var(--text-muted)); font-size: 12px; font-weight: 600; letter-sp
     scroll-behavior: auto !important;
   }
   .hero-inner { animation: none; }
+  .case-card:hover, .case-card.is-tilting { transform: none; }
+  .fx-wait { opacity: 1; translate: none; }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}
+
+/* Màn hình cảm ứng: bỏ hiệu ứng nghiêng 3D, giữ chuyển động nhẹ */
+@media (hover: none), (pointer: coarse) {
+  .case-card:hover { transform: none; }
+  .case-card:hover::after { opacity: 0; }
 }
 
 @media (max-width: 900px) {
@@ -1243,7 +1444,10 @@ th { color: hsl(var(--text-muted)); font-size: 12px; font-weight: 600; letter-sp
   .hide-sm { display: none; }
   .page.narrow { padding-top: 4vh; }
   .case-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .case-art { height: 104px; }
+  .case-card .body { padding: 10px 12px 12px; }
+  .case-card .price { font-size: 13px; }
+  .case-card .count { font-size: 11px; }
+  .case-art { height: 112px; }
   .signin-btn { padding: 8px 14px; }
 }
 @media (max-width: 420px) {
