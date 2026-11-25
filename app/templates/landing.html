@@ -24,19 +24,15 @@
       <p class="lp-note">Không cần cài thêm gì. Chỉ cần nick và mật khẩu bạn đã đặt trong game.</p>
     </div>
 
-    <div class="lp-stage" aria-hidden="true">
-      <div class="lp-crate">
-        <div class="lp-crate-lid"></div>
-        <div class="lp-crate-body">
-          <div class="lp-crate-band"></div>
-          <div class="lp-crate-glow"></div>
-        </div>
-        <div class="lp-crate-shadow"></div>
-      </div>
-      <div class="lp-rays"></div>
-      <div class="lp-coin lp-coin-a">◎</div>
-      <div class="lp-coin lp-coin-b">◎</div>
-      <div class="lp-coin lp-coin-c">◎</div>
+    <div class="lp-stage">
+      <video class="lp-video" autoplay muted loop playsinline preload="none"
+             poster="/static/media/landing-poster.jpg"
+             aria-label="Video giới thiệu JellyVale">
+        <source data-src="/static/media/landing-loop.webm" type="video/webm">
+        <source data-src="/static/media/landing-loop.mp4" type="video/mp4">
+      </video>
+      <div class="lp-video-veil" aria-hidden="true"></div>
+      <div class="lp-rays" aria-hidden="true"></div>
     </div>
   </div>
 </section>
@@ -139,4 +135,8 @@
   <a class="cf-btn-primary lp-btn-lg" href="/login">Đăng nhập để chơi</a>
   {% endif %}
 </section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="module" src="/static/landing.js"></script>
 {% endblock %}

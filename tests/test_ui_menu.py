@@ -127,7 +127,7 @@ async def main():
         await page.goto(f"{BASE}/", wait_until="load")
         h1 = await page.locator("h1").count()
         check("landing co duy nhat 1 h1", h1 == 1, str(h1))
-        check("landing co rung 3D", await page.locator(".lp-crate").count() == 1)
+        check("landing co video nen", await page.locator("video.lp-video").count() == 1)
         check("landing co bang gia ruong",
               await page.locator(".lp-table tbody tr").count() >= 5)
         check("landing co 3 buoc", await page.locator(".lp-steps li").count() == 3)
@@ -143,6 +143,55 @@ async def main():
         check("landing co CTA dang nhap hoac vao ruong",
               "Đăng nhập" in landing_text or "quầy rương" in landing_text.lower(),
               landing_text[:80])
+
+        print()
+        print("=== 7. VIDEO NEN (LANDING) ===")
+        # Kiem tra `data-src` TRUOC khi JS kich hoat -> dung context moi de
+        # trinh duyet chua co`src` nao (neu kiem tra sau khi JS chay thi
+        # `src` da duoc gan va khong con cach nao de chung minh).
+        ctx_raw = await browser.new_context(viewport={"width": 1400, "height": 950})
+        raw_page = await ctx_raw.new_page()
+        # Chan JS module de trinh duyet chua gan `src` (intercept request).
+        await raw_page.route("**/static/landing.js", lambda route: route.abort())
+        await raw_page.goto(f"{BASE}/", wait_until="load")
+        raw_src = await raw_page.eval_on_selector_all(
+            "video.lp-video source", "els => els.map(e => e.getAttribute('src'))",
+        )
+        raw_data = await raw_page.eval_on_selector_all(
+            "video.lp-video source", "els => els.map(e => e.getAttribute('data-src'))",
+        )
+        check("nguon video dung data-src (khong tu tai)",
+              all(s is None for s in raw_src) and all(d for d in raw_data),
+              f"src={raw_src} data-src={raw_data}")
+        await ctx_raw.close()
+
+        await page.goto(f"{BASE}/", wait_until="load")
+        check("video co poster",
+              await page.locator("video.lp-video").get_attribute("poster")
+              == "/static/media/landing-poster.jpg")
+        check("video muted + playsinline (khong autoplay keo theo audio)",
+              await page.locator("video.lp-video[muted]").count() == 1
+              and await page.locator("video.lp-video[playsinline]").count() == 1)
+        await page.wait_for_timeout(2500)
+        vinfo = await page.evaluate("""() => {
+            const v = document.querySelector('video.lp-video');
+            return {paused: v.paused, t: v.currentTime, w: v.videoWidth};
+        }""")
+        check("video phat (khong paused, co currentTime > 0)",
+              not vinfo["paused"] and vinfo["t"] > 0, str(vinfo))
+        check("video co kich thuoc video thuc", vinfo["w"] > 0, str(vinfo))
+        # Khong tran ngang o kich thuoc nho — do bang `scrollX` thuc te sau khi
+        # cuon sang phai (scrollWidth co the phan anh noi dung da duoc clip).
+        await page.set_viewport_size({"width": 390, "height": 844})
+        await page.wait_for_timeout(500)
+        sx = await page.evaluate("""() => {
+            window.scrollTo(9999, 0);
+            const x = window.scrollX;
+            window.scrollTo(0, 0);
+            return x;
+        }""")
+        check("landing khong tran ngang tren mobile", sx == 0, f"scrollX={sx}")
+        await page.set_viewport_size({"width": 1400, "height": 950})
 
         await page.screenshot(path=str(ROOT / "_menu.png"))
 

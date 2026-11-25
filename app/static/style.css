@@ -67,7 +67,16 @@ html.dark {
 
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; }
-html { scrollbar-width: thin; scrollbar-color: hsl(var(--border-strong)) transparent; }
+html {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border-strong)) transparent;
+  /* `html` moi la scroll container goc. Carousel "live drop" dai hon viewport
+     -> trang cuon ngang ngoai y muon tren mobile.
+     Luu y: khi `html` co `overflow` khac `visible`, gia tri do duoc PROPAGATE
+     len viewport, va `clip` bi bo qua khi propagate -> phai dung `hidden`.
+     `body` them `clip` de khong tao scrollbar doc moi. */
+  overflow-x: hidden;
+}
 body {
   min-height: 100dvh;
   display: flex;
@@ -77,6 +86,10 @@ body {
   line-height: 1.55;
   color: hsl(var(--text-primary));
   background-color: hsl(var(--surface-base));
+  /* Dải "live drop" là carousel cuộn ngang có chủ ý, nằm ngoài `.page`.
+     `overflow-x: clip` chặn nó làm trang cuộn ngang ngoài ý muốn mà KHÔNG
+     tạo vùng cuộn dọc mới (khác `overflow: hidden`). */
+  overflow-x: clip;
   background-image:
     radial-gradient(ellipse 60% 40% at 50% -12%, hsl(38 96% 55% / 0.14), transparent 70%),
     radial-gradient(ellipse 40% 30% at 92% 8%, hsl(190 90% 52% / 0.08), transparent 70%),
@@ -128,13 +141,24 @@ button, select, input { font-family: inherit; }
   align-items: stretch;
   gap: 10px;
   overflow: hidden;
+  /* `body` la flex column -> flex item mac dinh `min-width: auto` nen bi
+     NOI rộng theo noi dung con (danh sach `live-card` dai). Ep `min-width: 0`
+     + `align-self: stretch` de strip luon dung bang viewport. */
+  min-width: 0;
+  align-self: stretch;
   width: 100%;
+  max-width: 100%;
   padding: 10px 16px;
   background: var(--live-bg);
   border-bottom: 1px solid hsl(var(--border-subtle));
   min-height: 96px;
   box-sizing: border-box;
   backdrop-filter: blur(10px);
+  /* Dải drop là carousel cuộn ngang có chủ ý. `overflow: hidden` trên chính
+     nó chưa đủ: nội dung tràn ra vẫn làm `documentElement.scrollWidth` lớn
+     hơn viewport -> trang cuộn ngang ngoài ý muốn trên mobile. */
+  contain: paint;
+  max-height: 96px;
 }
 .live-best {
   display: flex;

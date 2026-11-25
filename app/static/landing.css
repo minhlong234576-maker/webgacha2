@@ -11,9 +11,10 @@
   --lp-amber: 22 82% 44%;
   --lp-stone: 193 42% 38%;
   --lp-ink: 222 34% 13%;
-  max-width: 1180px;
-  margin: 0 auto;
-  padding-bottom: 72px;
+  /* `.page` da gioi han `100% - 32px`; landing dung chung khung do nen
+     chi can bo sung padding duoi — tranh lam trang tran ngang tren mobile. */
+  max-width: none;
+  padding-bottom: 0;
 }
 
 html.dark .landing {
@@ -59,6 +60,9 @@ html.dark .landing {
   gap: clamp(28px, 4vw, 56px);
   align-items: center;
 }
+/* Grid item phai co `min-width: 0` — neu khong, noi dung dai (video, bang
+   gia) lam cot rong ra ngoai khung va trang tran ngang tren mobile. */
+.lp-hero-grid > * { min-width: 0; }
 
 /* ---------- CỘT CHỮ ---------- */
 
@@ -145,18 +149,42 @@ html.dark .landing {
   color: hsl(var(--lp-ink) / 0.5);
 }
 
-/* ---------- CHIẾC RƯƠNG 3D ---------- */
+/* ---------- VIDEO GIỚI THIỆU ---------- */
 
 .lp-stage {
   position: relative;
-  aspect-ratio: 1 / 1;
-  min-height: 300px;
-  display: grid;
-  place-items: center;
-  perspective: 1100px;
+  border-radius: 20px;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  width: 100%;
+  min-width: 0;
+  min-height: 260px;
+  border: 1px solid hsl(var(--lp-ink) / 0.12);
+  box-shadow: 0 26px 60px -28px hsl(var(--lp-amber) / 0.6);
+  background: hsl(var(--lp-ink) / 0.06);
 }
 
-/* Tia sáng toả ra từ rương */
+.lp-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Lớp phủ: làm dịu video để chữ bên cạnh nổi bật hơn */
+.lp-video-veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(200deg, hsl(var(--lp-ink) / 0.28), transparent 45%),
+    linear-gradient(20deg, hsl(var(--lp-ink) / 0.22), transparent 40%);
+  pointer-events: none;
+}
+
+/* Tia sáng toả ra tu rương.
+   `inset: -18%` lam no NO ra ngoai khung `.lp-stage` -> trang cuon ngang.
+   Stage da co `overflow: hidden` nen phai dat `position: absolute` de no
+   duoc clip theo khung cha. */
 .lp-rays {
   position: absolute;
   inset: -18%;
@@ -164,10 +192,10 @@ html.dark .landing {
     conic-gradient(
       from 200deg,
       transparent 0deg,
-      hsl(var(--lp-honey) / 0.2) 8deg,
+      hsl(var(--lp-honey) / 0.16) 8deg,
       transparent 18deg,
       transparent 30deg,
-      hsl(var(--lp-honey) / 0.14) 38deg,
+      hsl(var(--lp-honey) / 0.11) 38deg,
       transparent 48deg
     );
   mask-image: radial-gradient(circle at 50% 50%, black 18%, transparent 68%);
@@ -177,112 +205,6 @@ html.dark .landing {
 }
 @keyframes lp-spin {
   to { transform: rotate(360deg); }
-}
-
-.lp-crate {
-  position: relative;
-  width: min(64%, 260px);
-  aspect-ratio: 1 / 1;
-  transform-style: preserve-3d;
-  animation: lp-float 6.5s ease-in-out infinite;
-  filter: drop-shadow(0 30px 34px hsl(var(--lp-amber) / 0.32));
-}
-@keyframes lp-float {
-  0%, 100% { transform: translateY(-6px) rotateY(-13deg) rotateX(6deg); }
-  50% { transform: translateY(8px) rotateY(13deg) rotateX(-4deg); }
-}
-
-/* Nắp rương: nằm ngang, hơi mở ra */
-.lp-crate-lid {
-  position: absolute;
-  left: -6%;
-  right: -6%;
-  top: 8%;
-  height: 22%;
-  border-radius: 10px 10px 4px 4px;
-  background:
-    linear-gradient(180deg, hsl(var(--lp-honey) / 0.92), hsl(var(--lp-amber) / 0.95));
-  box-shadow:
-    inset 0 2px 0 hsl(40 90% 78% / 0.55),
-    0 6px 14px hsl(var(--lp-amber) / 0.35);
-  transform: translateZ(38px) rotateX(-18deg);
-  transform-origin: bottom center;
-}
-
-/* Thân rương: gỗ sẫm màu, viền sáng */
-.lp-crate-body {
-  position: absolute;
-  inset: 22% 0 0;
-  border-radius: 6px 6px 14px 14px;
-  background:
-    linear-gradient(160deg, hsl(28 62% 34%), hsl(24 58% 24%));
-  box-shadow:
-    inset 0 0 0 3px hsl(var(--lp-honey) / 0.55),
-    inset 0 -18px 30px hsl(20 60% 12% / 0.5);
-  transform: translateZ(0);
-}
-
-/* Đai kim loại chạy ngang thân rương */
-.lp-crate-band {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 22%;
-  height: 12%;
-  background: linear-gradient(180deg, hsl(38 74% 62%), hsl(30 68% 44%));
-  box-shadow: 0 2px 6px hsl(20 60% 12% / 0.45);
-}
-/* Khoảng sáng bên trong khe rương */
-.lp-crate-glow {
-  position: absolute;
-  left: 12%;
-  right: 12%;
-  top: 34%;
-  height: 8%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, hsl(44 100% 78% / 0.95), transparent);
-  filter: blur(3px);
-  animation: lp-glow 3.4s ease-in-out infinite;
-}
-@keyframes lp-glow {
-  0%, 100% { opacity: 0.5; transform: scaleX(0.72); }
-  50% { opacity: 1; transform: scaleX(1); }
-}
-
-.lp-crate-shadow {
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: -8%;
-  height: 12%;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 50%, hsl(var(--lp-amber) / 0.4), transparent 70%);
-  filter: blur(6px);
-  transform: rotateX(78deg) translateZ(-10px);
-}
-
-/* Coin mật ong bay quanh */
-.lp-coin {
-  position: absolute;
-  width: 26px;
-  height: 26px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  font-size: 15px;
-  color: hsl(var(--lp-amber));
-  background: radial-gradient(circle at 32% 28%, hsl(44 100% 84%), hsl(34 84% 52%));
-  box-shadow: 0 3px 8px hsl(var(--lp-amber) / 0.45);
-  animation: lp-coin 7s linear infinite;
-}
-.lp-coin-a { top: 16%; left: 8%; animation-delay: 0s; }
-.lp-coin-b { top: 30%; right: 6%; animation-delay: -2.4s; animation-duration: 8.5s; }
-.lp-coin-c { bottom: 22%; left: 14%; animation-delay: -4.6s; animation-duration: 9.5s; }
-@keyframes lp-coin {
-  0% { transform: translateY(0) rotateY(0deg); opacity: 0; }
-  12% { opacity: 1; }
-  88% { opacity: 1; }
-  100% { transform: translateY(-150px) rotateY(360deg); opacity: 0; }
 }
 
 /* ---------- SỐ LIỆU ---------- */
@@ -429,6 +351,10 @@ html.dark .landing {
   border: 1px solid hsl(var(--lp-ink) / 0.1);
   background: hsl(var(--surface-raised) / 0.6);
   overflow-x: auto;
+  /* `overflow-x: auto` + `min-width: 0` de bang cuon ngang thay vi
+     lam trang tran ngang tren viewport nho. */
+  max-width: 100%;
+  min-width: 0;
 }
 .lp-table {
   width: 100%;
@@ -526,6 +452,11 @@ html.dark .landing {
   clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
+  /* `clip-path` an chu nhung KHONG cat phan `left`/`top` -> phan tu van
+     nhung ra ngoai khung va lam trang cuon ngang tren mobile.
+     Ep `left: 0` va `top: 0` de no nam dung vi tri cua cha. */
+  left: 0;
+  top: 0;
 }
 
 /* ---------- RESPONSIVE ---------- */
@@ -537,22 +468,23 @@ html.dark .landing {
   .lp-numbers dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
-  .landing { padding-bottom: 48px; }
   .lp-steps, .lp-modes { grid-template-columns: 1fr; gap: 18px; }
   .lp-numbers dl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
   .lp-numbers dd { font-size: 24px; }
   .lp-cta { flex-direction: column; align-items: flex-start; }
   .lp-cta .lp-btn-lg { width: 100%; text-align: center; }
+  .lp-hero { padding: 24px 18px; border-radius: 20px; }
+  .lp-stage { aspect-ratio: 16 / 9; min-height: 0; }
 }
 
 /* ---------- TÔN TRÌNH & CHUYỂN ĐỘNG ---------- */
 
 @media (prefers-reduced-motion: reduce) {
-  .lp-crate,
   .lp-rays,
-  .lp-coin,
-  .lp-crate-glow,
   .lp-live i { animation: none; }
   .lp-mode { transition: none; }
   .lp-mode:hover { transform: none; }
+  /* Video nen: dung poster tinh thay vi phat -> ton trong reduced-motion. */
+  .lp-video { display: none; }
+  .lp-stage { background-image: url("/static/media/landing-poster.jpg"); background-size: cover; background-position: center; }
 }

@@ -9,7 +9,7 @@ và [`HUONG_DAN_DU_AN.md`](HUONG_DAN_DU_AN.md) cho hướng dẫn thiết kế/h
 
 ## Tính năng
 
-- **Landing page** (`/`) — giới thiệu dự án: rương 3D CSS thuần, bảng giá rương, hướng dẫn 3 bước.
+- **Landing page** (`/`) — giới thiệu dự án: video nền tự phát (lazy-load, có poster, tôn trọng `prefers-reduced-motion`), bảng giá rương, hướng dẫn 3 bước.
 - **Đăng nhập AuthMe** — verify SHA256, CSRF token, giới hạn 8 lần sai / 10 phút / IP.
 - **Mở rương** — 7 rương, mở 1x–5x, dải quay ngang/dọc nhiều dải.
 - **Túi đồ & bán** — bán lẻ hoặc bán tất cả, nhận lại Coin.
@@ -103,8 +103,9 @@ app/
   config.py     Nạp .env
   templates/    Jinja2
   static/       CSS, JS, ảnh rương/đồ
+  static/media/ Video nền landing + poster
 gacha.json      Rương, tỉ lệ, giá
-tests/          21 suite tự động
+tests/          22 suite tự động
 ```
 
 ## Test

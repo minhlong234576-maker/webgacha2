@@ -39,6 +39,7 @@ SUITES = [
     ("Realtime - thuc", "test_realtime_live.py", True, 8099),
     ("Realtime - UI", "test_realtime_ui.py", True, 8099),
     ("UI - menu", "test_ui_menu.py", True, 8101),
+    ("UI - landing video nen", "test_landing_video.py", True, 8101),
     ("UI - nang cap 2 mon len 1 mon", "test_upgrade_ui.py", True, 8101),
     ("Quyen admin realtime (doc OP tu PikaMC)", "test_admin_realtime.py", False, None),
     ("Quyen admin realtime - HTTP", "test_admin_http.py", True, 8101),
@@ -157,7 +158,8 @@ def main():
                    else [str(port)] if script in ("test_all_features.py",
                                                  "test_ui_menu.py",
                                                  "test_admin_http.py",
-                                                 "test_upgrade_ui.py")
+                                                 "test_upgrade_ui.py",
+                                                 "test_landing_video.py")
                    else [])],
                 cwd=str(ROOT),
                 capture_output=True,

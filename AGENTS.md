@@ -27,7 +27,8 @@ Read `CONSTRAINTS.md` before writing code. Do not weaken it to make a change pas
 
 ## Architecture Map
 - `app/main.py` — FastAPI routes, middleware (`SafeSessionMiddleware`, security headers), request validation.
-- `app/templates/landing.html` + `app/static/landing.css` — landing page `/` (rương 3D CSS, bảng giá rương). CSS riêng, chỉ nạp khi render landing.
+- `app/templates/landing.html` + `app/static/landing.css` + `app/static/landing.js` — landing page `/` (video nền lazy-load, bảng giá rương). CSS/JS riêng, chỉ nạp khi render landing.
+- `app/static/media/` — video nền landing (`landing-loop.mp4` / `.webm`) + poster JPEG. Nguon nằm trong `data-src` để JS quyết định có tải hay không.
 - `app/security.py` — AuthMe SHA256 verification, IP rate limiting, CSRF tokens, `SafeSessionMiddleware`, `is_same_origin`.
 - `app/game.py` — Case opening, selling, upgrading, battles, daily bonus rules.
 - `app/store.py` — SQLite schema, atomic `debit`/`credit`, battle CAS lock (`try_claim_battle_start`).
