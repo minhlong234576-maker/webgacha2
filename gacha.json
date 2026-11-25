@@ -9,18 +9,32 @@
       "pull_cost": 3500,
       "items": [
         {
-          "id": "starter_dust",
+          "id": "starter_dust_1",
           "name": "Bụi Vàng",
           "rarity": "consumer",
-          "weight": 35,
+          "weight": 18,
           "coin": 450
         },
         {
-          "id": "starter_apple",
+          "id": "starter_dust_2",
+          "name": "Bụi Bạc",
+          "rarity": "consumer",
+          "weight": 17,
+          "coin": 520
+        },
+        {
+          "id": "starter_apple_1",
           "name": "Táo Vàng",
           "rarity": "consumer",
-          "weight": 28,
+          "weight": 14,
           "coin": 850
+        },
+        {
+          "id": "starter_apple_2",
+          "name": "Táo Đỏ",
+          "rarity": "consumer",
+          "weight": 14,
+          "coin": 920
         },
         {
           "id": "starter_stone",
@@ -30,11 +44,18 @@
           "coin": 1200
         },
         {
-          "id": "starter_pouch",
+          "id": "starter_pouch_1",
           "name": "Túi Coin Nhỏ",
           "rarity": "industrial",
-          "weight": 12,
+          "weight": 7,
           "coin": 2200
+        },
+        {
+          "id": "starter_pouch_2",
+          "name": "Ví Vàng",
+          "rarity": "industrial",
+          "weight": 5,
+          "coin": 2500
         },
         {
           "id": "starter_iron",
@@ -70,6 +91,13 @@
           "rarity": "extraordinary",
           "weight": 0.2,
           "coin": 75000
+        },
+        {
+          "id": "starter_gem",
+          "name": "Ngọc Mổ",
+          "rarity": "consumer",
+          "weight": 13,
+          "coin": 680
         }
       ]
     },
@@ -175,15 +203,29 @@
           "id": "elite_pouch",
           "name": "Túi Coin Vàng",
           "rarity": "industrial",
-          "weight": 18,
+          "weight": 10,
           "coin": 3800
+        },
+        {
+          "id": "elite_pouch_2",
+          "name": "Ví Bạc",
+          "rarity": "industrial",
+          "weight": 8,
+          "coin": 4200
         },
         {
           "id": "elite_scroll",
           "name": "Cuộn Phép Trắng",
           "rarity": "milspec",
-          "weight": 20,
+          "weight": 12,
           "coin": 7500
+        },
+        {
+          "id": "elite_scroll_2",
+          "name": "Cuộn Phép Xanh",
+          "rarity": "milspec",
+          "weight": 8,
+          "coin": 8200
         },
         {
           "id": "elite_diamond",
@@ -203,8 +245,15 @@
           "id": "elite_book",
           "name": "Sách Elite",
           "rarity": "restricted",
-          "weight": 14,
+          "weight": 8,
           "coin": 18500
+        },
+        {
+          "id": "elite_book_2",
+          "name": "Sách Thần Bí",
+          "rarity": "restricted",
+          "weight": 6,
+          "coin": 20000
         },
         {
           "id": "elite_totem",
@@ -217,14 +266,14 @@
           "id": "elite_netherite",
           "name": "Khối Netherite",
           "rarity": "classified",
-          "weight": 5,
+          "weight": 4,
           "coin": 38000
         },
         {
           "id": "elite_elytra",
           "name": "Elytra Ánh Kim",
           "rarity": "classified",
-          "weight": 2.5,
+          "weight": 2,
           "coin": 65000
         },
         {
@@ -257,18 +306,32 @@
       "pull_cost": 70000,
       "items": [
         {
-          "id": "vault_scroll",
+          "id": "vault_scroll_1",
           "name": "Cuộn Phép Vàng",
           "rarity": "restricted",
-          "weight": 24,
+          "weight": 14,
           "coin": 20000
         },
         {
-          "id": "vault_totem",
+          "id": "vault_scroll_2",
+          "name": "Cuộn Phép Kim",
+          "rarity": "restricted",
+          "weight": 10,
+          "coin": 21000
+        },
+        {
+          "id": "vault_totem_1",
           "name": "Totem Bất Tử",
           "rarity": "restricted",
-          "weight": 18,
+          "weight": 12,
           "coin": 26000
+        },
+        {
+          "id": "vault_totem_2",
+          "name": "Totem Thần Linh",
+          "rarity": "restricted",
+          "weight": 6,
+          "coin": 27000
         },
         {
           "id": "vault_ruby",
@@ -281,15 +344,22 @@
           "id": "vault_netherite",
           "name": "Khối Netherite",
           "rarity": "classified",
-          "weight": 16,
+          "weight": 12,
           "coin": 38000
         },
         {
-          "id": "vault_elytra",
+          "id": "vault_elytra_1",
           "name": "Elytra Ánh Sáng",
           "rarity": "classified",
-          "weight": 11,
+          "weight": 8,
           "coin": 68000
+        },
+        {
+          "id": "vault_elytra_2",
+          "name": "Elytra Ánh Kim",
+          "rarity": "classified",
+          "weight": 3,
+          "coin": 72000
         },
         {
           "id": "vault_emerald",
@@ -299,11 +369,18 @@
           "coin": 92000
         },
         {
-          "id": "vault_susanoo",
+          "id": "vault_susanoo_1",
           "name": "Mangekyo Thần",
           "rarity": "covert",
-          "weight": 7,
+          "weight": 4,
           "coin": 115000
+        },
+        {
+          "id": "vault_susanoo_2",
+          "name": "Mangekyo Linh",
+          "rarity": "covert",
+          "weight": 3,
+          "coin": 125000
         },
         {
           "id": "vault_dragon",
@@ -497,39 +574,74 @@
       "pull_cost": 200000,
       "items": [
         {
-          "id": "celestial_feather",
+          "id": "celestial_feather_1",
           "name": "Lông Vũ Thiên Sứ",
           "rarity": "restricted",
-          "weight": 32,
+          "weight": 18,
           "coin": 55000
         },
         {
-          "id": "celestial_light",
+          "id": "celestial_feather_2",
+          "name": "Lông Vũ Huyền Bí",
+          "rarity": "restricted",
+          "weight": 14,
+          "coin": 58000
+        },
+        {
+          "id": "celestial_light_1",
           "name": "Thanh Kiếm Ánh Sáng",
           "rarity": "restricted",
-          "weight": 26,
+          "weight": 16,
           "coin": 85000
         },
         {
-          "id": "celestial_elytra",
+          "id": "celestial_light_2",
+          "name": "Thần Trượng Ánh Kim",
+          "rarity": "restricted",
+          "weight": 10,
+          "coin": 90000
+        },
+        {
+          "id": "celestial_elytra_1",
           "name": "Cánh Elytra Ánh Kim",
           "rarity": "classified",
-          "weight": 18,
+          "weight": 12,
           "coin": 180000
         },
         {
-          "id": "celestial_bow",
+          "id": "celestial_elytra_2",
+          "name": "Cánh Elytra Ánh Sáng",
+          "rarity": "classified",
+          "weight": 6,
+          "coin": 190000
+        },
+        {
+          "id": "celestial_bow_1",
           "name": "Cung Ánh Sáng",
           "rarity": "classified",
-          "weight": 12,
+          "weight": 8,
           "coin": 250000
         },
         {
-          "id": "celestial_dragon",
+          "id": "celestial_bow_2",
+          "name": "Cung Thiên Hà",
+          "rarity": "classified",
+          "weight": 4,
+          "coin": 270000
+        },
+        {
+          "id": "celestial_dragon_1",
           "name": "Trứng Rồng Thần Thánh",
           "rarity": "covert",
-          "weight": 8,
+          "weight": 5,
           "coin": 350000
+        },
+        {
+          "id": "celestial_dragon_2",
+          "name": "Trứng Rồng Vàng",
+          "rarity": "covert",
+          "weight": 3,
+          "coin": 380000
         },
         {
           "id": "celestial_halo",
@@ -542,7 +654,7 @@
           "id": "celestial_crown",
           "name": "Vương Miện Thiên Hà",
           "rarity": "extraordinary",
-          "weight": 1.2,
+          "weight": 1,
           "coin": 1500000
         },
         {
