@@ -21,6 +21,9 @@ UPGRADE_RTP = 0.9
 UPGRADE_MIN_CHANCE = 0.005
 UPGRADE_MAX_CHANCE = 0.85
 UPGRADE_MIN_MULTIPLIER = 1.05
+# Số món cược tối đa cho 1 lần nâng cấp. Cơ chế "2 món lên 1 món" dùng 2;
+# giữ trần trên để một request không thể nuốt cả túi đồ của người chơi.
+UPGRADE_MAX_STAKES = 10
 DRY_SEED = 250_000
 BONUS_SLICES = (
     (500, 28),
@@ -199,27 +202,62 @@ def upgrade_targets(stake_value: int) -> list[dict]:
     return out
 
 
-def do_upgrade(player: str, inventory_id: int, target_id: str, target_coin: int) -> dict:
-    # Support both single int and list of ints
-    if isinstance(inventory_id, list):
-        inventory_ids = inventory_id
-    else:
-        inventory_ids = [inventory_id]
-    
-    if not inventory_ids or len(inventory_ids) == 0:
+def upgrade_stake_ids(inventory_id: int | list[int] | tuple[int, ...]) -> list[int]:
+    """Chuẩn hoá danh sách id món cược.
+
+    - Bỏ id rỗng / âm / không phải số nguyên.
+    - Loại trùng (một món chỉ được dùng 1 lần — nếu không tổng giá trị bị
+      đếm 2 lần và người chơi nhận 2 món đích từ 1 món).
+    - Giữ nguyên thứ tự người chơi chọn.
+    """
+    raw = inventory_id if isinstance(inventory_id, (list, tuple)) else [inventory_id]
+    out: list[int] = []
+    seen: set[int] = set()
+    for value in raw:
+        try:
+            pk = int(value)
+        except (TypeError, ValueError):
+            continue
+        if pk <= 0 or pk in seen:
+            continue
+        seen.add(pk)
+        out.append(pk)
+    return out
+
+
+def do_upgrade(player: str, inventory_id: int | list[int], target_id: str, target_coin: int) -> dict:
+    """Nâng cấp: N món cược -> 1 món đích.
+
+    Thứ tự thao tác (rất quan trọng):
+    1. Chuẩn hoá + validate danh sách món cược (loại trùng, chặn quá nhiều).
+    2. Tìm món đích trong market (id + coin phải khớp, không tin client).
+    3. Tính tỉ lệ từ TỔNG giá trị các món cược.
+    4. `store.claim_inventory_for_upgrade` — chiếm nguyên tử các món cược
+       (CAS trên `status='held'`). Nếu món nào không còn `held` thì HỦY
+       toàn bộ lượt, KHÔNG mất món nào.
+    5. Roll + ghi kết quả.
+    """
+    inventory_ids = upgrade_stake_ids(inventory_id)
+    if not inventory_ids:
         raise GameError("Chọn ít nhất 1 món cược.")
-    
-    # Validate all stakes
-    stakes = []
+    if len(inventory_ids) > UPGRADE_MAX_STAKES:
+        raise GameError(f"Chỉ nâng cấp tối đa {UPGRADE_MAX_STAKES} món cược mỗi lần.")
+
+    # Đọc món cược để tính tổng giá trị + kiểm tra sở hữu (read-only, chưa
+    # thay đổi gì). Việc chiếm nguyên tử diễn ra ở bước 4.
+    items = store.get_inventory_items(inventory_ids)
+    stakes: list[dict] = []
     total_value = 0
-    for inv_id in inventory_ids:
-        stake = store.get_inventory_item(inv_id)
-        if not stake or stake["player"] != player or stake["status"] != "held":
-            raise GameError(f"Không dùng được món này.")
+    for pk in inventory_ids:
+        stake = items.get(pk)
+        if not stake or stake["player"] != player:
+            raise GameError("Không phải đồ của bạn.")
+        if stake["status"] != "held":
+            raise GameError(f"{stake['name']} không còn trong túi.")
         stakes.append(stake)
         total_value += int(stake["value"])
-    
-    # Find target
+
+    # Tìm món đích — phải khớp cả id lẫn coin, không tin giá client gửi lên.
     target = None
     for item in market_listings():
         if item.id == target_id and item.coin == target_coin:
@@ -227,33 +265,46 @@ def do_upgrade(player: str, inventory_id: int, target_id: str, target_coin: int)
             break
     if not target:
         raise GameError("Không có món đích này.")
-    
-    # Calc odds: 90% × tổng_cược / giá_đích
+
+    # Tỉ lệ = 90% × tổng_cược / giá_đích (2 món lên 1 món thì tổng cược
+    # = tổng giá trị của cả 2 món).
     odds = upgrade_odds(total_value, target.coin)
     if not odds["ok"]:
         raise GameError(odds["reason"])
-    
+
+    # Roll + commit trong MỘT transaction: chiếm món cược (CAS) và thêm món
+    # đích phải cùng thành công hoặc cùng rollback. Nếu không, người chơi có
+    # thể mất 2 món cược mà không nhận được món đích.
     roll_v = random.random()
     won = roll_v < odds["chance"]
-    
-    # Mark all stakes as upgraded
-    store.set_inventory_status(inventory_ids, "upgraded")
-    
-    reward_id = None
-    if won:
-        reward_id = store.add_inventory(player, target, "upgrade")
-        store.record_drop(player, target, "upgrade", is_bot=False)
-    
-    # Record upgrade (stake = combined list)
+    target_public = target.as_public()
+
+    try:
+        claimed, reward_id = store.commit_upgrade(
+            player, inventory_ids, target_public, won
+        )
+    except store._UpgradeClaimFailed as exc:
+        raise GameError(str(exc), 409) from exc
+    if len(claimed) != len(inventory_ids):
+        raise GameError("Không chiếm được đủ món cược.", 409)
+
+    # Ghi lịch sử nâng cấp (stake = danh sách món đã gộp).
     stake_desc = " + ".join([s["name"] for s in stakes])
-    store.record_upgrade(player, {"name": stake_desc, "coin": total_value}, target.as_public(), odds["chance"], roll_v, won)
-    
+    store.record_upgrade(
+        player,
+        {"name": stake_desc, "coin": total_value},
+        target_public,
+        odds["chance"],
+        roll_v,
+        won,
+    )
+
     return {
         "won": won,
         "chance": round(odds["chance"] * 100, 2),
         "roll": round(roll_v * 100, 2),
         "stakes": stakes,
-        "target": target.as_public(),
+        "target": target_public,
         "reward_id": reward_id,
         "balance": store.get_balance(player),
     }

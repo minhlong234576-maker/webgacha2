@@ -18,7 +18,7 @@ from .config import (
     PIKA_SERVER_UUID,
 )
 from .errors import MoneyError
-from .gacha import give_command, take_command
+from .gacha import give_command, nexo_give_command, take_command
 
 USERNAME_RE = re.compile(r"^[A-Za-z0-9_.-]{1,32}$")
 _cached_server: str | None = None
@@ -400,6 +400,17 @@ async def eco_give(username: str, amount: int) -> float:
         if after < before + amount - 1:
             raise MoneyError("Cộng Coin in-game thất bại, hãy thử lại.")
         return after
+
+
+async def nexo_give_item(username: str, nexo_id: str, amount: int = 1) -> str:
+    """Gửi lệnh console trao vật phẩm Nexo vào server Minecraft."""
+    _require_safe_name(username)
+    try:
+        cmd = nexo_give_command(username, nexo_id, amount)
+    except ValueError as exc:
+        raise MoneyError(str(exc)) from exc
+    await send_command(cmd)
+    return cmd
 
 
 async def find_economy_user(username: str) -> dict[str, Any] | None:

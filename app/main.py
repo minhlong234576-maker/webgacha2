@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import json
 import asyncio
+import json
+import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -10,27 +11,39 @@ from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from starlette.middleware.sessions import SessionMiddleware
 
 from . import admins, bank, bots, game, pika, store
 from .roulette import roulette_manager
-from .config import PIKA_SERVER_UUID, SESSION_SECRET, pika_ready
+from .config import PIKA_SERVER_UUID, SESSION_SECRET, pika_ready, session_https_only
 from .errors import MoneyError
-from .gacha import get_case, is_dry_run, load_cases, pull_cost
+from .gacha import (
+    find_listing,
+    get_case,
+    is_dry_run,
+    is_nexo_withdraw_enabled,
+    load_cases,
+    pull_cost,
+)
 from .pika import (
     coin_amount,
     find_authme_user,
     find_economy_user,
     get_server,
     list_servers,
+    nexo_give_item,
 )
 from .security import (
+    SafeSessionMiddleware,
     client_ip,
+    is_same_origin,
     login_allowed,
     new_csrf_token,
     record_failed_login,
     verify_authme_sha256,
 )
+
+log = logging.getLogger("jellyvale.web")
+_bonus_locks: dict[str, asyncio.Lock] = {}
 
 VN_TZ = timezone(timedelta(hours=7))
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
@@ -86,12 +99,24 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="JellyVale Gacha", docs_url=None, redoc_url=None, lifespan=lifespan)
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    return response
+
+
 app.add_middleware(
-    SessionMiddleware,
+    SafeSessionMiddleware,
     secret_key=SESSION_SECRET,
     session_cookie="jv_session",
     same_site="lax",
-    https_only=False,
+    https_only=session_https_only(),
     max_age=60 * 60 * 12,
 )
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -166,6 +191,25 @@ def json_error(exc: game.GameError | Exception, status: int = 400) -> JSONRespon
     if isinstance(exc, game.GameError):
         return JSONResponse({"detail": exc.message}, status_code=exc.status)
     return JSONResponse({"detail": str(exc)}, status_code=status)
+
+
+async def read_json_dict(request: Request) -> dict:
+    try:
+        body = await request.json()
+    except Exception as exc:
+        raise game.GameError("Dữ liệu JSON không hợp lệ.", 400) from exc
+    if not isinstance(body, dict):
+        raise game.GameError("Dữ liệu JSON phải là object.", 400)
+    return body
+
+
+def parse_int(value, default: int = 0, *, field: str = "giá trị") -> int:
+    if value is None or value == "":
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError) as exc:
+        raise game.GameError(f"{field} không hợp lệ.", 400) from exc
 
 
 def case_view(case) -> dict:
@@ -599,25 +643,43 @@ async def upgrade_run(request: Request):
     user = api_auth(request, csrf=True)
     if isinstance(user, JSONResponse):
         return user
-    body = await request.json()
     try:
-        # Support both single (inventory_id) and multi (inventory_ids)
-        inv_id = body.get("inventory_id")
-        inv_ids = body.get("inventory_ids", [])
-        if inv_id:
-            inv_ids = [inv_id]
-        
+        body = await read_json_dict(request)
+        # Hỗ trợ cả 1 món (`inventory_id`) và nhiều món (`inventory_ids` —
+        # cơ chế 2 món lên 1 món). Ưu tiên `inventory_ids` khi có mặt.
+        raw_ids = body.get("inventory_ids")
+        if raw_ids is None:
+            inv_id = body.get("inventory_id")
+            if inv_id is None:
+                raise game.GameError("Chưa chọn món nào.", 400)
+            inv_ids = [parse_int(inv_id, field="inventory_id")]
+        else:
+            if not isinstance(raw_ids, list):
+                raise game.GameError("inventory_ids không hợp lệ.", 400)
+            if not raw_ids:
+                raise game.GameError("Chọn ít nhất 1 món cược.", 400)
+            if len(raw_ids) > game.UPGRADE_MAX_STAKES:
+                raise game.GameError(
+                    f"Chỉ nâng cấp tối đa {game.UPGRADE_MAX_STAKES} món cược mỗi lần.", 400
+                )
+            inv_ids = [parse_int(x, field="inventory_id") for x in raw_ids]
+
         result = game.do_upgrade(
             user,
             inv_ids,
             str(body.get("target_id") or ""),
-            int(body.get("target_coin") or 0),
+            parse_int(body.get("target_coin"), 0, field="target_coin"),
         )
         result["balance_fmt"] = format_coin(result["balance"])
         result["target"]["coin_fmt"] = format_coin(result["target"]["coin"])
         return result
     except game.GameError as exc:
         return json_error(exc)
+    except Exception:
+        # Không trả raw `str(exc)` cho client — log server-side rồi trả lỗi
+        # chung. Nâng cấp là luồng tiền/đồ nên lỗi 500 phải an toàn.
+        log.exception("api_upgrade loi bat ngo cho %s", user)
+        return JSONResponse({"detail": "Lỗi hệ thống, vui lòng thử lại."}, status_code=500)
 
 
 @app.get("/battles", response_class=HTMLResponse)

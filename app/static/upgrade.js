@@ -6,7 +6,7 @@ const CIRC = 2 * Math.PI * RADIUS;
 const SPIN_MS = 3600;
 const TURNS = 4;
 
-function mountGauge(el) {
+export function mountGauge(el) {
   el.innerHTML = `<div class="relative" style="width:${SIZE}px;height:${SIZE}px;position:relative">
     <svg width="${SIZE}" height="${SIZE}" style="transform:rotate(-90deg)">
       <circle cx="${CENTER}" cy="${CENTER}" r="${RADIUS}" fill="none" stroke="#262626" stroke-width="${STROKE}"></circle>

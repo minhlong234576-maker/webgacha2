@@ -36,3 +36,11 @@ def pika_ready() -> bool:
 
 def dry_run() -> bool:
     return os.getenv("GACHA_DRY_RUN", "true").strip().lower() in {"1", "true", "yes"}
+
+
+def nexo_withdraw_enabled() -> bool:
+    return os.getenv("GACHA_NEXO_WITHDRAW", "false").strip().lower() in {"1", "true", "yes"}
+
+
+def session_https_only() -> bool:
+    return os.getenv("SESSION_HTTPS_ONLY", "false").strip().lower() in {"1", "true", "yes"}

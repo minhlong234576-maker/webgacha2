@@ -428,6 +428,111 @@ def set_inventory_status(item_pks: list[int], status: str) -> None:
     run(inner)
 
 
+def commit_upgrade(
+    player: str,
+    item_pks: list[int],
+    target_public: dict[str, Any],
+    won: bool,
+) -> tuple[dict[int, dict[str, Any]], int | None]:
+    """Commit 1 lần nâng cấp trong MỘT transaction duy nhất.
+
+    Việc gộp "chiếm món cược" + "thêm món đích" vào cùng một transaction là
+    bắt buộc: nếu tách ra 2 lệnh riêng thì khi app crash giữa chừng, người
+    chơi mất món cược mà không nhận được món đích.
+
+    Trả về `(claimed, reward_id)`:
+    - `claimed`: dict {id: row} của các món cược đã chiếm (status='upgraded').
+    - `reward_id`: id món đích mới tạo, hoặc `None` nếu thua.
+
+    Nếu bất kỳ món nào không còn `held` (đã bán, đã rút, hoặc bị request
+    song song chiếm trước) thì HỦY TOÀN BỘ — không món nào bị đụng tới.
+
+    Vì sao cần CAS:
+    - `do_upgrade` cũ đọc trạng thái `held` rồi mới `UPDATE` ở một lệnh
+      KHÁC → 2 request song song cùng dùng 1 món đều thấy `held` và đều
+      "thắng", tức là 1 món biến thành 2 món đích (clone item).
+    - Với 2 món lên 1 món, chỉ cần 1 trong 2 món đã bị dùng thì cả lượt
+      phải hủy, nếu không người chơi mất 1 món mà không đổi được gì.
+
+    Dùng `UPDATE ... WHERE id = ? AND status = 'held'` và kiểm tra
+    `rowcount` — đây là CAS ở tầng SQL nên an toàn kể cả khi chạy nhiều
+    process/worker (không chỉ dựa vào `_lock` trong process).
+    """
+    if not item_pks:
+        return {}, None
+
+    claimed: dict[int, dict[str, Any]] = {}
+    reward_id: int | None = None
+
+    def inner(con: sqlite3.Connection) -> None:
+        nonlocal reward_id
+        # 1) Chiếm từng món cược (CAS).
+        for pk in item_pks:
+            row = row_dict(
+                con.execute("SELECT * FROM inventory WHERE id = ?", (pk,)).fetchone()
+            )
+            if not row or row["player"] != player or row["status"] != "held":
+                raise _UpgradeClaimFailed(
+                    f"{row['name'] if row else 'Món này'} không còn trong túi."
+                )
+            cur = con.execute(
+                "UPDATE inventory SET status = 'upgraded' WHERE id = ? AND status = 'held'",
+                (pk,),
+            )
+            if cur.rowcount != 1:
+                # Request khác vừa chiếm món này trước (race).
+                raise _UpgradeClaimFailed("Món này vừa được dùng, hãy thử lại.")
+            claimed[pk] = dict(row)
+
+        # 2) Thêm món đích (nếu thắng) + ghi lịch sử drop — cùng transaction.
+        if won:
+            cur = con.execute(
+                """
+                INSERT INTO inventory (
+                    player, item_id, name, rarity, value, image, color, source, status, case_id, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'held', ?, ?)
+                """,
+                (
+                    player,
+                    target_public["id"],
+                    target_public["name"],
+                    target_public["rarity"],
+                    int(target_public["coin"]),
+                    target_public["image"],
+                    target_public["color"],
+                    "upgrade",
+                    "",
+                    now(),
+                ),
+            )
+            reward_id = int(cur.lastrowid)
+            con.execute(
+                """
+                INSERT INTO drops (
+                    player, is_bot, item_id, name, rarity, value, image, color, case_id, created_at
+                ) VALUES (?, 0, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    player,
+                    target_public["id"],
+                    target_public["name"],
+                    target_public["rarity"],
+                    int(target_public["coin"]),
+                    target_public["image"],
+                    target_public["color"],
+                    "upgrade",
+                    now(),
+                ),
+            )
+
+    run(inner)
+    return claimed, reward_id
+
+
+class _UpgradeClaimFailed(Exception):
+    """Nội bộ: chiếm món đồ thất bại -> rollback toàn bộ transaction."""
+
+
 def record_drop(player: str, item, case_id: str, is_bot: bool = False) -> None:
     public = item.as_public() if hasattr(item, "as_public") else item
 

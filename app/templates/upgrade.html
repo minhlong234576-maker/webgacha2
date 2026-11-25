@@ -3,17 +3,17 @@
 {% block content %}
 <p class="eyebrow"><i></i> Upgrade · RTP 90%</p>
 <h1>Nâng cấp đồ</h1>
-<p class="lead">Cược một món. Thắng thì đổi món đắt hơn, thua thì mất món. Tỉ lệ = 90% × giá cược / giá đích.</p>
+<p class="lead">Chọn 2 món cược để nâng thành 1 món đắt hơn. Tỉ lệ = 90% × tổng giá cược / giá đích.</p>
 
 <div class="upgrade-stage">
   <div id="stake-slot" class="slot-card">
     <span class="eyebrow" style="margin:0">Cược</span>
-    <span class="meta">Chọn món bên dưới</span>
+    <span class="meta" id="stake-info">Chọn 2 món</span>
   </div>
   <div class="gauge-wrap">
     <div id="gauge"></div>
     <button id="go" class="cf-btn-primary" type="button" disabled>Nâng cấp</button>
-    <p id="up-result" class="meta" style="text-align:center;min-height:1.4em"></p>
+    <p id="up-result" class="meta" role="status" aria-live="polite" style="text-align:center;min-height:1.4em"></p>
   </div>
   <div id="target-slot" class="slot-card">
     <span class="eyebrow" style="margin:0">Đích</span>
@@ -23,91 +23,357 @@
 
 <div class="upgrade-lists">
   <section>
-    <h2 style="margin-top:0">Đồ của tôi</h2>
-    <div class="pick-grid" id="stakes">
-      {% for item in items %}
-      <button class="item-card pick stake" type="button" data-id="{{ item.id }}" data-value="{{ item.value }}" data-name="{{ item.name }}" data-image="{{ item.image }}" data-color="{{ item.color }}" data-fmt="{{ item.value_fmt }}" style="box-shadow:inset 0 -2px 0 0 {{ item.color }}">
-        <img src="{{ item.image }}" alt="{{ item.name }}">
-        <div class="name">{{ item.name }}</div>
-        <div class="chance">{{ item.value_fmt }}</div>
-      </button>
-      {% else %}
-      <p class="lead">Chưa có đồ. <a href="/gacha">Mở rương</a> trước.</p>
-      {% endfor %}
+    <div class="upgrade-head">
+      <h2 style="margin:0;flex:1">Đồ của tôi</h2>
+      <label for="stake-search" class="visually-hidden">Tìm đồ cược</label>
+      <input id="stake-search" type="search" placeholder="Tìm đồ cược..." autocomplete="off" spellcheck="false" style="width:150px;padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px">
     </div>
+    <fieldset id="stake-fieldset" style="border:0;padding:0;margin:0 0 12px">
+      <legend class="visually-hidden">Chọn món cược để nâng cấp</legend>
+      <div class="pick-grid" id="stakes">
+        {% for item in items %}
+        <label class="item-card pick stake" data-name="{{ item.name }}" style="box-shadow:inset 0 -2px 0 0 {{ item.color }}">
+          <input type="checkbox" name="stake" value="{{ item.id }}" data-value="{{ item.value }}" data-name="{{ item.name }}" data-image="{{ item.image }}" data-color="{{ item.color }}" data-fmt="{{ item.value_fmt }}">
+          <img src="{{ item.image }}" alt="{{ item.name }}">
+          <div class="name">{{ item.name }}</div>
+          <div class="chance">{{ item.value_fmt }}</div>
+        </label>
+        {% else %}
+        <p class="lead">Chưa có đồ. <a href="/gacha">Mở rương</a> trước.</p>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <p class="meta" id="stake-hint">Chọn đúng 2 món để nâng cấp.</p>
   </section>
   <section>
-    <h2 style="margin-top:0">Nâng thành</h2>
-    <div class="pick-grid" id="targets"><p class="meta">Chọn món cược trước.</p></div>
+    <div class="upgrade-head">
+      <h2 style="margin:0;flex:1">Nâng thành</h2>
+      <label for="target-sort" class="visually-hidden">Sắp xếp món đích</label>
+      <select id="target-sort" style="padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px">
+        <option value="low">Giá: Thấp → Cao</option>
+        <option value="high">Giá: Cao → Thấp</option>
+      </select>
+      <label for="target-search" class="visually-hidden">Tìm món đích</label>
+      <input id="target-search" type="search" placeholder="🔍" autocomplete="off" spellcheck="false" style="width:36px;padding:6px 8px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px;text-align:center" title="Tìm đồ nâng">
+    </div>
+    <div class="pick-grid" id="targets"><p class="meta">Chọn 2 món cược trước.</p></div>
   </section>
 </div>
 <script type="module">
   import { mountGauge } from "/static/upgrade.js";
+
+  // Cơ chế "2 món lên 1 món": chọn đúng 2 món cược, đổi thành 1 món đích.
+  const STAKE_COUNT = 2;
+
   const csrf = document.querySelector("meta[name=csrf]").content;
   const gauge = mountGauge(document.getElementById("gauge"));
-  let stakeId = 0;
-  let target = null;
+  const stakeSlot = document.getElementById("stake-slot");
+  const stakeInfo = document.getElementById("stake-info");
+  const stakeHint = document.getElementById("stake-hint");
+  const targetSlot = document.getElementById("target-slot");
+  const targetBox = document.getElementById("targets");
+  const goBtn = document.getElementById("go");
+  const result = document.getElementById("up-result");
+  const targetSort = document.getElementById("target-sort");
+  const targetSearch = document.getElementById("target-search");
 
-  function slotHtml(item) {
-    return `<img src="${item.image}" alt=""><div class="name">${item.name}</div><div class="price">${item.fmt} Coin</div>`;
+  /** @type {Array<{id:number,name:string,image:string,fmt:string,color:string,value:number}>} */
+  let stakes = [];
+  /** @type {null | {id:string,coin:number,chance:number,name:string,image:string,fmt:string,color:string}} */
+  let target = null;
+  let allTargets = [];
+  let loadingTargets = false;
+
+  function esc(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
   }
 
-  document.querySelectorAll(".stake").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      document.querySelectorAll(".stake").forEach((el) => el.classList.remove("on"));
-      btn.classList.add("on");
-      stakeId = Number(btn.dataset.id);
-      target = null;
-      document.getElementById("go").disabled = true;
-      document.getElementById("stake-slot").innerHTML = slotHtml({
-        image: btn.dataset.image, name: btn.dataset.name, fmt: btn.dataset.fmt
-      });
-      document.getElementById("stake-slot").style.borderColor = btn.dataset.color;
-      const res = await fetch("/api/upgrade/targets?value=" + btn.dataset.value);
-      const data = await res.json();
-      const box = document.getElementById("targets");
-      if (!data.targets.length) {
-        box.innerHTML = "<p class='meta'>Không có món đích phù hợp.</p>";
+  function slotHtml(item) {
+    return `<img src="${esc(item.image)}" alt=""><div class="name">${esc(item.name)}</div><div class="price">${esc(item.fmt)} Coin</div>`;
+  }
+
+  function fmtCoin(value) {
+    return Number(value).toLocaleString("vi-VN");
+  }
+
+  // --- Chọn món cược ------------------------------------------------------
+
+  function checkedBoxes() {
+    return [...document.querySelectorAll("#stakes input[type=checkbox]:checked")];
+  }
+
+  function readStakes() {
+    stakes = checkedBoxes().map((el) => ({
+      id: Number(el.value),
+      name: el.dataset.name,
+      image: el.dataset.image,
+      fmt: el.dataset.fmt,
+      color: el.dataset.color,
+      value: Number(el.dataset.value),
+    }));
+  }
+
+  function renderStakeSlot() {
+    if (!stakes.length) {
+      stakeSlot.replaceChildren();
+      const hint = document.createElement("span");
+      hint.className = "meta";
+      hint.textContent = `Chọn ${STAKE_COUNT} món`;
+      stakeSlot.appendChild(hint);
+      stakeSlot.style.borderColor = "";
+      stakeInfo.textContent = `Chọn ${STAKE_COUNT} món`;
+      return;
+    }
+    const wrap = document.createElement("div");
+    wrap.style.display = "flex";
+    wrap.style.gap = "8px";
+    wrap.style.flexWrap = "wrap";
+    wrap.style.justifyContent = "center";
+    for (const item of stakes) {
+      const cell = document.createElement("div");
+      cell.innerHTML = slotHtml(item);
+      wrap.appendChild(cell);
+    }
+    stakeSlot.replaceChildren(wrap);
+    stakeSlot.style.borderColor = stakes[0].color;
+    stakeInfo.textContent = `${stakes.length} món · ${fmtCoin(stakes.reduce((s, i) => s + i.value, 0))} Coin`;
+  }
+
+  function updateChance() {
+    const total = stakes.reduce((s, i) => s + i.value, 0);
+    if (!target || !total) {
+      gauge.setChance(0);
+      return;
+    }
+    // Tỉ lệ = 90% × tổng cược / giá đích (giống hệt server).
+    const chance = Math.min(0.85, (total / target.coin) * 0.9);
+    gauge.setChance(chance);
+  }
+
+  function updateGoButton() {
+    goBtn.disabled = stakes.length !== STAKE_COUNT || !target;
+  }
+
+  function renderStakeHint() {
+    const n = stakes.length;
+    if (n < STAKE_COUNT) {
+      stakeHint.textContent = `Chọn đúng ${STAKE_COUNT} món để nâng cấp (đã chọn ${n}).`;
+      stakeHint.style.color = "";
+      return;
+    }
+    if (n > STAKE_COUNT) {
+      stakeHint.textContent = `Chỉ được chọn ${STAKE_COUNT} món. Bỏ bớt 1 món để tiếp tục.`;
+      stakeHint.style.color = "hsl(var(--negative))";
+      return;
+    }
+    stakeHint.textContent = `Đủ ${STAKE_COUNT} món — chọn món đích bên phải.`;
+    stakeHint.style.color = "hsl(var(--positive))";
+  }
+
+  // --- Món đích ------------------------------------------------------------
+
+  function renderTargets() {
+    const sort = targetSort.value;
+    const query = targetSearch.value.trim().toLowerCase();
+    const filtered = allTargets
+      .filter((item) => !query || item.name.toLowerCase().includes(query))
+      .sort((a, b) => (sort === "high" ? b.coin - a.coin : a.coin - b.coin));
+
+    if (!filtered.length) {
+      targetBox.replaceChildren();
+      const p = document.createElement("p");
+      p.className = "meta";
+      p.textContent = query ? "Không tìm thấy món nào." : "Chọn 2 món cược trước.";
+      targetBox.appendChild(p);
+      return;
+    }
+
+    const frag = document.createDocumentFragment();
+    for (const item of filtered) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "item-card pick tgt";
+      btn.dataset.id = item.id;
+      btn.dataset.coin = String(item.coin);
+      btn.dataset.chance = String(item.chance);
+      btn.dataset.name = item.name;
+      btn.dataset.image = item.image;
+      btn.dataset.color = item.color;
+      btn.dataset.fmt = item.coin_fmt;
+      btn.style.boxShadow = `inset 0 -2px 0 0 ${item.color}`;
+      btn.innerHTML = `
+        <img src="${esc(item.image)}" alt="${esc(item.name)}">
+        <div class="name">${esc(item.name)}</div>
+        <div class="chance">${Number(item.chance)}% · ${esc(item.coin_fmt)}</div>`;
+      btn.addEventListener("click", () => selectTarget(btn));
+      frag.appendChild(btn);
+    }
+    targetBox.replaceChildren(frag);
+  }
+
+  function selectTarget(el) {
+    for (const node of targetBox.querySelectorAll(".tgt")) {
+      node.classList.remove("on");
+    }
+    el.classList.add("on");
+    target = {
+      id: el.dataset.id,
+      coin: Number(el.dataset.coin),
+      chance: Number(el.dataset.chance),
+      name: el.dataset.name,
+      image: el.dataset.image,
+      fmt: el.dataset.fmt,
+      color: el.dataset.color,
+    };
+    targetSlot.innerHTML = slotHtml(target);
+    targetSlot.style.borderColor = target.color;
+    updateChance();
+    updateGoButton();
+  }
+
+  async function loadTargets() {
+    if (loadingTargets) return;
+    loadingTargets = true;
+    try {
+      const total = stakes.reduce((s, i) => s + i.value, 0);
+      const res = await fetch(`/api/upgrade/targets?value=${encodeURIComponent(total)}`);
+      if (!res.ok) {
+        allTargets = [];
+        renderTargets();
         return;
       }
-      box.innerHTML = data.targets.map((item) => `
-        <button class="item-card pick tgt" type="button" data-id="${item.id}" data-coin="${item.coin}" data-chance="${item.chance}" data-name="${item.name}" data-image="${item.image}" data-color="${item.color}" data-fmt="${item.coin_fmt}" style="box-shadow:inset 0 -2px 0 0 ${item.color}">
-          <img src="${item.image}" alt="${item.name}">
-          <div class="name">${item.name}</div>
-          <div class="chance">${item.chance}% · ${item.coin_fmt}</div>
-        </button>`).join("");
-      box.querySelectorAll(".tgt").forEach((el) => {
-        el.addEventListener("click", () => {
-          box.querySelectorAll(".tgt").forEach((n) => n.classList.remove("on"));
-          el.classList.add("on");
-          target = { id: el.dataset.id, coin: Number(el.dataset.coin), chance: Number(el.dataset.chance), name: el.dataset.name, image: el.dataset.image, fmt: el.dataset.fmt, color: el.dataset.color };
-          document.getElementById("target-slot").innerHTML = slotHtml(target);
-          document.getElementById("target-slot").style.borderColor = target.color;
-          gauge.setChance(target.chance / 100);
-          document.getElementById("go").disabled = false;
-        });
-      });
+      const data = await res.json();
+      allTargets = Array.isArray(data.targets) ? data.targets : [];
+      renderTargets();
+    } catch {
+      allTargets = [];
+      renderTargets();
+    } finally {
+      loadingTargets = false;
+    }
+  }
+
+  function resetTargets() {
+    target = null;
+    allTargets = [];
+    for (const node of targetBox.querySelectorAll(".tgt")) {
+      node.classList.remove("on");
+    }
+    targetSlot.replaceChildren();
+    const span = document.createElement("span");
+    span.className = "meta";
+    span.textContent = "Chọn món đắt hơn";
+    targetSlot.appendChild(span);
+    targetSlot.style.borderColor = "";
+    targetBox.replaceChildren();
+    const p = document.createElement("p");
+    p.className = "meta";
+    p.textContent = "Chọn 2 món cược trước.";
+    targetBox.appendChild(p);
+  }
+
+  // --- Sự kiện chọn món cược ----------------------------------------------
+
+  const stakeBoxes = [...document.querySelectorAll("#stakes input[type=checkbox]")];
+
+  for (const box of stakeBoxes) {
+    box.addEventListener("change", () => {
+      const checked = checkedBoxes();
+      // Chặn chọn quá số lượng: bỏ tick mới nhất nếu đã đủ 2 món.
+      if (checked.length > STAKE_COUNT) {
+        box.checked = false;
+        result.textContent = `Chỉ được chọn ${STAKE_COUNT} món cược.`;
+        return;
+      }
+      result.textContent = "";
+      readStakes();
+      renderStakeSlot();
+      renderStakeHint();
+      updateChance();
+      updateGoButton();
+
+      if (stakes.length === STAKE_COUNT) {
+        // Đủ 2 món -> tải danh sách món đích.
+        loadTargets();
+      } else {
+        resetTargets();
+      }
     });
+  }
+
+  document.getElementById("stake-search").addEventListener("input", (event) => {
+    const query = event.target.value.trim().toLowerCase();
+    for (const card of document.querySelectorAll("#stakes .stake")) {
+      const name = (card.dataset.name || "").toLowerCase();
+      card.hidden = Boolean(query) && !name.includes(query);
+    }
   });
 
-  document.getElementById("go").addEventListener("click", async () => {
-    if (!stakeId || !target) return;
-    const btn = document.getElementById("go");
-    btn.disabled = true;
-    const res = await fetch("/api/upgrade", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-CSRF": csrf },
-      body: JSON.stringify({ inventory_id: stakeId, target_id: target.id, target_coin: target.coin })
-    });
-    const data = await res.json();
-    const box = document.getElementById("up-result");
-    if (!res.ok) { box.textContent = data.detail; btn.disabled = false; return; }
-    gauge.spin({ won: data.won, roll: data.roll / 100, chance: data.chance / 100 }, () => {
-      box.innerHTML = data.won
-        ? `<span style="color:hsl(var(--positive))">Thắng — ${data.target.name}</span>`
-        : `<span style="color:hsl(var(--negative))">Thua · roll ${data.roll} / ${data.chance}%</span>`;
-      setTimeout(() => location.reload(), 1400);
-    });
+  targetSort.addEventListener("change", renderTargets);
+  targetSearch.addEventListener("input", renderTargets);
+  targetSearch.addEventListener("focus", () => {
+    targetSearch.placeholder = "Tìm đồ nâng...";
+    targetSearch.style.width = "150px";
+    targetSearch.style.textAlign = "left";
   });
+  targetSearch.addEventListener("blur", () => {
+    targetSearch.placeholder = "🔍";
+    targetSearch.style.width = "36px";
+    targetSearch.style.textAlign = "center";
+    targetSearch.value = "";
+    renderTargets();
+  });
+
+  // --- Nâng cấp ------------------------------------------------------------
+
+  goBtn.addEventListener("click", async () => {
+    if (stakes.length !== STAKE_COUNT || !target) return;
+    goBtn.disabled = true;
+    result.textContent = "Đang nâng cấp...";
+    try {
+      const res = await fetch("/api/upgrade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF": csrf },
+        body: JSON.stringify({
+          inventory_ids: stakes.map((s) => s.id),
+          target_id: target.id,
+          target_coin: target.coin,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        result.textContent = data.detail || "Không nâng cấp được.";
+        goBtn.disabled = false;
+        // Nếu món cược đã bị dùng ở nơi khác -> cập nhật lại danh sách.
+        if (res.status === 409) {
+          readStakes();
+          renderStakeSlot();
+          renderStakeHint();
+        }
+        return;
+      }
+      const won = Boolean(data.won);
+      gauge.spin({ won, roll: Number(data.roll) / 100 }, () => {
+        result.innerHTML = won
+          ? `<span style="color:hsl(var(--positive))">Thắng — ${esc(data.target.name)}</span>`
+          : `<span style="color:hsl(var(--negative))">Thua · roll ${esc(data.roll)} / ${esc(data.chance)}%</span>`;
+        setTimeout(() => location.reload(), 1400);
+      });
+    } catch {
+      result.textContent = "Lỗi mạng, vui lòng thử lại.";
+      goBtn.disabled = false;
+    }
+  });
+
+  // Khởi tạo.
+  renderStakeSlot();
+  renderStakeHint();
+  updateChance();
+  updateGoButton();
 </script>
 {% endblock %}

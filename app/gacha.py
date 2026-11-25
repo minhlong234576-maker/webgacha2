@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import json
 import random
+import re
 from dataclasses import dataclass, field
 
-from .config import ROOT, STATIC_DIR, dry_run
+from .config import ROOT, STATIC_DIR, dry_run, nexo_withdraw_enabled
 
 GACHA_FILE = ROOT / "gacha.json"
 IMAGE_EXTS = (".png", ".webp", ".jpg", ".jpeg", ".svg")
+NEXO_ID_RE = re.compile(r"^[a-z0-9_:-]{1,64}$")
 
 RARITY_COLORS = {
     "consumer": "#b0c3d9",
@@ -48,6 +50,8 @@ class Item:
     coin: int
     image: str = ""
     color: str = ""
+    nexo_id: str = ""
+    nexo_amount: int = 1
 
     def as_public(self) -> dict:
         return {
@@ -58,6 +62,8 @@ class Item:
             "coin": self.coin,
             "image": self.image,
             "color": self.color or rarity_color(self.rarity),
+            "nexo_id": self.nexo_id,
+            "nexo_amount": self.nexo_amount,
         }
 
 
@@ -79,6 +85,11 @@ def load_config() -> dict:
 def _parse_item(raw: dict) -> Item:
     item_id = raw["id"]
     rarity = raw.get("rarity", "consumer")
+    nexo_id = str(raw.get("nexo_id") or "").strip()
+    try:
+        nexo_amount = max(1, int(raw.get("nexo_amount") or 1))
+    except (TypeError, ValueError):
+        nexo_amount = 1
     return Item(
         id=item_id,
         name=raw["name"],
@@ -87,6 +98,8 @@ def _parse_item(raw: dict) -> Item:
         coin=int(raw.get("coin", 0)),
         image=resolve_image("items", item_id, raw.get("image")),
         color=rarity_color(rarity),
+        nexo_id=nexo_id,
+        nexo_amount=nexo_amount,
     )
 
 
@@ -146,8 +159,22 @@ def give_command(player: str, amount: int) -> str:
     return template.format(player=player, amount=amount)
 
 
+def nexo_give_command(player: str, nexo_id: str, amount: int = 1) -> str:
+    """Tao lenh console trao NexoItem cho nguoi choi (an toan injection)."""
+    clean_id = nexo_id.strip()
+    if not NEXO_ID_RE.fullmatch(clean_id):
+        raise ValueError(f"Nexo item id khong hop le: {nexo_id!r}")
+    qty = max(1, int(amount))
+    template = load_config().get("nexo_give_command", "nexo give {player} {item_id} {amount}")
+    return template.format(player=player, item_id=clean_id, amount=qty)
+
+
 def is_dry_run() -> bool:
     return dry_run()
+
+
+def is_nexo_withdraw_enabled() -> bool:
+    return nexo_withdraw_enabled()
 
 
 def market_listings() -> list[Item]:
