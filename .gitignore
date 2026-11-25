@@ -1,0 +1,36 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Bien moi truong — KHONG commit (chua API key PikaMC + session secret)
+.env
+.env.*
+!.env.example
+.session_secret
+
+# Du lieu game (SQLite — chua tien that + inventory nguoi choi)
+data/
+tmp/
+*.db
+*.db-wal
+*.db-shm
+
+# Repo tham chieu / san pham khac (khong phai source cua project nay)
+caseforge-main/
+Nexo/
+*.zip
+
+# Tool cua Cursor / IDE
+.codegraph/
+.cursor/
+.idea/
+.vscode/
+
+# Anh chup man hinh test
+_shots/
+*.png
+!app/static/**/*.png

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="stvGold" cx="50%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="35%" stop-color="#f59e0b"/>
+      <stop offset="75%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#78350f"/>
+    </radialGradient>
+    <radialGradient id="stvGlow" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="50%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#0891b2"/>
+    </radialGradient>
+    <filter id="stvShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0891b2" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <!-- Outer Special Rim with Diamond/Cyan Glow -->
+  <circle cx="50" cy="50" r="48" fill="url(#stvGlow)" stroke="#fef08a" stroke-width="2.5" filter="url(#stvShadow)"/>
+  <circle cx="50" cy="50" r="43" fill="none" stroke="#fde047" stroke-width="1.5" stroke-dasharray="2,2"/>
+  <!-- Inner Coin Base -->
+  <circle cx="50" cy="50" r="40" fill="url(#stvGold)"/>
+  
+  <!-- Steve Pixel Avatar / Face -->
+  <!-- Hair Base -->
+  <rect x="29" y="24" width="42" height="42" rx="3" fill="#b45309" stroke="#78350f" stroke-width="1"/>
+  <!-- Hair Top -->
+  <rect x="29" y="24" width="42" height="15" fill="#451a03"/>
+  <rect x="29" y="39" width="7" height="10" fill="#451a03"/>
+  <rect x="64" y="39" width="7" height="10" fill="#451a03"/>
+  <rect x="36" y="39" width="5" height="5" fill="#451a03"/>
+  <rect x="59" y="39" width="5" height="5" fill="#451a03"/>
+  <!-- Face Skin -->
+  <rect x="36" y="39" width="28" height="24" fill="#c68b59"/>
+  <!-- Eyes -->
+  <!-- Left Eye: White + Indigo/Cyan -->
+  <rect x="35" y="44" width="8" height="5" fill="#ffffff"/>
+  <rect x="39" y="44" width="4" height="5" fill="#2563eb"/>
+  <!-- Right Eye: Indigo/Cyan + White -->
+  <rect x="57" y="44" width="8" height="5" fill="#ffffff"/>
+  <rect x="57" y="44" width="4" height="5" fill="#2563eb"/>
+  <!-- Nose -->
+  <rect x="47" y="48" width="6" height="5" fill="#a16239"/>
+  <!-- Mouth / Goatee -->
+  <rect x="43" y="54" width="14" height="6" fill="#451a03"/>
+  <rect x="45" y="54" width="10" height="2" fill="#c68b59"/>
+  
+  <!-- Sparkles / Diamond Star Badges -->
+  <!-- Top Star -->
+  <polygon points="50,11 52,16 57,17 53,20 54,25 50,22 46,25 47,20 43,17 48,16" fill="#e0f2fe" stroke="#0284c7" stroke-width="0.8"/>
+  <!-- Bottom Stars/Text -->
+  <polygon points="26,73 29,71 31,74 30,71 33,69 30,68 30,65 28,68 25,67 27,70" fill="#fef08a"/>
+  <polygon points="74,73 71,71 69,74 70,71 67,69 70,68 70,65 72,68 75,67 73,70" fill="#fef08a"/>
+  <!-- 14x Badge -->
+  <rect x="35" y="72" width="30" height="15" rx="4" fill="#0891b2" stroke="#e0f2fe" stroke-width="1.2"/>
+  <text x="50" y="83.5" text-anchor="middle" fill="#ffffff" font-size="10.5" font-weight="900" font-family="Segoe UI,Arial,sans-serif" letter-spacing="0.5">14x</text>
+</svg>

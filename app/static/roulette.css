@@ -1,0 +1,538 @@
+/* CSGOEMPIRE COINFLIP ROULETTE STYLES */
+
+.roulette-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 20px 48px;
+}
+
+/* TOP BAR & HISTORY */
+.roulette-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.roulette-title-wrap h1 {
+  margin: 2px 0 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.history-strip-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: hsl(var(--surface-raised));
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--border-subtle));
+  box-shadow: var(--card-shadow);
+}
+.history-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: hsl(var(--text-muted));
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.history-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  max-width: 480px;
+  scrollbar-width: none;
+}
+.history-strip::-webkit-scrollbar {
+  display: none;
+}
+.hist-badge {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  transition: transform 0.15s ease;
+}
+.hist-badge:hover {
+  transform: scale(1.15);
+}
+.hist-badge img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+.hist-badge.hist-village {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+}
+.hist-badge.hist-pillager {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+}
+.hist-badge.hist-steve {
+  background: rgba(6, 182, 212, 0.2);
+  border-color: #06b6d4;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+}
+
+/* KHUNG PANEL VÒNG QUAY */
+.roulette-wheel-card {
+  padding: 20px;
+  margin-bottom: 24px;
+  background: hsl(var(--surface-raised));
+  border: 1px solid hsl(var(--border-subtle));
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+}
+
+.wheel-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.status-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.round-indicator {
+  font-size: 13px;
+  color: hsl(var(--text-muted));
+  font-weight: 600;
+}
+.round-indicator strong {
+  color: hsl(var(--text-primary));
+}
+.state-badge {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+}
+.badge-betting {
+  background: rgba(16, 185, 129, 0.18);
+  color: #059669;
+}
+html.dark .badge-betting {
+  color: #34d399;
+}
+.badge-rolling {
+  background: rgba(6, 182, 212, 0.2);
+  color: #0891b2;
+}
+html.dark .badge-rolling {
+  color: #38bdf8;
+}
+.badge-settled {
+  background: rgba(245, 158, 11, 0.2);
+  color: #d97706;
+}
+html.dark .badge-settled {
+  color: #fbbf24;
+}
+
+.status-center {
+  text-align: center;
+}
+.timer-countdown {
+  font-size: 26px;
+  font-weight: 900;
+  color: hsl(var(--accent-text));
+  letter-spacing: -0.02em;
+}
+html.dark .timer-countdown {
+  color: hsl(var(--accent));
+}
+
+.status-right .fair-hash {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: hsl(var(--text-faint));
+  cursor: help;
+}
+
+/* THANH TIẾN ĐỘ THỜI GIAN */
+.progress-track {
+  width: 100%;
+  height: 6px;
+  background: hsl(var(--surface-overlay));
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.progress-fill {
+  height: 100%;
+  width: 100%;
+  background: #10b981;
+  border-radius: 999px;
+  transition: width 0.15s linear, background-color 0.2s ease;
+}
+
+/* KHUNG VIEWPORT DẢI QUAY NẰM NGANG CHUẨN CSGOEMPIRE */
+.roulette-viewport {
+  position: relative;
+  width: 100%;
+  height: 130px;
+  overflow: hidden;
+  background: hsl(var(--surface-overlay));
+  border-radius: 14px;
+  border: 2px solid hsl(var(--border-subtle));
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+}
+
+/* KIM CHỈ TRUNG TÂM */
+.roulette-pointer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 4px;
+  transform: translateX(-50%);
+  background: #f59e0b;
+  z-index: 30;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.95);
+  pointer-events: none;
+}
+.roulette-pointer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 13px solid #f59e0b;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+.roulette-pointer::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 13px solid #f59e0b;
+  filter: drop-shadow(0 -2px 4px rgba(0,0,0,0.3));
+}
+
+/* DẢI BĂNG CUỘN TRƯỢT NGANG (HOÀN TOÀN NẰM NGANG) */
+.roulette-track {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  position: absolute;
+  left: 0;
+  top: 13px;
+  height: 104px;
+  white-space: nowrap !important;
+  will-change: transform;
+}
+
+/* TỪNG Ô THẺ COINFLIP */
+.roulette-card {
+  display: inline-flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 86px !important;
+  width: 86px !important;
+  height: 102px !important;
+  margin: 0 5px !important;
+  background: hsl(var(--surface-raised));
+  border-radius: 10px;
+  border: 1px solid hsl(var(--border-subtle));
+  border-bottom-width: 4px;
+  box-sizing: border-box;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  user-select: none;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.roulette-card .card-icon img {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  pointer-events: none;
+}
+.roulette-card .card-mult {
+  font-size: 13px;
+  font-weight: 800;
+  margin-top: 4px;
+}
+.roulette-card.winner-highlight {
+  border-color: #f59e0b !important;
+  border-bottom-color: #f59e0b !important;
+  transform: scale(1.08);
+  box-shadow: 0 0 22px rgba(245, 158, 11, 0.7);
+  z-index: 10;
+}
+
+/* BẢNG ĐIỀU KHIỂN CƯỢC */
+.bet-controls-panel {
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  background: hsl(var(--surface-raised));
+  border: 1px solid hsl(var(--border-subtle));
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+}
+.bet-input-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.bet-input-wrap {
+  display: flex;
+  align-items: center;
+  background: hsl(var(--surface-overlay));
+  border: 1px solid hsl(var(--border-subtle));
+  border-radius: 10px;
+  padding: 6px 12px;
+  flex: 1;
+  min-width: 180px;
+}
+.input-icon {
+  font-size: 18px;
+  margin-right: 8px;
+}
+.bet-input-wrap input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: hsl(var(--text-primary));
+  font-size: 16px;
+  font-weight: 700;
+  width: 100%;
+}
+
+.quick-chips,
+.quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.chip-btn,
+.action-btn {
+  background: hsl(var(--surface-overlay));
+  border: 1px solid hsl(var(--border-subtle));
+  color: hsl(var(--text-primary));
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.chip-btn:hover,
+.action-btn:hover {
+  background: hsl(var(--surface-hover));
+  border-color: hsl(var(--border-strong));
+  transform: translateY(-1px);
+}
+.chip-btn:active,
+.action-btn:active {
+  transform: translateY(0);
+}
+
+/* 3 CỘT CƯỢC */
+.roulette-columns-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 32px;
+}
+@media (max-width: 860px) {
+  .roulette-columns-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.roulette-col {
+  background: hsl(var(--surface-raised));
+  border: 1px solid hsl(var(--border-subtle));
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--card-shadow);
+  transition: border-color 0.2s ease;
+}
+
+/* NÚT CƯỢC CỦA MỖI CỘT */
+.bet-btn {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: 14px;
+  font-family: inherit;
+}
+.bet-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: grayscale(0.35);
+}
+.bet-btn .btn-icon-wrap img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+.bet-btn .btn-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+.bet-btn .side-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.bet-btn .side-mult {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+/* MÀU SẮC RIÊNG CHO 3 NÚT CƯỢC */
+.btn-village {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.25));
+  border-color: #10b981;
+  color: #065f46;
+}
+html.dark .btn-village {
+  color: #34d399;
+}
+.btn-village:hover:not(:disabled) {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+  transform: translateY(-2px);
+}
+
+.btn-pillager {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(185, 28, 28, 0.25));
+  border-color: #ef4444;
+  color: #7f1d1d;
+}
+html.dark .btn-pillager {
+  color: #f87171;
+}
+.btn-pillager:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+  transform: translateY(-2px);
+}
+
+.btn-steve {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(245, 158, 11, 0.25));
+  border-color: #06b6d4;
+  color: #0e7490;
+  box-shadow: 0 0 14px rgba(6, 182, 212, 0.25);
+}
+html.dark .btn-steve {
+  color: #38bdf8;
+}
+.btn-steve:hover:not(:disabled) {
+  background: linear-gradient(135deg, #06b6d4, #f59e0b);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(6, 182, 212, 0.5);
+  transform: translateY(-2px);
+}
+
+.col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid hsl(var(--border-subtle));
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: hsl(var(--text-muted));
+}
+.col-head strong {
+  color: hsl(var(--text-primary));
+  font-size: 14px;
+}
+
+.bets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 380px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-right: 4px;
+}
+.bet-empty-hint {
+  text-align: center;
+  padding: 24px 0;
+  color: hsl(var(--text-faint));
+  font-size: 13px;
+}
+.bet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: hsl(var(--surface-overlay));
+  border: 1px solid hsl(var(--border-subtle));
+  border-radius: 8px;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+.bet-row .player-name {
+  font-weight: 600;
+  color: hsl(var(--text-primary));
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bet-row .bot-tag {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 5px;
+  background: hsl(var(--surface-base));
+  border: 1px solid hsl(var(--border-subtle));
+  border-radius: 4px;
+  color: hsl(var(--text-muted));
+}
+.bet-row .bet-val {
+  font-weight: 700;
+  color: hsl(var(--accent-text));
+}
+html.dark .bet-row .bet-val {
+  color: hsl(var(--accent));
+}
+.bet-row.is-me {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: #f59e0b;
+}
+.bet-row.is-me .player-name {
+  color: #d97706;
+  font-weight: 800;
+}

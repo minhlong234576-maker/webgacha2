@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}JellyVale{% endblock %}</title>
+  <script>
+    (function() {
+      try {
+        const saved = localStorage.getItem("jv_theme");
+        if (saved === "dark") {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/roulette.css">
+  {% if csrf %}<meta name="csrf" content="{{ csrf }}">{% endif %}
+</head>
+<body>
+  <div id="live-drops" class="live-strip" aria-label="Drop trực tiếp"></div>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="/gacha">Jelly<span>Vale</span></a>
+      <nav>
+        {% set p = request.url.path %}
+        <a class="nav-link {% if p == '/gacha' or p.startswith('/case/') %}on{% endif %}" href="/gacha">Rương</a>
+        <a class="nav-link {% if p.startswith('/roulette') %}on{% endif %}" href="/roulette">Roulette</a>
+        <a class="nav-link {% if p.startswith('/battles') %}on{% endif %}" href="/battles">Battle</a>
+        <a class="nav-link {% if p.startswith('/upgrade') %}on{% endif %}" href="/upgrade">Nâng cấp</a>
+        <a class="nav-link {% if p.startswith('/bonus') %}on{% endif %}" href="/bonus">Bonus</a>
+        {% if player %}
+        <a class="nav-link {% if p.startswith('/inventory') %}on{% endif %}" href="/inventory">Túi đồ{% if held %} {{ held }}{% endif %}</a>
+        {% endif %}
+        {% if is_admin %}<a class="nav-link {% if p.startswith('/admin') %}on{% endif %}" href="/admin">Admin</a>{% endif %}
+      </nav>
+      <div class="header-right">
+        <button id="theme-toggle" class="theme-btn" type="button" title="Đổi giao diện Sáng / Tối">☀️</button>
+        {% if player %}
+        <a class="coin-chip" href="/vi">
+          <span id="coin-balance">{{ money_fmt or money }} Coin</span>
+          <span class="plus" title="Ví">+</span>
+        </a>
+        <a class="avatar-link" href="/vi" title="{{ player }}">
+          <span class="avatar">{{ (player[:2] if player else '?')|upper }}</span>
+          <span class="hide-sm">{{ player }}</span>
+        </a>
+        <form method="post" action="/logout"><button class="signout" type="submit">Thoát</button></form>
+        {% else %}
+        <a class="cf-btn-primary" href="/login" style="padding:8px 16px">Đăng nhập</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+  <main class="page {% block page_class %}{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>JellyVale Case — phong cách tươi sáng, roll trên server, đồ Minecraft.</span>
+      <span class="live-dot"><i></i> Provably recorded</span>
+    </div>
+  </footer>
+  <script src="/static/live.js"></script>
+  <script src="/static/balance.js"></script>
+  {% block extra_scripts %}{% endblock %}
+  <script>
+    (function() {
+      const toggleBtn = document.getElementById("theme-toggle");
+      if (!toggleBtn) return;
+      function updateIcon() {
+        const isDark = document.documentElement.classList.contains("dark");
+        toggleBtn.textContent = isDark ? "🌙" : "☀️";
+      }
+      updateIcon();
+      toggleBtn.addEventListener("click", function() {
+        const isDark = document.documentElement.classList.toggle("dark");
+        localStorage.setItem("jv_theme", isDark ? "dark" : "light");
+        updateIcon();
+      });
+    })();
+  </script>
+</body>
+</html>

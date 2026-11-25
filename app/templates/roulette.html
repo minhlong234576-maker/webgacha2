@@ -1,0 +1,470 @@
+{% extends "base.html" %}
+{% block title %}Coinflip Roulette · JellyVale{% endblock %}
+{% block page_class %}roulette-page{% endblock %}
+
+{% block content %}
+<div class="roulette-container">
+  <!-- TIÊU ĐỀ & LỊCH SỬ VÒNG TRƯỚC -->
+  <div class="roulette-top-bar">
+    <div class="roulette-title-wrap">
+      <p class="eyebrow"><i></i> Chế độ Coinflip Roulette</p>
+      <h1>Roulette Minecraft</h1>
+    </div>
+    
+    <div class="history-strip-wrap">
+      <span class="history-label">Lịch sử:</span>
+      <div id="history-strip" class="history-strip">
+        {% for h in roulette_state.recent_history %}
+        <div class="hist-badge hist-{{ h.side }}" title="Vòng #{{ h.round_id }}: {{ h.multiplier }}x ({{ h.side }})">
+          <img src="{{ h.icon }}" alt="{{ h.side }}">
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- DẢI QUAY ROULETTE (REEL CONTAINER) -->
+  <section class="roulette-wheel-card cf-panel">
+    <!-- THANH TRẠNG THÁI & ĐẾM NGƯỢC -->
+    <div class="wheel-status-bar">
+      <div class="status-left">
+        <span class="round-indicator">Vòng #<strong id="round-num">{{ roulette_state.round_id }}</strong></span>
+        <span id="round-state-badge" class="state-badge badge-betting">ĐANG NHẬN CƯỢC</span>
+      </div>
+      <div class="status-center">
+        <span id="timer-text" class="timer-countdown">15.0s</span>
+      </div>
+      <div class="status-right">
+        <span class="fair-hash" title="SHA-256 Commit của vòng: {{ roulette_state.hash_commit }}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span class="hash-text">Provably Fair</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- THANH TIẾN ĐỘ THỜI GIAN (PROGRESS BAR) -->
+    <div class="progress-track">
+      <div id="progress-bar" class="progress-fill"></div>
+    </div>
+
+    <!-- KHUNG DẢI QUAY CUỘN NGANG VỚI KIM TRUNG TÂM -->
+    <div class="roulette-viewport" id="roulette-viewport">
+      <div class="roulette-pointer"></div>
+      <div id="roulette-track" class="roulette-track">
+        <!-- Render động bằng JavaScript -->
+      </div>
+    </div>
+  </section>
+
+  <!-- BẢNG ĐẶT CƯỢC & NÚT TIỆN ÍCH -->
+  <section class="bet-controls-panel cf-panel">
+    <div class="bet-input-row">
+      <div class="bet-input-wrap">
+        <span class="input-icon">🪙</span>
+        <input type="number" id="bet-amount" min="100" max="10000000" step="100" value="1000" placeholder="Số Coin cược...">
+      </div>
+      <div class="quick-chips">
+        <button type="button" class="chip-btn" data-val="1000">+1K</button>
+        <button type="button" class="chip-btn" data-val="5000">+5K</button>
+        <button type="button" class="chip-btn" data-val="10000">+10K</button>
+        <button type="button" class="chip-btn" data-val="50000">+50K</button>
+      </div>
+      <div class="quick-actions">
+        <button type="button" class="action-btn" id="btn-half">1/2</button>
+        <button type="button" class="action-btn" id="btn-double">2X</button>
+        <button type="button" class="action-btn" id="btn-max">Max</button>
+        <button type="button" class="action-btn" id="btn-clear">Xóa</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 CỘT CƯỢC: LÀNG (2X) | STEVE (14X) | PILLAGER (2X) -->
+  <section class="roulette-columns-grid">
+    <!-- CỘT 1: NGÔI LÀNG (2X) -->
+    <div class="roulette-col col-village" id="col-village">
+      <button type="button" class="bet-btn btn-village" id="btn-bet-village" data-side="village">
+        <div class="btn-icon-wrap">
+          <img src="/static/items/coin_village.svg" alt="Ngôi Làng">
+        </div>
+        <div class="btn-info">
+          <span class="side-name">NGÔI LÀNG</span>
+          <span class="side-mult">ĂN 2X</span>
+        </div>
+      </button>
+
+      <div class="col-head">
+        <span class="player-count"><span id="count-village">0</span> người cược</span>
+        <strong id="total-village">0 Coin</strong>
+      </div>
+      <div class="bets-list" id="bets-village">
+        <div class="bet-empty-hint">Chưa có ai đặt cược</div>
+      </div>
+    </div>
+
+    <!-- CỘT 2: STEVE ĐẶC BIỆT (14X) -->
+    <div class="roulette-col col-steve" id="col-steve">
+      <button type="button" class="bet-btn btn-steve" id="btn-bet-steve" data-side="steve">
+        <div class="btn-icon-wrap">
+          <img src="/static/items/coin_steve.svg" alt="Steve Đặc Biệt">
+        </div>
+        <div class="btn-info">
+          <span class="side-name">STEVE ĐẶC BIỆT</span>
+          <span class="side-mult">ĂN 14X</span>
+        </div>
+      </button>
+
+      <div class="col-head">
+        <span class="player-count"><span id="count-steve">0</span> người cược</span>
+        <strong id="total-steve">0 Coin</strong>
+      </div>
+      <div class="bets-list" id="bets-steve">
+        <div class="bet-empty-hint">Chưa có ai đặt cược</div>
+      </div>
+    </div>
+
+    <!-- CỘT 3: PILLAGER (2X) -->
+    <div class="roulette-col col-pillager" id="col-pillager">
+      <button type="button" class="bet-btn btn-pillager" id="btn-bet-pillager" data-side="pillager">
+        <div class="btn-icon-wrap">
+          <img src="/static/items/coin_pillager.svg" alt="Pillager">
+        </div>
+        <div class="btn-info">
+          <span class="side-name">PILLAGER</span>
+          <span class="side-mult">ĂN 2X</span>
+        </div>
+      </button>
+
+      <div class="col-head">
+        <span class="player-count"><span id="count-pillager">0</span> người cược</span>
+        <strong id="total-pillager">0 Coin</strong>
+      </div>
+      <div class="bets-list" id="bets-pillager">
+        <div class="bet-empty-hint">Chưa có ai đặt cược</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  const CSRF_TOKEN = document.querySelector('meta[name="csrf"]')?.content || "";
+  const CURRENT_PLAYER = {{ (player | tojson) if player else "null" }};
+  let INITIAL_STATE = {{ state_json | safe }};
+
+  // Cấu hình kích thước ô của dải Roulette
+  const CARD_WIDTH = 96; // 86px width + 10px margin
+  const WHEEL_SLOTS = INITIAL_STATE.wheel_slots || [];
+  const TOTAL_SLOTS = WHEEL_SLOTS.length; // 15
+  const REPEAT_SETS = 10; // Lặp lại 10 set = 150 ô
+  const TARGET_SET_INDEX = 6; // Set thứ 7 làm đích dừng
+
+  const trackEl = document.getElementById("roulette-track");
+  const viewportEl = document.getElementById("roulette-viewport");
+  const timerTextEl = document.getElementById("timer-text");
+  const progressBarEl = document.getElementById("progress-bar");
+  const roundBadgeEl = document.getElementById("round-state-badge");
+  const roundNumEl = document.getElementById("round-num");
+  const betInputEl = document.getElementById("bet-amount");
+
+  let localState = INITIAL_STATE;
+  let isRollingAnim = false;
+  let currentRoundId = INITIAL_STATE.round_id;
+  let userBalance = {{ money if money else 0 }};
+
+  // 1. Tạo HTML cho 1 ô thẻ của dải roulette
+  function createSlotTileHtml(slot, index) {
+    return `
+      <div class="roulette-card side-${slot.side}" data-slot="${slot.slot}" data-index="${index}" style="border-bottom-color: ${slot.color}">
+        <div class="card-icon">
+          <img src="${slot.icon}" alt="${slot.name}" draggable="false">
+        </div>
+        <span class="card-mult" style="color: ${slot.color}">${slot.multiplier}x</span>
+      </div>
+    `;
+  }
+
+  // 2. Dựng dải băng roulette gồm nhiều set lặp lại
+  function buildTrack() {
+    let html = "";
+    let globalIndex = 0;
+    for (let s = 0; s < REPEAT_SETS; s++) {
+      for (let i = 0; i < TOTAL_SLOTS; i++) {
+        html += createSlotTileHtml(WHEEL_SLOTS[i], globalIndex);
+        globalIndex++;
+      }
+    }
+    trackEl.innerHTML = html;
+  }
+
+  // 3. Đặt vị trí dải băng về một slot bất kỳ không có hiệu ứng xoay (nhẹ nhàng)
+  function snapToSlot(slotIndex, jitterRatio = 0) {
+    if (!viewportEl) return;
+    const viewWidth = viewportEl.clientWidth;
+    const targetCardIndex = TARGET_SET_INDEX * TOTAL_SLOTS + slotIndex;
+    const targetCenter = targetCardIndex * CARD_WIDTH + CARD_WIDTH / 2;
+    const offset = targetCenter - viewWidth / 2 + (jitterRatio * (CARD_WIDTH * 0.35));
+
+    trackEl.style.transition = "none";
+    trackEl.style.transform = `translate3d(${-offset}px, 0, 0)`;
+  }
+
+  // 4. Bắt đầu cuộn trượt dải roulette với transition mượt mà (6 giây chuẩn CSGOEmpire)
+  function animateRoll(targetSlotIndex) {
+    if (isRollingAnim) return;
+    isRollingAnim = true;
+    roundBadgeEl.className = "state-badge badge-rolling";
+    roundBadgeEl.textContent = "ĐANG QUAY...";
+
+    // Reset về vị trí đầu set
+    snapToSlot(0, 0);
+
+    // Tính điểm dừng đích với chút dao động ngẫu nhiên trong lòng ô
+    const viewWidth = viewportEl.clientWidth;
+    const targetCardIndex = TARGET_SET_INDEX * TOTAL_SLOTS + targetSlotIndex;
+    const jitter = (Math.random() - 0.5) * (CARD_WIDTH * 0.7);
+    const targetCenter = targetCardIndex * CARD_WIDTH + CARD_WIDTH / 2;
+    const finalOffset = targetCenter - viewWidth / 2 + jitter;
+
+    // Kích hoạt transition mượt mà
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        trackEl.style.transition = "transform 5800ms cubic-bezier(0.12, 0.82, 0.14, 1)";
+        trackEl.style.transform = `translate3d(${-finalOffset}px, 0, 0)`;
+      });
+    });
+
+    setTimeout(() => {
+      isRollingAnim = false;
+      highlightWinningTile(targetSlotIndex);
+    }, 5800);
+  }
+
+  function highlightWinningTile(winningSlot) {
+    const tiles = trackEl.querySelectorAll(".roulette-card");
+    tiles.forEach(tile => {
+      const s = parseInt(tile.getAttribute("data-slot"), 10);
+      if (s === winningSlot) {
+        tile.classList.add("winner-highlight");
+      } else {
+        tile.classList.remove("winner-highlight");
+      }
+    });
+  }
+
+  function clearTileHighlights() {
+    const tiles = trackEl.querySelectorAll(".roulette-card");
+    tiles.forEach(tile => tile.classList.remove("winner-highlight"));
+  }
+
+  // 5. Cập nhật giao diện 3 cột cược & Lịch sử
+  function renderBetsAndTotals(totals) {
+    if (!totals) return;
+    ["village", "steve", "pillager"].forEach(side => {
+      const sideData = totals[side] || { count: 0, total_amount: 0, bets: [] };
+      const countEl = document.getElementById(`count-${side}`);
+      const totalEl = document.getElementById(`total-${side}`);
+      const listEl = document.getElementById(`bets-${side}`);
+
+      if (countEl) countEl.textContent = sideData.count;
+      if (totalEl) totalEl.textContent = Number(sideData.total_amount).toLocaleString("vi-VN") + " Coin";
+
+      if (listEl) {
+        if (!sideData.bets || sideData.bets.length === 0) {
+          listEl.innerHTML = `<div class="bet-empty-hint">Chưa có ai đặt cược</div>`;
+        } else {
+          listEl.innerHTML = sideData.bets.slice().reverse().map(b => {
+            const isMe = CURRENT_PLAYER && b.player.toLowerCase() === CURRENT_PLAYER.toLowerCase();
+            return `
+              <div class="bet-row ${isMe ? 'is-me' : ''}">
+                <span class="player-name">
+                  ${escapeHtml(b.player)}
+                  ${b.is_bot ? '<span class="bot-tag">BOT</span>' : ''}
+                </span>
+                <span class="bet-val">${Number(b.amount).toLocaleString("vi-VN")} Coin</span>
+              </div>
+            `;
+          }).join("");
+        }
+      }
+    });
+  }
+
+  function renderHistory(history) {
+    const histEl = document.getElementById("history-strip");
+    if (!histEl || !history) return;
+    histEl.innerHTML = history.slice(-15).map(h => `
+      <div class="hist-badge hist-${h.side}" title="Vòng #${h.round_id}: ${h.multiplier}x (${h.side})">
+        <img src="${h.icon}" alt="${h.side}">
+      </div>
+    `).join("");
+  }
+
+  function escapeHtml(str) {
+    return String(str || "").replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // 6. Nhận trạng thái mới từ máy chủ (Server Polling)
+  function applyState(nextState) {
+    const prevState = localState;
+    localState = nextState;
+
+    // Cập nhật số vòng
+    if (roundNumEl) roundNumEl.textContent = nextState.round_id;
+
+    // Nếu chuyển sang vòng mới
+    if (nextState.round_id !== currentRoundId) {
+      currentRoundId = nextState.round_id;
+      clearTileHighlights();
+      // Snap nhẹ dải băng về vị trí ô trúng vòng trước
+      if (prevState && prevState.winning_slot !== null && prevState.winning_slot !== undefined) {
+        snapToSlot(prevState.winning_slot, 0);
+      }
+    }
+
+    // Xử lý các trạng thái
+    if (nextState.status === "BETTING") {
+      roundBadgeEl.className = "state-badge badge-betting";
+      roundBadgeEl.textContent = "ĐANG NHẬN CƯỢC";
+      enableBetButtons(true);
+      timerTextEl.textContent = nextState.time_left.toFixed(1) + "s";
+      const pct = Math.max(0, Math.min(100, (nextState.time_left / nextState.total_phase_time) * 100));
+      progressBarEl.style.width = pct + "%";
+      progressBarEl.style.background = "#10b981";
+    } else if (nextState.status === "ROLLING") {
+      enableBetButtons(false);
+      timerTextEl.textContent = "Đang quay...";
+      progressBarEl.style.width = "100%";
+      progressBarEl.style.background = "#06b6d4";
+      if (!isRollingAnim && nextState.winning_slot !== null && nextState.winning_slot !== undefined) {
+        animateRoll(nextState.winning_slot);
+      }
+    } else if (nextState.status === "SETTLED") {
+      enableBetButtons(false);
+      roundBadgeEl.className = "state-badge badge-settled";
+      const sideName = nextState.winning_side === "steve" ? "STEVE (14X)" : (nextState.winning_side === "village" ? "NGÔI LÀNG (2X)" : "PILLAGER (2X)");
+      roundBadgeEl.textContent = `KẾT QUẢ: ${sideName}`;
+      timerTextEl.textContent = "Trả thưởng";
+      progressBarEl.style.width = "100%";
+      progressBarEl.style.background = "#f59e0b";
+      highlightWinningTile(nextState.winning_slot);
+    }
+
+    // Cập nhật các cột cược và lịch sử
+    renderBetsAndTotals(nextState.totals);
+    renderHistory(nextState.recent_history);
+  }
+
+  function enableBetButtons(enabled) {
+    ["village", "steve", "pillager"].forEach(side => {
+      const btn = document.getElementById(`btn-bet-${side}`);
+      if (btn) btn.disabled = !enabled;
+    });
+  }
+
+  // 7. Polling liên tục mỗi 900ms
+  async function pollState() {
+    try {
+      const res = await fetch("/api/roulette/state");
+      if (res.ok) {
+        const data = await res.json();
+        applyState(data);
+      }
+    } catch (e) {
+      console.error("Lỗi polling roulette:", e);
+    }
+  }
+
+  // 8. Đặt cược của người dùng
+  async function placeBet(side) {
+    if (!CURRENT_PLAYER) {
+      alert("Vui lòng đăng nhập để tham gia đặt cược!");
+      location.href = "/login";
+      return;
+    }
+    const amount = parseInt(betInputEl.value, 10);
+    if (!amount || isNaN(amount) || amount < 100) {
+      alert("Mức cược tối thiểu là 100 Coin!");
+      return;
+    }
+
+    const btn = document.getElementById(`btn-bet-${side}`);
+    if (btn) btn.disabled = true;
+
+    try {
+      const res = await fetch("/api/roulette/bet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF": CSRF_TOKEN,
+        },
+        body: JSON.stringify({ side, amount }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || "Không thể đặt cược.");
+      } else {
+        // Cập nhật chip số dư góc trên
+        document.dispatchEvent(new CustomEvent("jv:balance", { detail: data }));
+        // Gọi polling ngay để cập nhật bảng cược
+        pollState();
+      }
+    } catch (err) {
+      alert("Lỗi kết nối khi đặt cược.");
+    } finally {
+      if (localState.status === "BETTING" && btn) {
+        btn.disabled = false;
+      }
+    }
+  }
+
+  // 9. Gắn sự kiện các nút tiện ích và nút cược
+  document.querySelectorAll(".chip-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const add = parseInt(btn.getAttribute("data-val"), 10) || 0;
+      const cur = parseInt(betInputEl.value, 10) || 0;
+      betInputEl.value = cur + add;
+    });
+  });
+
+  document.getElementById("btn-clear")?.addEventListener("click", () => {
+    betInputEl.value = 100;
+  });
+
+  document.getElementById("btn-half")?.addEventListener("click", () => {
+    const cur = parseInt(betInputEl.value, 10) || 0;
+    betInputEl.value = Math.max(100, Math.floor(cur / 2));
+  });
+
+  document.getElementById("btn-double")?.addEventListener("click", () => {
+    const cur = parseInt(betInputEl.value, 10) || 0;
+    betInputEl.value = cur * 2;
+  });
+
+  document.getElementById("btn-max")?.addEventListener("click", () => {
+    const chip = document.getElementById("coin-balance");
+    let maxCoin = userBalance;
+    if (chip) {
+      const text = chip.textContent.replace(/[^\d]/g, "");
+      if (text) maxCoin = parseInt(text, 10);
+    }
+    betInputEl.value = Math.max(100, maxCoin);
+  });
+
+  ["village", "steve", "pillager"].forEach(side => {
+    document.getElementById(`btn-bet-${side}`)?.addEventListener("click", () => {
+      placeBet(side);
+    });
+  });
+
+  // Khởi tạo ban đầu
+  buildTrack();
+  if (localState.winning_slot !== null && localState.winning_slot !== undefined) {
+    snapToSlot(localState.winning_slot, 0);
+  } else {
+    snapToSlot(0, 0);
+  }
+  applyState(localState);
+
+  // Kích hoạt chu kỳ polling
+  setInterval(pollState, 900);
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}CRM · JellyVale{% endblock %}
+{% block content %}
+<section class="admin-card">
+  <p class="eyebrow"><i></i> CRM</p>
+  <h1>Thông số gacha</h1>
+  <p class="lead">Sổ local. Bot cũng ghi drop / battle. Dry-run không trừ Coin in-game.</p>
+  <div class="grid stats">
+    <div class="mini"><span>Lượt mở</span><strong>{{ stats.pulls }}</strong></div>
+    <div class="mini"><span>Coin trừ rương</span><strong>{{ spent }}</strong></div>
+    <div class="mini"><span>Giá trị drop</span><strong>{{ paid }}</strong></div>
+    <div class="mini"><span>Chênh lệch</span><strong>{{ net }}</strong></div>
+    <div class="mini"><span>Battle xong</span><strong>{{ stats.battles }}</strong></div>
+    <div class="mini"><span>Đồ đã bán</span><strong>{{ stats.sells }}</strong></div>
+    <div class="mini"><span>Đồ đang giữ</span><strong>{{ stats.held }}</strong></div>
+    <div class="mini"><span>Nâng cấp thắng</span><strong>{{ stats.upgrade_wins }}/{{ stats.upgrades }}</strong></div>
+  </div>
+  <h2>Quản trị viên</h2>
+  <p class="lead">Đọc trực tiếp từ <code>ops.json</code> trên server — ai có OP là có quyền admin web. Tự cập nhật mỗi 60 giây.</p>
+  <table>
+    <thead><tr><th>Tên</th><th>Nguồn</th></tr></thead>
+    <tbody>
+      {% for row in admins %}
+      <tr>
+        <td>{{ row.name }}</td>
+        <td>{% if row.source == 'server-op' %}<span style="color:hsl(var(--positive))">OP trên server</span>{% else %}<span class="meta">khai báo trong .env</span>{% endif %}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="2">Chưa đọc được danh sách OP. Kiểm tra kết nối PikaMC.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h2>Theo độ hiếm</h2>
+  <table>
+    <thead><tr><th>Rarity</th><th>Lượt</th><th>Giá trị</th></tr></thead>
+    <tbody>
+      {% for row in stats.by_rarity %}
+      <tr><td>{{ row.rarity }}</td><td>{{ row.n }}</td><td>{{ row.paid_fmt }}</td></tr>
+      {% else %}
+      <tr><td colspan="3">Chưa có lượt quay.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h2>40 lượt gần nhất</h2>
+  <table>
+    <thead><tr><th>Thời gian</th><th>Player</th><th>Rương</th><th>Giải</th><th>Giá</th></tr></thead>
+    <tbody>
+      {% for row in stats.recent %}
+      <tr>
+        <td>{{ row.when }}</td>
+        <td>{{ row.player }}</td>
+        <td>{{ row.case_id }}</td>
+        <td>{{ row.prize_name }}</td>
+        <td>{{ row.prize_fmt }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5">Chưa có lượt quay.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

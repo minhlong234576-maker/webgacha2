@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Ví · {{ player }}{% endblock %}
+{% block page_class %}narrow{% endblock %}
+{% block content %}
+<section class="wallet-card">
+  <p class="eyebrow"><i></i> Ví Coin</p>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+    <span class="avatar" style="width:40px;height:40px;font-size:14px">{{ player[:2]|upper }}</span>
+    <h1 style="margin:0">{{ player }}</h1>
+  </div>
+  <p class="meta">Online gần nhất: {{ last_seen }}</p>
+  <p class="amount" id="wallet-balance">{{ money_fmt }}</p>
+  <p class="hint">Coin in-game là nguồn sự thật. Mở rương / battle / roulette sẽ trừ Coin in-game; bán đồ và bonus sẽ cộng ngược lại.</p>
+  <p class="meta">Coin in-game (Pika): <span id="wallet-pika">{{ pika_fmt }}</span></p>
+  <h2>Giao dịch</h2>
+  <table>
+    <tbody>
+      {% for row in txs %}
+      <tr>
+        <td class="meta">{{ row.when }}</td>
+        <td>{{ row.kind_label }}</td>
+        <td style="color:hsl(var(--accent));font-weight:600">{{ row.amount_fmt }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3">Chưa có giao dịch.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+  /* Số dư trang ví cập nhật realtime cùng chip trên header. */
+  document.addEventListener("jv:balance", (e) => {
+    const fmt = e.detail && e.detail.balance_fmt;
+    if (!fmt) return;
+    const el = document.getElementById("wallet-balance");
+    if (el) el.textContent = fmt;
+    const pika = document.getElementById("wallet-pika");
+    if (pika) pika.textContent = fmt;
+  });
+</script>
+{% endblock %}

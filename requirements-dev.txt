@@ -1,0 +1,2 @@
+# Dev/test-only dependencies (khong can cho production)
+playwright==1.65.2

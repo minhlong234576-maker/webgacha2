@@ -1,0 +1,527 @@
+{% extends "base.html" %}
+{% block title %}Battle #{{ battle.id }} · JellyVale{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <div>
+    <p class="eyebrow"><i></i> Battle #{{ battle.id }}</p>
+    <h1 id="battle-title">{{ battle.case_name }}</h1>
+    <p class="meta" id="battle-sub">{{ battle.mode_label }} · {{ battle.rounds }} vòng · {{ battle.price_fmt }} Coin / ghế</p>
+    <p class="meta" id="battle-lines" style="margin-top:4px"></p>
+  </div>
+  <div class="grow"></div>
+  <div id="actions" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+</div>
+
+{% if battle.status == "WAITING" and player and player == battle.host %}
+<section class="cf-panel" id="config-panel" style="padding:16px;margin-bottom:16px">
+  <h3 style="margin:0 0 8px">Cấu hình phòng <span class="meta">(chuẩn web gốc: ghép nhiều rương)</span></h3>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+    <span class="meta" id="cfg-info"></span>
+    <button id="cfg-add" class="cf-btn-ghost" type="button" style="padding:2px 10px;font-size:12px;margin-left:auto">+ Thêm rương</button>
+  </div>
+  <div id="cfg-lines"></div>
+  <div class="create-grid" style="margin-top:8px">
+    <label>Ghế
+      <select id="cfg-slots">
+        <option value="2" {% if battle.slots == 2 %}selected{% endif %}>2</option>
+        <option value="3" {% if battle.slots == 3 %}selected{% endif %}>3</option>
+        <option value="4" {% if battle.slots == 4 %}selected{% endif %}>4</option>
+      </select>
+    </label>
+    <label>Chế độ
+      <select id="cfg-mode">
+        <option value="STANDARD" {% if battle.mode == "STANDARD" %}selected{% endif %}>Standard (cao thắng)</option>
+        <option value="CRAZY" {% if battle.mode == "CRAZY" %}selected{% endif %}>Crazy (thấp thắng)</option>
+      </select>
+    </label>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
+    <button id="cfg-apply" class="cf-btn-primary" type="button">Lưu cấu hình</button>
+    <span id="cfg-hint" class="meta"></span>
+  </div>
+</section>
+{% endif %}
+
+<p id="round-label" class="meta" style="min-height:1.4em"></p>
+<p id="hint" class="meta"></p>
+<div id="arena" class="arena"></div>
+<p id="winner-line" class="amount" style="text-align:center;font-size:28px;display:none"></p>
+
+<div id="rematch-panel" class="cf-panel" style="display:none;padding:16px;margin-top:16px">
+  <h3 style="margin:0 0 8px">Đánh tiếp ván mới</h3>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+    <span class="meta" id="rm-info"></span>
+    <button id="rm-add" class="cf-btn-ghost" type="button" style="padding:2px 10px;font-size:12px;margin-left:auto">+ Thêm rương</button>
+  </div>
+  <div id="rm-lines"></div>
+  <div class="create-grid" style="margin-top:8px">
+    <label>Chế độ
+      <select id="rm-mode">
+        <option value="STANDARD">Standard</option>
+        <option value="CRAZY">Crazy</option>
+      </select>
+    </label>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+    <button id="rm-go" class="cf-btn-primary" type="button">Tạo ván tiếp theo</button>
+    <span id="rm-hint" class="meta"></span>
+  </div>
+</div>
+
+<script type="module">
+  import { spinReel } from "/static/roulette.js";
+
+  const csrf = document.querySelector("meta[name=csrf]")?.content;
+  const battleId = {{ battle.id }};
+  const me = {{ (player or '') | tojson }};
+  const CASES = {{ cases | tojson }};
+  let state = {{ battle_json | safe }};
+  let activeRound = 0;
+  let playedRound = 0;
+  let finishedReels = 0;
+  let watching = false;
+  let busy = false;
+
+  function initials(name) {
+    return (name || "?").slice(0, 2).toUpperCase();
+  }
+
+  function dropFor(player, round) {
+    return (state.drops || []).find((d) => d.player === player && d.round === round);
+  }
+
+  function revealedFor(player) {
+    return (state.drops || []).filter((d) => d.player === player && d.round <= playedRound);
+  }
+
+  function caseNameOf(cid) {
+    const l = (state.lines || []).find((x) => x.case_id === cid);
+    if (l) return l.name;
+    const c = CASES.find((x) => x.id === cid);
+    return c ? c.name : cid;
+  }
+
+  function poolForRound(round) {
+    if (state.pools && state.pools[round - 1] && state.pools[round - 1].length) return state.pools[round - 1];
+    return state.pool || [];
+  }
+
+  function linesHtml() {
+    if (!state.lines || !state.lines.length) return "";
+    return state.lines.map((l) => `<span style="border:1px solid #2a3350;border-radius:999px;padding:1px 8px;font-size:11px">${l.name} × ${l.count}</span>`).join(" ");
+  }
+
+  function renderLobbyOrResult() {
+    const arena = document.getElementById("arena");
+    const players = state.players || [];
+    const slots = Number(state.slots || players.length || 2);
+    arena.style.gridTemplateColumns = `repeat(${slots}, minmax(0, 1fr))`;
+    const isHost = state.host === me;
+
+    let html = "";
+    for (let i = 0; i < slots; i += 1) {
+      const p = players[i];
+      if (!p) {
+        html += `<article class="seat"><p class="meta" style="text-align:center;padding:48px 0">Ghế trống</p></article>`;
+        continue;
+      }
+      const win = state.winner === p.player && activeRound === 0 && state.status === "FINISHED" ? " win-seat" : "";
+      const drops = revealedFor(p.player);
+      const total = drops.reduce((n, d) => n + Number(d.value || 0), 0);
+      const kickBtn = (state.status === "WAITING" && isHost && p.is_bot && p.player !== state.host)
+        ? `<button class="cf-btn-ghost kick-btn" data-kick="${p.player}" type="button" style="padding:2px 8px;font-size:11px">Đá</button>` : "";
+      html += `<article class="seat${win}" data-player="${p.player}">
+        <header style="display:flex;align-items:center;gap:8px">
+          <span class="avatar">${initials(p.player)}</span>
+          <strong>${p.player === me ? "Bạn" : p.player}</strong>
+          ${p.is_bot ? " <span class='bot-tag'>bot</span>" : ""}
+          ${kickBtn}
+          <span class="price" style="margin-left:auto">${total.toLocaleString("vi-VN")} Coin</span>
+        </header>
+        <div class="seat-body" data-seat="${i}">
+          ${activeRound > 0 ? reelMarkup(i) : dropsHtml(drops)}
+        </div>
+      </article>`;
+    }
+    arena.innerHTML = html;
+    document.querySelectorAll("[data-kick]")?.forEach((b) =>
+      b.addEventListener("click", () => onKick(b.dataset.kick, b))
+    );
+  }
+
+  function reelMarkup(i) {
+    return `<div class="reel vertical" id="reel-${i}">
+      <div class="reel-marker-h"></div>
+      <div class="reel-fade-t"></div>
+      <div class="reel-fade-b"></div>
+      <div class="reel-strip vertical" id="strip-${i}"></div>
+    </div>`;
+  }
+
+  function dropsHtml(drops) {
+    if (!drops.length) {
+      return `<p class="meta" style="text-align:center;padding:40px 0">${state.status === "WAITING" ? "Đang chờ..." : "—"}</p>`;
+    }
+    return `<div class="seat-drops">${drops.map((d) =>
+      `<div class="mini-drop" style="border-bottom-color:${d.color}" title="${d.case_name || ""}"><img src="${d.image}" alt=""><span>${d.value_fmt || d.value}</span></div>`
+    ).join("")}</div>`;
+  }
+
+  function paintActions() {
+    const box = document.getElementById("actions");
+    const seated = (state.players || []).some((p) => p.player === me);
+    const isHost = state.host === me;
+    const waiting = state.status === "WAITING";
+    const running = state.status === "RUNNING";
+    const finished = state.status === "FINISHED";
+    const cancelled = state.status === "CANCELLED";
+    const canJoin = waiting && me && !seated && (state.players || []).length < state.slots;
+    let html = "";
+    if (canJoin) html += `<button id="join" class="cf-btn-primary" type="button">Ngồi vào · ${state.price_fmt} Coin</button>`;
+    if (waiting && seated) html += `<button id="leave" class="cf-btn-ghost" type="button">Rời phòng (hoàn tiền)</button>`;
+    if (waiting && seated) html += `<button id="bots" class="cf-btn-ghost" type="button">Gọi bot (đủ ghế tự quay)</button>`;
+    if (waiting && isHost) {
+      html += `<button id="start" class="cf-btn-primary" type="button">Bắt đầu quay</button>`;
+      html += `<button id="cancel" class="cf-btn-ghost" type="button">Hủy phòng</button>`;
+    }
+    if (running) html += `<span class="meta">Đang quay, chờ kết quả...</span>`;
+    if (!me && waiting) html += `<a class="cf-btn-primary" href="/login">Đăng nhập</a>`;
+    if ((finished || cancelled) && me) html += `<a class="cf-btn-ghost" href="/battles">Về sảnh</a>`;
+    box.innerHTML = html;
+
+    document.getElementById("join")?.addEventListener("click", onJoin);
+    document.getElementById("bots")?.addEventListener("click", onBots);
+    document.getElementById("start")?.addEventListener("click", onStart);
+    document.getElementById("leave")?.addEventListener("click", onLeave);
+    document.getElementById("cancel")?.addEventListener("click", onCancel);
+
+    const panel = document.getElementById("rematch-panel");
+    if (panel) panel.style.display = (finished && me && (state.players || []).some((p) => p.player === me)) ? "block" : "none";
+    const cfg = document.getElementById("config-panel");
+    if (cfg) cfg.style.display = (waiting && isHost) ? "block" : "none";
+    const title = document.getElementById("battle-title");
+    if (title) title.textContent = state.case_name || title.textContent;
+    const sub = document.getElementById("battle-sub");
+    if (sub) sub.textContent = `${state.mode_label || ""} · ${state.rounds} vòng · ${state.price_fmt} Coin / ghế`;
+    const bl = document.getElementById("battle-lines");
+    if (bl) bl.innerHTML = linesHtml();
+  }
+
+  function paintHint() {
+    const hint = document.getElementById("hint");
+    const win = document.getElementById("winner-line");
+    const roundLabel = document.getElementById("round-label");
+    if (activeRound > 0) {
+      const cid = (state.order || [])[activeRound - 1];
+      roundLabel.textContent = `Vòng ${activeRound} / ${state.rounds} · ${caseNameOf(cid)}`;
+      hint.textContent = "Đang quay...";
+      win.style.display = "none";
+      return;
+    }
+    roundLabel.textContent = "";
+    if (state.status === "WAITING") {
+      hint.textContent = `${(state.players || []).length}/${state.slots} ghế. Đủ ghế tự quay như web gốc — không cần chờ host. Rời phòng được hoàn tiền.`;
+      win.style.display = "none";
+    } else if (state.status === "RUNNING") {
+      hint.textContent = "Trận đang quay, chờ kết quả...";
+      win.style.display = "none";
+    } else if (state.status === "FINISHED") {
+      hint.textContent = "Toàn bộ đồ vào túi người thắng. Có thể đánh tiếp ván mới ở khung bên dưới.";
+      win.style.display = "block";
+      win.textContent = "Thắng: " + state.winner;
+    } else if (state.status === "CANCELLED") {
+      hint.textContent = "Phòng đã bị hủy, tiền ghế đã hoàn lại.";
+      win.style.display = "none";
+    }
+  }
+
+  async function playRounds() {
+    watching = true;
+    activeRound = 1;
+    playedRound = 0;
+    finishedReels = 0;
+    paintActions();
+    paintHint();
+    renderLobbyOrResult();
+    startCurrentRound();
+  }
+
+  function startCurrentRound() {
+    const players = state.players || [];
+    finishedReels = 0;
+    paintHint();
+    renderLobbyOrResult();
+    players.forEach((p, index) => {
+      const drop = dropFor(p.player, activeRound);
+      if (!drop) {
+        finishedReels += 1;
+        maybeAdvance();
+        return;
+      }
+      const winner = {
+        id: drop.id,
+        name: drop.name,
+        rarity: drop.rarity,
+        coin: drop.value,
+        image: drop.image,
+        color: drop.color,
+      };
+      spinReel({
+        pool: poolForRound(activeRound).length ? poolForRound(activeRound) : [winner],
+        winner,
+        orientation: "vertical",
+        index,
+        viewport: document.getElementById("reel-" + index),
+        strip: document.getElementById("strip-" + index),
+        onFinish: () => {
+          finishedReels += 1;
+          maybeAdvance();
+        },
+      });
+    });
+  }
+
+  function maybeAdvance() {
+    if (finishedReels < (state.players || []).length) return;
+    playedRound = activeRound;
+    setTimeout(() => {
+      if (activeRound < Number(state.rounds)) {
+        activeRound += 1;
+        startCurrentRound();
+      } else {
+        activeRound = 0;
+        watching = false;
+        paintActions();
+        paintHint();
+        renderLobbyOrResult();
+      }
+    }, 700);
+  }
+
+  async function refresh() {
+    const res = await fetch("/api/battles/" + battleId);
+    if (!res.ok) return;
+    const next = await res.json();
+    const wasWaiting = state.status === "WAITING" || state.status === "RUNNING";
+    state = next;
+    if (!watching) {
+      paintActions();
+      paintHint();
+      if (state.status === "FINISHED" && wasWaiting && (state.drops || []).length) {
+        playRounds();
+      } else if (state.status === "FINISHED" && !wasWaiting) {
+        playedRound = Number(state.rounds);
+        activeRound = 0;
+        renderLobbyOrResult();
+      } else {
+        renderLobbyOrResult();
+      }
+    }
+    if (state.status === "WAITING" || state.status === "RUNNING") setTimeout(refresh, 1200);
+  }
+
+  function say(msg) {
+    document.getElementById("hint").textContent = msg;
+  }
+
+  function afterState(next) {
+    state = next;
+    if (state.status === "FINISHED" && (state.drops || []).length && !watching) {
+      paintActions(); paintHint();
+      playRounds();
+    } else {
+      paintActions(); paintHint(); renderLobbyOrResult();
+      if (state.status === "WAITING" || state.status === "RUNNING") refresh();
+    }
+  }
+
+  async function onJoin(ev) {
+    if (busy) return;
+    busy = true;
+    ev.target.disabled = true;
+    const res = await fetch("/api/battles/" + battleId + "/join", { method: "POST", headers: { "X-CSRF": csrf } });
+    const data = await res.json();
+    busy = false;
+    if (!res.ok) { say(data.detail); ev.target.disabled = false; return; }
+    afterState(data);
+  }
+
+  async function onBots(ev) {
+    if (busy) return;
+    busy = true;
+    ev.target.disabled = true;
+    const res = await fetch("/api/battles/" + battleId + "/bots", { method: "POST", headers: { "X-CSRF": csrf } });
+    const data = await res.json();
+    busy = false;
+    if (!res.ok) { say(data.detail); ev.target.disabled = false; return; }
+    afterState(data);
+  }
+
+  async function onStart(ev) {
+    if (busy) return;
+    busy = true;
+    ev.target.disabled = true;
+    const res = await fetch("/api/battles/" + battleId + "/start", { method: "POST", headers: { "X-CSRF": csrf } });
+    const data = await res.json();
+    busy = false;
+    if (!res.ok) { say(data.detail); ev.target.disabled = false; paintActions(); return; }
+    afterState(data);
+  }
+
+  async function onLeave(ev) {
+    if (busy) return;
+    if (!confirm("Rời phòng và nhận lại tiền ghế?")) return;
+    busy = true;
+    ev.target.disabled = true;
+    const res = await fetch("/api/battles/" + battleId + "/leave", { method: "POST", headers: { "X-CSRF": csrf } });
+    const data = await res.json();
+    busy = false;
+    if (!res.ok) { say(data.detail); ev.target.disabled = false; return; }
+    if (data.deleted) { location.href = "/battles"; return; }
+    state = data;
+    paintActions(); paintHint(); renderLobbyOrResult();
+  }
+
+  async function onCancel(ev) {
+    if (busy) return;
+    if (!confirm("Hủy phòng? Tiền ghế của mọi người được hoàn lại.")) return;
+    busy = true;
+    ev.target.disabled = true;
+    const res = await fetch("/api/battles/" + battleId + "/cancel", { method: "POST", headers: { "X-CSRF": csrf } });
+    const data = await res.json();
+    busy = false;
+    if (!res.ok) { say(data.detail); ev.target.disabled = false; return; }
+    location.href = "/battles";
+  }
+
+  async function onKick(target, btn) {
+    if (busy) return;
+    busy = true;
+    btn.disabled = true;
+    const res = await fetch("/api/battles/" + battleId + "/kick", {
+      method: "POST", headers: { "Content-Type": "application/json", "X-CSRF": csrf },
+      body: JSON.stringify({ player: target }),
+    });
+    const data = await res.json();
+    busy = false;
+    if (!res.ok) { say(data.detail); btn.disabled = false; return; }
+    state = data;
+    paintActions(); paintHint(); renderLobbyOrResult();
+  }
+
+  // --- Editor playlist rương (chuẩn web gốc) ---
+  function lineRow(box, cid, cnt) {
+    const div = document.createElement("div");
+    div.className = "create-grid";
+    div.style.marginBottom = "8px";
+    div.innerHTML = `
+      <label>Rương
+        <select class="line-case">
+          ${CASES.map((c) => `<option value="${c.id}" ${c.id === cid ? "selected" : ""}>${c.name} · ${c.cost_fmt}</option>`).join("")}
+        </select>
+      </label>
+      <label>Số vòng
+        <select class="line-count">${Array.from({length: 10}, (_, i) => `<option value="${i+1}" ${i+1 === cnt ? "selected" : ""}>${i+1}</option>`).join("")}</select>
+      </label>
+      <label style="justify-content:flex-end;display:flex;align-items:flex-end">
+        <button class="line-del cf-btn-ghost" type="button" style="padding:4px 10px;font-size:12px">Xóa</button>
+      </label>`;
+    div.querySelector(".line-del").addEventListener("click", () => {
+      if (box.children.length <= 1) return;
+      div.remove();
+    });
+    return div;
+  }
+
+  function collectLines(box) {
+    const out = [];
+    const seen = new Set();
+    for (const row of box.children) {
+      const cid = row.querySelector(".line-case").value;
+      const cnt = Number(row.querySelector(".line-count").value || 1);
+      if (!cid || seen.has(cid)) continue;
+      seen.add(cid);
+      out.push({ case_id: cid, count: cnt });
+    }
+    return out.slice(0, 6);
+  }
+
+  const cfgBox = document.getElementById("cfg-lines");
+  if (cfgBox) {
+    const init = (state.lines && state.lines.length ? state.lines : [{ case_id: state.case_id, count: Number(state.rounds) || 1 }]);
+    init.forEach((l) => cfgBox.appendChild(lineRow(cfgBox, l.case_id, l.count)));
+    document.getElementById("cfg-add")?.addEventListener("click", () => {
+      if (cfgBox.children.length >= 6) return;
+      cfgBox.appendChild(lineRow(cfgBox, CASES[0]?.id, 1));
+    });
+  }
+
+  const rmBox = document.getElementById("rm-lines");
+  if (rmBox) {
+    const init = (state.lines && state.lines.length ? state.lines : [{ case_id: state.case_id, count: 1 }]);
+    init.slice(0, 6).forEach((l) => rmBox.appendChild(lineRow(rmBox, l.case_id, 1)));
+    document.getElementById("rm-add")?.addEventListener("click", () => {
+      if (rmBox.children.length >= 6) return;
+      rmBox.appendChild(lineRow(rmBox, CASES[0]?.id, 1));
+    });
+  }
+
+  document.getElementById("cfg-apply")?.addEventListener("click", async (ev) => {
+    if (busy) return;
+    busy = true;
+    ev.target.disabled = true;
+    const box = document.getElementById("cfg-hint");
+    box.textContent = "Đang lưu...";
+    const lines = collectLines(cfgBox);
+    const res = await fetch("/api/battles/" + battleId + "/config", {
+      method: "POST", headers: { "Content-Type": "application/json", "X-CSRF": csrf },
+      body: JSON.stringify({
+        case_id: lines[0]?.case_id,
+        rounds: lines.reduce((n, l) => n + l.count, 0),
+        lines,
+        slots: Number(document.getElementById("cfg-slots").value),
+        mode: document.getElementById("cfg-mode").value,
+      }),
+    });
+    const data = await res.json();
+    busy = false;
+    ev.target.disabled = false;
+    if (!res.ok) { box.textContent = data.detail; return; }
+    state = data;
+    box.textContent = "Đã lưu cấu hình.";
+    paintActions(); paintHint(); renderLobbyOrResult();
+  });
+
+  document.getElementById("rm-go")?.addEventListener("click", async (ev) => {
+    if (busy) return;
+    busy = true;
+    ev.target.disabled = true;
+    const box = document.getElementById("rm-hint");
+    box.textContent = "Đang tạo ván mới...";
+    const lines = collectLines(rmBox);
+    const res = await fetch("/api/battles/" + battleId + "/rematch", {
+      method: "POST", headers: { "Content-Type": "application/json", "X-CSRF": csrf },
+      body: JSON.stringify({
+        case_id: lines[0]?.case_id,
+        rounds: lines.reduce((n, l) => n + l.count, 0),
+        lines,
+        mode: document.getElementById("rm-mode").value,
+      }),
+    });
+    const data = await res.json();
+    busy = false;
+    if (!res.ok) { box.textContent = data.detail; ev.target.disabled = false; return; }
+    location.href = "/battles/" + data.id;
+  });
+
+  // Opening an already-finished battle: show result, don't replay unless just settled.
+  if (state.status === "FINISHED") {
+    playedRound = Number(state.rounds);
+    activeRound = 0;
+  }
+  paintActions();
+  paintHint();
+  renderLobbyOrResult();
+  if (state.status === "WAITING" || state.status === "RUNNING") refresh();
+</script>
+{% endblock %}
