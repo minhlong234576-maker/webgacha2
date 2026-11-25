@@ -36,6 +36,19 @@ if "GACHA_DB_PATH" not in os.environ:
     os.environ["GACHA_DB_PATH"] = str(tmp_dir / "gacha.db")
     shutil.copy(ROOT / "data" / "gacha.db", tmp_dir / "gacha.db")
 
+# `gacha.json` cung vay danh sach san pham. Server test KHONG bao gio ghi vao
+# file that — dung ban sao tam trong thu muc tam. Cac route admin san pham
+# (`/admin/products`) se ghi vao ban sao nay.
+if "GACHA_FILE" not in os.environ:
+    _cfg_tmp = Path(tempfile.mkdtemp(prefix="jvcfg_"))
+    os.environ["GACHA_FILE"] = str(_cfg_tmp / "gacha.json")
+    shutil.copy(ROOT / "gacha.json", os.environ["GACHA_FILE"])
+    # Ghi duong dan ra file de test process tu tim thay (khong do duong dan
+    # qua bien moi truong).
+    (_cfg_tmp / "gacha_file_path.txt").write_text(
+        os.environ["GACHA_FILE"], encoding="utf-8"
+    )
+
 import uvicorn  # noqa: E402
 
 port = int(sys.argv[1]) if len(sys.argv) > 1 else 8101

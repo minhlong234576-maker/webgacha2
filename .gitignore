@@ -19,6 +19,12 @@ tmp/
 *.db-wal
 *.db-shm
 
+# Backup tam sinh khi admin sua catalogue (gacha.json.bak / .tmp / .broken).
+# Chi giu `gacha.json` trong git; cac file nay sinh luc runtime.
+gacha.json.bak
+gacha.json.tmp
+gacha.json.broken
+
 # Repo tham chieu / san pham khac (khong phai source cua project nay)
 caseforge-main/
 Nexo/
@@ -39,4 +45,5 @@ _shots/
 logs_server.*
 srv*.out
 srv*.err
+srv*.log
 tmp_*.py

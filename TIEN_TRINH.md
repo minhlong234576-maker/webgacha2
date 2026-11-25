@@ -15,8 +15,9 @@ Nhánh: `main` — commit hiện tại: `c08851f` (121 file)
 | Coin realtime từ PikaMC (ExcellentEconomy) | ✅ Hoàn thành |
 | Quyền admin động đọc `ops.json` | ✅ Hoàn thành |
 | Mở rương / Túi đồ / Bán / Nâng cấp / Battle / Bonus / Roulette | ✅ Hoàn thành |
+| Admin quản lý sản phẩm + upload ảnh (`/admin/products`) | ✅ Hoàn thành |
 | Xóa tính năng "Hợp đồng" (contract) | ✅ Hoàn thành |
-| Test tự động (14 suite) | ✅ 14/14 PASS — 625 assertions |
+| Test tự động (24 suite) | ✅ 24/24 PASS — 1115 assertions |
 | Push lên GitHub | ✅ Đã push `0a59f6d..c08851f` |
 
 ---
@@ -91,6 +92,60 @@ Nguồn sự thật là file `/ops.json` trên server Minecraft.
 - Rebase trên commit `0a59f6d` (Initial commit có sẵn `README.md`) rồi push.
 - Đã **gỡ token khỏi remote URL** sau khi push (`git remote -v` chỉ hiện
   URL công khai).
+
+### 2.5 Admin quản lý sản phẩm + upload ảnh
+
+Trang `/admin/products` cho phép admin **thêm / sửa / xoá** món đồ trong
+các rương và **tự upload ảnh** cho từng món. Nguồn sự thật là file
+`gacha.json` ở thư mục gốc.
+
+**`app/catalog_admin.py`** (module mới)
+
+- `list_items()` / `list_cases()` / `get_item()` — đọc danh mục.
+- `create_item()` / `update_item()` / `delete_item()` / `update_case()` — ghi.
+- `save_item_image()` / `delete_item_image()` — ảnh trong `app/static/items/`.
+- `validate_item()` — id hợp lệ, `weight > 0`, `coin >= 0`, rarity trong danh
+  sách cho phép, `nexo_id` đúng định dạng.
+
+**Cơ chế an toàn**
+
+| Cơ chế | Chi tiết |
+| :--- | :--- |
+| Ghi atomic | Ghi file tạm → `os.replace()` sang file thật (không bao giờ nửa file) |
+| Backup | Mỗi lần ghi giữ `gacha.json.bak`; `restore_backup()` để quay lại |
+| Khoá | `threading.Lock` — hai request admin không ghi đè nhau |
+| Chặn path traversal | Tên file ảnh **sinh từ `id` + extension thật**, không dùng tên file người tải lên |
+| Kiểm tra magic bytes | Chỉ nhận PNG / JPG / WebP / SVG thật (chặn `.html`, `.exe`) |
+| Chặn ghi khi dry-run | `GACHA_DRY_RUN=true` + file thật → `CatalogReadOnlyError` |
+
+**Route (`app/main.py`)**
+
+| Method | Path | Việc |
+| :--- | :--- | :--- |
+| `GET` | `/admin/products` | Trang quản lý (admin) |
+| `GET` | `/api/admin/products` | Danh sách item + rương |
+| `POST` | `/api/admin/products` | Thêm sản phẩm |
+| `PUT` | `/api/admin/products/{case}/{item}` | Sửa sản phẩm |
+| `DELETE` | `/api/admin/products/{case}/{item}` | Xoá sản phẩm |
+| `PUT` | `/api/admin/cases/{case}` | Sửa rương (tên / giá quay) |
+| `POST` | `/api/admin/products/{case}/{item}/image` | Upload ảnh (multipart) |
+| `POST` | `/api/admin/products/{case}/{item}/image/delete` | Xoá ảnh |
+| `GET` | `/pika/tex/{base64}` | Proxy texture NexoMC từ server Minecraft |
+
+> **Xoá item cuối cùng được phép** — rương sẽ rỗng và không quay được nữa.
+> UI hiện nút `Xoá (rỗng)` + hộp thoại cảnh báo, và cảnh báo danh sách
+> rương rỗng ở đầu trang.
+
+**Biến môi trường mới**
+
+- `GACHA_FILE` — đường dẫn `gacha.json` (mặc định `<ROOT>/gacha.json`).
+  Server test trỏ sang bản sao tạm để **không bao giờ chạm dữ liệu thật**.
+
+**Test**
+
+- `tests/test_admin_products.py` — 52 assertion: phân quyền (401/403),
+  CSRF, CRUD, validate, upload ảnh (magic bytes / path traversal), xoá item
+  cuối cùng, và lưới an toàn dry-run.
 
 ---
 

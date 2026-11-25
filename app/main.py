@@ -9,12 +9,12 @@ from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import FastAPI, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.routing import Match
 from fastapi.templating import Jinja2Templates
 
-from . import admins, bank, bots, game, pika, store
+from . import admins, bank, bots, catalog_admin, game, pika, store
 from .roulette import roulette_manager
 from .config import PIKA_SERVER_UUID, SESSION_SECRET, pika_ready, session_https_only
 from .errors import MoneyError
@@ -227,6 +227,21 @@ def require_admin(request: Request) -> bool:
         if admins.is_admin_now(session.get(key)):
             return True
     return False
+
+
+def require_admin_api(request: Request, *, csrf: bool = True) -> JSONResponse | None:
+    """Chac quyen admin + CSRF cho API quan tri san pham.
+
+    Tra ve `JSONResponse` loi neu khong du quyen, nguoc lai `None` (cho phep
+    tiep tuc xu ly). Dung chung cho moi route `/api/admin/*`.
+    """
+    if not request.session.get("user"):
+        return JSONResponse({"detail": "Chưa đăng nhập."}, status_code=401)
+    if not require_admin(request):
+        return JSONResponse({"detail": "Chỉ quản trị viên mới dùng được."}, status_code=403)
+    if csrf and not require_csrf(request):
+        return JSONResponse({"detail": "Phiên hết hạn, tải lại trang."}, status_code=403)
+    return None
 
 
 def require_login(request: Request) -> tuple[str, str] | RedirectResponse:
@@ -1405,6 +1420,241 @@ async def admin_page(request: Request):
         net=format_coin(data["net"]),
         admins=await admins.admin_list(),
     )
+
+
+# ---------------------------------------------------------------------------
+#  Admin — quan tri san pham (item) cua catalogue
+# ---------------------------------------------------------------------------
+
+
+@app.get("/pika/tex/{encoded}")
+async def pika_texture(encoded: str):
+    """Proxy texture NexoMC tu server Minecraft.
+
+    `encoded` la `nexo_id` duoc base64url hoa (khong co padding). Server tu
+    trai ten voi duong dan that cua texture, nen web khong can biet cau truc
+    thu muc `assets/` cua resource pack.
+    """
+    from base64 import urlsafe_b64decode
+
+    from . import pika_textures
+
+    try:
+        padding = "=" * (-len(encoded) % 4)
+        nexo_id = urlsafe_b64decode(encoded + padding).decode("utf-8")
+    except Exception:
+        return JSONResponse({"detail": "Mã texture không hợp lệ."}, status_code=400)
+
+    try:
+        path = await pika_textures.resolve_nexo_id(nexo_id)
+    except Exception:
+        log.warning("khong resolve duoc texture %s", nexo_id, exc_info=True)
+        path = None
+    if not path:
+        # Fallback: thu doi duong dan theo thu muc pack.
+        return JSONResponse({"detail": "Không tìm thấy texture."}, status_code=404)
+    try:
+        result = await pika.read_binary(path)
+    except HTTPException:
+        raise
+    except Exception:
+        log.warning("khong tai duoc texture %s", path, exc_info=True)
+        return JSONResponse({"detail": "Không tải được texture."}, status_code=502)
+    if not result:
+        return JSONResponse({"detail": "Không tìm thấy texture."}, status_code=404)
+    content, content_type = result
+    return Response(
+        content=content,
+        media_type=content_type or "image/png",
+        headers={"Cache-Control": "public, max-age=300"},
+    )
+
+
+@app.get("/admin/products", response_class=HTMLResponse)
+async def admin_products_page(request: Request):
+    """Trang quan tri san pham: danh sach item, them / sua / xoa, upload anh."""
+    ctx = await require_player(request)
+    if isinstance(ctx, RedirectResponse):
+        return ctx
+    if not require_admin(request):
+        return RedirectResponse("/gacha", status_code=303)
+    try:
+        cases = catalog_admin.list_cases()
+        items = catalog_admin.list_items()
+    except catalog_admin.CatalogError as exc:
+        cases, items = [], []
+        log.warning("khong doc duoc catalogue: %s", exc)
+    for row in items:
+        row["image_url"] = _item_image_url(row)
+        row["coin_fmt"] = format_coin(row.get("coin"))
+        row["weight_pct"] = row.get("_pct")
+    return render(
+        request,
+        "admin_products.html",
+        **ctx,
+        cases=cases,
+        items=items,
+        rarities=catalog_admin.RARITIES,
+        catalog_error=str(exc) if not cases else "",
+    )
+
+
+def _item_image_url(row: dict) -> str:
+    """Duong dan anh hien thi cua item.
+
+    Uu tien `image` explicit (duong dan noi bo). Neu khong co, dung proxy
+    `/pika/tex/<base64 nexo_id>` de web tu tai texture tu server.
+    """
+    explicit = str(row.get("image") or "").strip()
+    if explicit.startswith("/static/") or explicit.startswith("/pika/tex/"):
+        return explicit
+    nexo_id = str(row.get("nexo_id") or "").strip()
+    if nexo_id:
+        from base64 import urlsafe_b64encode
+        encoded = urlsafe_b64encode(nexo_id.encode()).decode().rstrip("=")
+        return f"/pika/tex/{encoded}"
+    return "/static/items/_placeholder.svg"
+
+
+@app.get("/api/admin/products")
+async def api_admin_products(request: Request):
+    """Danh sach item (loc theo `case` neu co)."""
+    err = require_admin_api(request, csrf=False)
+    if err:
+        return err
+    try:
+        case_id = request.query_params.get("case") or None
+        items = catalog_admin.list_items(case_id)
+        for row in items:
+            row["image_url"] = _item_image_url(row)
+        return {"items": items, "cases": catalog_admin.list_cases()}
+    except catalog_admin.CatalogError as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=400)
+
+
+@app.post("/api/admin/products")
+async def api_admin_product_create(request: Request):
+    """Them san pham moi vao ruong."""
+    err = require_admin_api(request)
+    if err:
+        return err
+    try:
+        body = await read_json_dict(request)
+        case_id = str(body.get("case_id") or "").strip()
+        if not case_id:
+            raise catalog_admin.CatalogError("Thiếu rương đích.")
+        item = catalog_admin.create_item(case_id, body)
+        item["image_url"] = _item_image_url(item)
+        return {"ok": True, "item": item}
+    except catalog_admin.CatalogError as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=400)
+    except Exception:
+        log.exception("tao san pham that bai")
+        return JSONResponse({"detail": "Lỗi hệ thống, vui lòng thử lại."}, status_code=500)
+
+
+@app.put("/api/admin/products/{case_id}/{item_id}")
+async def api_admin_product_update(request: Request, case_id: str, item_id: str):
+    """Sua san pham."""
+    err = require_admin_api(request)
+    if err:
+        return err
+    try:
+        body = await read_json_dict(request)
+        item = catalog_admin.update_item(case_id, item_id, body)
+        item["image_url"] = _item_image_url(item)
+        return {"ok": True, "item": item}
+    except catalog_admin.CatalogError as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=400)
+    except Exception:
+        log.exception("sua san pham that bai")
+        return JSONResponse({"detail": "Lỗi hệ thống, vui lòng thử lại."}, status_code=500)
+
+
+@app.delete("/api/admin/products/{case_id}/{item_id}")
+async def api_admin_product_delete(request: Request, case_id: str, item_id: str):
+    """Xoa san pham khoi ruong."""
+    err = require_admin_api(request)
+    if err:
+        return err
+    try:
+        catalog_admin.delete_item(case_id, item_id)
+        return {"ok": True}
+    except catalog_admin.CatalogError as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=400)
+    except Exception:
+        log.exception("xoa san pham that bai")
+        return JSONResponse({"detail": "Lỗi hệ thống, vui lòng thử lại."}, status_code=500)
+
+
+@app.put("/api/admin/cases/{case_id}")
+async def api_admin_case_update(request: Request, case_id: str):
+    """Sua thong tin ruong (ten, mo ta, gia quay)."""
+    err = require_admin_api(request)
+    if err:
+        return err
+    try:
+        body = await read_json_dict(request)
+        case = catalog_admin.update_case(case_id, body)
+        return {"ok": True, "case": case}
+    except catalog_admin.CatalogError as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=400)
+    except Exception:
+        log.exception("sua ruong that bai")
+        return JSONResponse({"detail": "Lỗi hệ thống, vui lòng thử lại."}, status_code=500)
+
+
+@app.post("/api/admin/products/{case_id}/{item_id}/image")
+async def api_admin_product_image(request: Request, case_id: str, item_id: str):
+    """Upload anh cho san pham (multipart/form-data).
+
+    File luu vao `app/static/items/<id>.<ext>`. Ten file sinh tu id + extension
+    thật nen khong dung ten file nguoi tai len -> chong path traversal.
+    """
+    err = require_admin_api(request)
+    if err:
+        return err
+    try:
+        # `python-multipart` cho phep FastAPI parse multipart.
+        form = await request.form()
+        upload = form.get("file")
+        if upload is None or not hasattr(upload, "read"):
+            raise catalog_admin.CatalogError("Chưa chọn file ảnh.")
+        content = await upload.read()
+        path = catalog_admin.save_item_image(item_id, getattr(upload, "filename", "") or "", content)
+        # Luu duong dan moi vao item neu item ton tai trong ruong.
+        try:
+            item = catalog_admin.get_item(item_id, case_id)
+            if item:
+                catalog_admin.update_item(case_id, item_id, {**item, "image": path})
+        except catalog_admin.CatalogError:
+            # Anh da luu thanh cong; item khong tim thay -> van tra ve path.
+            pass
+        return {"ok": True, "image": path, "image_url": path}
+    except catalog_admin.CatalogError as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=400)
+    except Exception:
+        log.exception("upload anh that bai")
+        return JSONResponse({"detail": "Lỗi hệ thống, vui lòng thử lại."}, status_code=500)
+
+
+@app.post("/api/admin/products/{case_id}/{item_id}/image/delete")
+async def api_admin_product_image_delete(request: Request, case_id: str, item_id: str):
+    """Xoa file anh cua san pham."""
+    err = require_admin_api(request)
+    if err:
+        return err
+    try:
+        catalog_admin.delete_item_image(item_id)
+        item = catalog_admin.get_item(item_id, case_id)
+        if item:
+            catalog_admin.update_item(case_id, item_id, {**item, "image": ""})
+        return {"ok": True}
+    except catalog_admin.CatalogError as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=400)
+    except Exception:
+        log.exception("xoa anh that bai")
+        return JSONResponse({"detail": "Lỗi hệ thống, vui lòng thử lại."}, status_code=500)
 
 
 @app.get("/setup", response_class=HTMLResponse)

@@ -31,9 +31,21 @@ def rarity_color(rarity: str) -> str:
     return RARITY_COLORS.get(rarity, "#b0c3d9")
 
 
-def resolve_image(folder: str, item_id: str, explicit: str | None = None) -> str:
+def resolve_image(folder: str, item_id: str, explicit: str | None = None, nexo_id: str | None = None) -> str:
+    """Ánh xạ ảnh cho item.
+
+    Ưu tiên: explicit URL -> nexo_id (Pika texture) -> local file -> placeholder.
+    """
     if explicit:
         return explicit
+    # Thử nexo_id: nếu có, trả về URL proxy `/pika/tex/<path>`.
+    if nexo_id:
+        from base64 import urlsafe_b64encode
+        # URL proxy sẽ được resolve trong async context (main.py).
+        # Tạm thời encode vào URL để có thể decode sau.
+        encoded = urlsafe_b64encode(nexo_id.encode()).decode().rstrip("=")
+        return f"/pika/tex/{encoded}"
+    # Fallback: tìm ảnh local.
     for ext in IMAGE_EXTS:
         path = STATIC_DIR / folder / f"{item_id}{ext}"
         if path.exists():
@@ -96,7 +108,7 @@ def _parse_item(raw: dict) -> Item:
         rarity=rarity,
         weight=float(raw.get("weight", 1)),
         coin=int(raw.get("coin", 0)),
-        image=resolve_image("items", item_id, raw.get("image")),
+        image=resolve_image("items", item_id, raw.get("image"), nexo_id),
         color=rarity_color(rarity),
         nexo_id=nexo_id,
         nexo_amount=nexo_amount,
@@ -109,13 +121,15 @@ def load_cases() -> list[Case]:
         items = [_parse_item(item) for item in raw.get("items", [])]
         glow = rarity_color(items[-1].rarity) if items else "#e4ae39"
         case_id = raw["id"]
+        # Rương có thể có nexo_id để lấy ảnh từ Pika.
+        case_nexo_id = str(raw.get("nexo_id") or "").strip() or None
         cases.append(
             Case(
                 id=case_id,
                 name=raw["name"],
                 description=raw.get("description", ""),
                 pull_cost=int(raw.get("pull_cost", 0)),
-                image=resolve_image("cases", case_id, raw.get("image")),
+                image=resolve_image("cases", case_id, raw.get("image"), case_nexo_id),
                 items=items,
                 glow=glow,
             )

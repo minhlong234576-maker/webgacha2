@@ -44,6 +44,7 @@ SUITES = [
     ("UI - nang cap 2 mon len 1 mon", "test_upgrade_ui.py", True, 8101),
     ("Quyen admin realtime (doc OP tu PikaMC)", "test_admin_realtime.py", False, None),
     ("Quyen admin realtime - HTTP", "test_admin_http.py", True, 8101),
+    ("Admin - quan tri san pham + upload anh", "test_admin_products.py", True, 8101),
     ("Dang nhap thuc", "test_login_browser.py", True, 8080),
     ("Tai khoan that (mo ruong, ban do, rut do)", "test_live_account_browser.py", True, 8080),
 ]
@@ -83,23 +84,33 @@ def kill_port(port: int) -> None:
     subprocess.run(cmd, capture_output=True)
 
 
-def start_servers(ports: set[int]) -> list[subprocess.Popen]:
+def start_servers(ports: set[int]) -> tuple[list[subprocess.Popen], dict[int, Path]]:
+    """Khoi dong server test. Tra ve (processes, port -> ban sao gacha.json)."""
     procs = []
+    cfg_files: dict[int, Path] = {}
     for port in sorted(ports):
         kill_port(port)
-    time.sleep(1.5)
+        time.sleep(1.5)
     for port in sorted(ports):
         dry_run, extra = SERVERS.get(port, ("true", []))
         env = dict(os.environ)
         env["GACHA_DB_PATH"] = str(TEST_DB)
         env["GACHA_DRY_RUN"] = dry_run
+        # `gacha.json` la danh sach san pham THAT cua production. Server test
+        # KHONG bao gio ghi vao file do — tro moi server toi mot ban sao tam.
+        # Neu khong, route admin san pham se xoa item that khi test chay.
+        cfg_tmp = Path(tempfile.mkdtemp(prefix=f"jvcfg{port}_"))
+        cfg_file = cfg_tmp / "gacha.json"
+        shutil.copy(ROOT / "gacha.json", cfg_file)
+        env["GACHA_FILE"] = str(cfg_file)
+        cfg_files[port] = cfg_file
         out = open(ROOT / f"srv{port}.out", "w", encoding="utf-8")
         err = open(ROOT / f"srv{port}.err", "w", encoding="utf-8")
         procs.append(subprocess.Popen(
             [sys.executable, str(HERE / "run_test_server.py"), str(port), *extra],
             cwd=str(ROOT), env=env, stdout=out, stderr=err,
         ))
-    return procs
+    return procs, cfg_files
 
 
 def wait_ready(ports: set[int], timeout: float = 40.0) -> bool:
@@ -128,7 +139,7 @@ def main():
     prepare_db()
 
     needed_ports = {port for _, _, needs, port in SUITES if needs and port}
-    procs = start_servers(needed_ports)
+    procs, cfg_files = start_servers(needed_ports)
     try:
         if not wait_ready(needed_ports):
             print("!! Khong khoi dong duoc server test — bo qua cac suite can server.")
@@ -159,6 +170,7 @@ def main():
                    else [str(port)] if script in ("test_all_features.py",
                                                  "test_ui_menu.py",
                                                  "test_admin_http.py",
+                                                 "test_admin_products.py",
                                                  "test_upgrade_ui.py",
                                                  "test_landing_video.py",
                                                  "test_require_login.py")
@@ -168,7 +180,10 @@ def main():
                 text=True,
                 encoding="utf-8",
                 errors="replace",
-                env={**os.environ, "GACHA_DB_PATH": str(TEST_DB)},
+                env={**os.environ, "GACHA_DB_PATH": str(TEST_DB),
+                     # Truong `GACHA_FILE` -> ban sao tam cua server test de
+                     # suite nay khong bao gio cham `gacha.json` that.
+                     "GACHA_FILE": str(cfg_files.get(port, "")) or ""},
             )
             dt = time.perf_counter() - t0
             out = proc.stdout or ""

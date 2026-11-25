@@ -99,14 +99,30 @@ app/
   bots.py       Bot mở rương + ngồi battle
   roulette.py   Coinflip Roulette
   gacha.py      Nạp gacha.json, roll, lệnh eco
+  catalog_admin.py  Quản lý sản phẩm (thêm/sửa/xoá item + ảnh) cho admin
+  pika_textures.py  Index texture NexoMC từ server Minecraft
   security.py   AuthMe SHA256, CSRF, rate limit
   config.py     Nạp .env
   templates/    Jinja2
   static/       CSS, JS, ảnh rương/đồ
   static/media/ Video nền landing + poster
 gacha.json      Rương, tỉ lệ, giá
-tests/          22 suite tự động
+tests/          24 suite tự động
 ```
+
+## Quản lý sản phẩm (admin)
+
+Trang `/admin/products` cho phép admin thêm / sửa / xoá món đồ trong các
+rương và tự upload ảnh cho từng món. Dữ liệu lưu thẳng vào `gacha.json`.
+
+- Ghi file **atomic** (file tạm → `os.replace`), kèm backup `gacha.json.bak`.
+- Tên file ảnh **sinh từ id sản phẩm** + extension thật → không có
+  path traversal; kiểm tra magic bytes nên chỉ nhận PNG/JPG/WebP/SVG thật.
+- Cho phép xoá item cuối cùng (rương sẽ rỗng — UI cảnh báo rõ).
+- Khi `GACHA_DRY_RUN=true`, mọi thao tác ghi vào `gacha.json` thật bị chặn.
+
+Biến `GACHA_FILE` cho phép trỏ sang file danh mục khác (server test dùng
+bản sao tạm để không bao giờ chạm dữ liệu thật).
 
 ## Test
 

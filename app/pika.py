@@ -223,6 +223,62 @@ async def read_file(file_path: str) -> str | None:
     return response.text
 
 
+async def list_dir(directory: str = "") -> list[dict[str, Any]]:
+    """Liệt kê nội dung một thư mục trên server Minecraft.
+
+    Endpoint `files/list` giới hạn `per_page` tối đa 100 nên phải phân trang.
+    Mỗi entry có: `name`, `directory` (bool), `size` (int).
+    """
+    server = await resolve_server_uuid()
+    url = f"{PIKA_BASE_URL}/api/client/servers/{server}/files/list"
+    out: list[dict[str, Any]] = []
+    page = 1
+    while True:
+        response = await get_client(timeout=30.0).get(
+            url,
+            headers=_headers(),
+            params={"directory": directory, "per_page": 100, "page": page},
+        )
+        if response.status_code in (403, 404):
+            return out
+        if response.status_code >= 400:
+            raise HTTPException(
+                status_code=503,
+                detail=f"PikaMC files/list HTTP {response.status_code}",
+            )
+        try:
+            entries = response.json().get("entries") or {}
+        except Exception:
+            return out
+        out.extend(entries.get("data") or [])
+        total_pages = int(entries.get("total_pages") or 1)
+        if page >= total_pages:
+            break
+        page += 1
+    return out
+
+
+async def read_binary(file_path: str) -> tuple[bytes, str] | None:
+    """Tải file nhị phân từ server (ảnh PNG, v.v.).
+
+    Trả về `(nội dung, content-type)` hoặc `None` nếu file không tồn tại.
+    """
+    server = await resolve_server_uuid()
+    url = f"{PIKA_BASE_URL}/api/client/servers/{server}/files/contents"
+    response = await get_client(timeout=30.0).get(
+        url, headers=_headers(), params={"file": file_path}
+    )
+    if response.status_code in (403, 404):
+        return None
+    if response.status_code >= 400:
+        raise HTTPException(
+            status_code=503,
+            detail=f"PikaMC files/contents HTTP {response.status_code}",
+        )
+    content_type = response.headers.get("content-type", "application/octet-stream")
+    return response.content, content_type
+
+
 async def server_ops() -> list[dict[str, Any]]:
     """Danh sách operator (OP) của server Minecraft, đọc từ `ops.json`.
 

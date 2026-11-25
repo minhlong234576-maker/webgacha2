@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+{% block title %}Quản lý sản phẩm · JellyVale{% endblock %}
+{% block content %}
+<section class="admin-card">
+  <p class="eyebrow"><i></i> Quản trị · Sản phẩm</p>
+  <h1>Sản phẩm &amp; ảnh</h1>
+  <p class="lead">
+    Thêm, sửa, xoá món đồ trong các rương và tự upload ảnh cho từng món.
+    Thay đổi lưu thẳng vào <code>gacha.json</code> (có file backup tự động).
+  </p>
+
+  {% if catalog_error %}
+  <div class="alert">Không đọc được <code>gacha.json</code>: {{ catalog_error }}</div>
+  {% endif %}
+
+  <div class="toolbar">
+    <label for="filter-case" class="sr-only">Lọc theo rương</label>
+    <select id="filter-case">
+      <option value="">Tất cả rương</option>
+      {% for c in cases %}
+      <option value="{{ c.id }}">{{ c.name }} ({{ c.item_count }} món)</option>
+      {% endfor %}
+    </select>
+    <input id="filter-text" type="search" placeholder="Tìm theo tên hoặc id..." aria-label="Tìm sản phẩm">
+    <span id="count-label" class="meta"></span>
+    <button class="cf-btn-primary" type="button" id="btn-new">+ Thêm sản phẩm</button>
+  </div>
+
+  <div class="table-scroll">
+    <table id="product-table">
+      <thead>
+        <tr>
+          <th style="width:56px">Ảnh</th>
+          <th>Tên</th>
+          <th>Id</th>
+          <th>Rương</th>
+          <th>Rarity</th>
+          <th style="text-align:right">Tỉ lệ</th>
+          <th style="text-align:right">Giá</th>
+          <th style="text-align:right">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody id="product-rows"></tbody>
+    </table>
+  </div>
+  <p class="meta" id="empty-hint" hidden>Không có sản phẩm nào khớp bộ lọc.</p>
+  <p class="alert warn" id="empty-case-warn" hidden></p>
+</section>
+
+<!-- ======= Modal: thêm / sửa sản phẩm ======= -->
+<div class="modal-backdrop" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <header class="modal-head">
+      <h2 id="modal-title">Thêm sản phẩm</h2>
+      <button type="button" class="modal-close" id="btn-close" aria-label="Đóng">✕</button>
+    </header>
+
+    <form id="product-form" class="modal-body">
+      <input type="hidden" name="case_id" id="f-case-id">
+      <input type="hidden" name="orig_id" id="f-orig-id">
+
+      <div class="modal-media">
+        <div class="preview-frame">
+          <img id="f-preview" src="/static/items/_placeholder.svg" alt="Ảnh xem trước">
+        </div>
+        <div class="media-actions">
+          <label class="upload-btn" for="f-file">Chọn ảnh…</label>
+          <input id="f-file" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+          <p class="meta">PNG / JPG / WebP / SVG · tối đa 5 MB. Tên file được sinh tự động từ id sản phẩm.</p>
+          <p class="meta" id="f-file-name"></p>
+          <button type="button" class="btn-ghost-danger" id="btn-clear-image">Xoá ảnh đã lưu</button>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <label>Tên sản phẩm
+          <input id="f-name" type="text" required maxlength="120" placeholder="Ví dụ: Kiếm Bạc">
+        </label>
+        <label>Id sản phẩm
+          <input id="f-id" type="text" required maxlength="64" placeholder="vd: silver_sword" spellcheck="false" autocapitalize="none">
+          <span class="meta">Chữ thường, số, gạch dưới, gạch ngang.</span>
+        </label>
+        <label>Rương
+          <select id="f-case" required>
+            {% for c in cases %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Rarity
+          <select id="f-rarity">
+            {% for r in rarities %}
+            <option value="{{ r }}">{{ r }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>Tỉ lệ trúng (weight)
+          <input id="f-weight" type="number" step="0.001" min="0.001" required value="1">
+          <span class="meta">Càng lớn càng dễ trúng. Tổng mỗi rương phải &gt; 0.</span>
+        </label>
+        <label>Giá trị (Coin)
+          <input id="f-coin" type="number" step="1" min="0" required value="1000">
+        </label>
+        <label>Nexo id (đồ trong game)
+          <input id="f-nexo" type="text" maxlength="64" placeholder="vd: silver_sword" spellcheck="false" autocapitalize="none">
+          <span class="meta">Dùng để rút đồ vào Minecraft. Để trống nếu chỉ bán Coin.</span>
+        </label>
+        <label>Số lượng khi rút
+          <input id="f-nexo-amount" type="number" step="1" min="1" value="1">
+        </label>
+      </div>
+
+      <p class="form-error" id="form-error" hidden></p>
+
+      <footer class="modal-foot">
+        <button type="button" class="btn-ghost" id="btn-cancel">Huỷ</button>
+        <button type="submit" class="cf-btn-primary" id="btn-save">Lưu sản phẩm</button>
+      </footer>
+    </form>
+  </div>
+</div>
+
+<script>
+const CSRF = document.querySelector('meta[name="csrf"]')?.content || "";
+const API = "/api/admin/products";
+
+const ALL_ITEMS = {{ items | tojson }};
+const ALL_CASES = {{ cases | tojson }};
+
+const els = {
+  rows: document.getElementById("product-rows"),
+  empty: document.getElementById("empty-hint"),
+  count: document.getElementById("count-label"),
+  filterCase: document.getElementById("filter-case"),
+  filterText: document.getElementById("filter-text"),
+  modal: document.getElementById("modal"),
+  form: document.getElementById("product-form"),
+  err: document.getElementById("form-error"),
+  preview: document.getElementById("f-preview"),
+  file: document.getElementById("f-file"),
+  fileName: document.getElementById("f-file-name"),
+};
+
+const RARITY_LABEL = {
+  consumer: "Consumer", industrial: "Industrial", milspec: "Military",
+  restricted: "Restricted", classified: "Classified", covert: "Covert",
+  extraordinary: "Extraordinary",
+};
+
+let editing = null;      // null = them moi, {case_id, id} = sua
+let pendingFile = null; // File moi chon, chua upload
+let savedImage = "";    // Duong dan anh da luu cua item dang sua
+
+// --- Render bang ------------------------------------------------------------
+function filtered() {
+  const cs = els.filterCase.value;
+  const q = els.filterText.value.trim().toLowerCase();
+  return ALL_ITEMS.filter(it => {
+    if (cs && it.case_id !== cs) return false;
+    if (!q) return true;
+    return (it.name || "").toLowerCase().includes(q)
+        || (it.id || "").toLowerCase().includes(q)
+        || (it.nexo_id || "").toLowerCase().includes(q);
+  });
+}
+
+function fmtCoin(n) {
+  const v = Number(n || 0);
+  return v.toLocaleString("vi-VN").replace(/,/g, ".");
+}
+
+function render() {
+  const rows = filtered();
+  els.rows.replaceChildren();
+
+  // Tinh % trung theo tung ruong.
+  const totalByCase = {};
+  const countByCase = {};
+  for (const it of ALL_ITEMS) {
+    totalByCase[it.case_id] = (totalByCase[it.case_id] || 0) + Number(it.weight || 0);
+    countByCase[it.case_id] = (countByCase[it.case_id] || 0) + 1;
+  }
+
+  // Canh bao cac ruong dang rong (khong quay duoc).
+  const emptyCases = ALL_CASES.filter(c => !countByCase[c.id]);
+  const warn = document.getElementById("empty-case-warn");
+  if (warn) {
+    warn.hidden = emptyCases.length === 0;
+    warn.textContent = emptyCases.length
+      ? "Rương rỗng (không quay được): " + emptyCases.map(c => c.name).join(", ")
+      : "";
+  }
+
+  for (const it of rows) {
+    const tr = document.createElement("tr");
+    tr.dataset.caseId = it.case_id;
+    tr.dataset.itemId = it.id;
+
+    // --- Anh
+    const tdImg = document.createElement("td");
+    const img = document.createElement("img");
+    img.className = "thumb";
+    img.src = it.image_url || "/static/items/_placeholder.svg";
+    img.alt = it.name || it.id;
+    img.loading = "lazy";
+    img.width = 40;
+    img.height = 40;
+    tdImg.append(img);
+
+    // --- Ten + nexo
+    const tdName = document.createElement("td");
+    const strong = document.createElement("strong");
+    strong.textContent = it.name || it.id;
+    tdName.append(strong);
+    if (it.nexo_id) {
+      const small = document.createElement("div");
+      small.className = "meta";
+      small.textContent = "nexo: " + it.nexo_id;
+      tdName.append(small);
+    }
+
+    const tdId = document.createElement("td");
+    const code = document.createElement("code");
+    code.textContent = it.id;
+    tdId.append(code);
+
+    const tdCase = document.createElement("td");
+    tdCase.textContent = it.case_name || it.case_id;
+
+    const tdRar = document.createElement("td");
+    const badge = document.createElement("span");
+    badge.className = "rarity-chip";
+    badge.dataset.rarity = it.rarity;
+    badge.textContent = RARITY_LABEL[it.rarity] || it.rarity;
+    tdRar.append(badge);
+
+    const tdW = document.createElement("td");
+    tdW.style.textAlign = "right";
+    const total = totalByCase[it.case_id] || 0;
+    const pct = total > 0 ? (Number(it.weight || 0) / total) * 100 : 0;
+    tdW.textContent = pct.toFixed(2) + "%";
+
+    const tdCoin = document.createElement("td");
+    tdCoin.style.textAlign = "right";
+    tdCoin.textContent = fmtCoin(it.coin);
+
+    // --- Nut
+    const tdAct = document.createElement("td");
+    tdAct.style.textAlign = "right";
+    tdAct.style.whiteSpace = "nowrap";
+
+    const btnEdit = document.createElement("button");
+    btnEdit.type = "button";
+    btnEdit.className = "btn-ghost";
+    btnEdit.textContent = "Sửa";
+    btnEdit.addEventListener("click", () => openEdit(it));
+
+    const btnDel = document.createElement("button");
+    btnDel.type = "button";
+    btnDel.className = "btn-ghost-danger";
+    const caseCount = ALL_ITEMS.filter(x => x.case_id === it.case_id).length;
+    btnDel.textContent = caseCount <= 1 ? "Xoá (rỗng)" : "Xoá";
+    if (caseCount <= 1) {
+      btnDel.title = "Món cuối cùng của rương — xoá sẽ làm rương rỗng.";
+    }
+    btnDel.addEventListener("click", () => removeItem(it));
+
+    tdAct.append(btnEdit, btnDel);
+
+    tr.append(tdImg, tdName, tdId, tdCase, tdRar, tdW, tdCoin, tdAct);
+    els.rows.append(tr);
+  }
+
+  els.empty.hidden = rows.length > 0;
+  els.count.textContent = `${rows.length}/${ALL_ITEMS.length} sản phẩm`;
+}
+
+// --- Modal ------------------------------------------------------------------
+function openModal(title) {
+  els.modal.hidden = false;
+  document.getElementById("modal-title").textContent = title;
+  els.err.hidden = true;
+  els.err.textContent = "";
+  document.body.classList.add("modal-open");
+}
+
+function closeModal() {
+  els.modal.hidden = true;
+  document.body.classList.remove("modal-open");
+  editing = null;
+  pendingFile = null;
+  savedImage = "";
+  els.file.value = "";
+  els.fileName.textContent = "";
+}
+
+function setPreview(url) {
+  els.preview.src = url || "/static/items/_placeholder.svg";
+}
+
+function openNew() {
+  editing = null;
+  pendingFile = null;
+  savedImage = "";
+  els.form.reset();
+  document.getElementById("f-orig-id").value = "";
+  document.getElementById("f-id").value = "";
+  document.getElementById("f-weight").value = "1";
+  document.getElementById("f-coin").value = "1000";
+  document.getElementById("f-nexo-amount").value = "1";
+  els.file.value = "";
+  els.fileName.textContent = "";
+  setPreview("/static/items/_placeholder.svg");
+  openModal("Thêm sản phẩm");
+  document.getElementById("f-name").focus();
+}
+
+function openEdit(it) {
+  editing = { case_id: it.case_id, id: it.id };
+  pendingFile = null;
+  savedImage = it.image || "";
+  document.getElementById("f-orig-id").value = it.id;
+  document.getElementById("f-case-id").value = it.case_id;
+  document.getElementById("f-name").value = it.name || "";
+  document.getElementById("f-id").value = it.id || "";
+  document.getElementById("f-case").value = it.case_id;
+  document.getElementById("f-rarity").value = it.rarity || "consumer";
+  document.getElementById("f-weight").value = it.weight ?? 1;
+  document.getElementById("f-coin").value = it.coin ?? 0;
+  document.getElementById("f-nexo").value = it.nexo_id || "";
+  document.getElementById("f-nexo-amount").value = it.nexo_amount ?? 1;
+  els.file.value = "";
+  els.fileName.textContent = "";
+  setPreview(it.image_url);
+  openModal("Sửa sản phẩm");
+  document.getElementById("f-name").focus();
+}
+
+function showError(msg) {
+  els.err.textContent = msg;
+  els.err.hidden = false;
+}
+
+// --- Luu --------------------------------------------------------------------
+async function saveProduct(e) {
+  e.preventDefault();
+  const btn = document.getElementById("btn-save");
+  btn.disabled = true;
+  try {
+    const payload = {
+      case_id: document.getElementById("f-case").value,
+      id: document.getElementById("f-id").value.trim().toLowerCase(),
+      name: document.getElementById("f-name").value.trim(),
+      rarity: document.getElementById("f-rarity").value,
+      weight: Number(document.getElementById("f-weight").value),
+      coin: Number(document.getElementById("f-coin").value),
+      nexo_id: document.getElementById("f-nexo").value.trim(),
+      nexo_amount: Number(document.getElementById("f-nexo-amount").value),
+    };
+
+    const origId = document.getElementById("f-orig-id").value;
+    const url = origId
+      ? `${API}/${encodeURIComponent(editing.case_id)}/${encodeURIComponent(origId)}`
+      : API;
+    const method = origId ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method: method,
+      headers: { "Content-Type": "application/json", "X-CSRF": CSRF },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showError(data.detail || "Không lưu được sản phẩm.");
+      return;
+    }
+
+    // Upload anh (neu co chon file moi).
+    if (pendingFile) {
+      const fd = new FormData();
+      fd.append("file", pendingFile);
+      const up = await fetch(
+        `${API}/${encodeURIComponent(payload.case_id)}/${encodeURIComponent(payload.id)}/image`,
+        { method: "POST", headers: { "X-CSRF": CSRF }, body: fd }
+      );
+      const upData = await up.json().catch(() => ({}));
+      if (!up.ok) {
+        showError("Đã lưu sản phẩm nhưng upload ảnh thất bại: " + (upData.detail || ""));
+        await reload();
+        return;
+      }
+      data.item.image = upData.image;
+      data.item.image_url = upData.image;
+    }
+
+    await reload();
+    closeModal();
+  } catch (err) {
+    showError("Lỗi mạng: " + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function removeItem(it) {
+  const label = `${it.name} (${it.id})`;
+  // Neu day la item cuoi cung cua ruong -> rong se rong, khong quay duoc nua.
+  const count = ALL_ITEMS.filter(x => x.case_id === it.case_id).length;
+  const isLast = count <= 1;
+  const msg = isLast
+    ? `Xoá sản phẩm "${label}" khỏi rương ${it.case_name}?\n\n` +
+      `Đây là món CUỐI CÙNG của rương. Rương sẽ rỗng và không thể quay ` +
+      `cho tới khi bạn thêm lại sản phẩm.`
+    : `Xoá sản phẩm "${label}" khỏi rương ${it.case_name}?\n\n` +
+      `Món này sẽ không còn xuất hiện khi quay rương.`;
+  if (!confirm(msg)) {
+    return;
+  }
+  try {
+    const res = await fetch(
+      `${API}/${encodeURIComponent(it.case_id)}/${encodeURIComponent(it.id)}`,
+      { method: "DELETE", headers: { "X-CSRF": CSRF } }
+    );
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert(data.detail || "Không xoá được.");
+      return;
+    }
+    await reload();
+  } catch (err) {
+    alert("Lỗi mạng: " + err.message);
+  }
+}
+
+// --- Tai lai danh sach tu server ---------------------------------------------
+async function reload() {
+  try {
+    const res = await fetch(API, { headers: { "X-CSRF": CSRF } });
+    if (!res.ok) return;
+    const data = await res.json();
+    ALL_ITEMS.length = 0;
+    ALL_ITEMS.push(...data.items);
+    render();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// --- Su kien ----------------------------------------------------------------
+els.form.addEventListener("submit", saveProduct);
+document.getElementById("btn-new").addEventListener("click", openNew);
+document.getElementById("btn-close").addEventListener("click", closeModal);
+document.getElementById("btn-cancel").addEventListener("click", closeModal);
+els.modal.addEventListener("click", (e) => { if (e.target === els.modal) closeModal(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !els.modal.hidden) closeModal(); });
+els.filterCase.addEventListener("change", render);
+els.filterText.addEventListener("input", render);
+
+els.file.addEventListener("change", () => {
+  const f = els.file.files[0];
+  pendingFile = f || null;
+  els.fileName.textContent = f ? `${f.name} · ${(f.size / 1024).toFixed(0)} KB` : "";
+  if (f) setPreview(URL.createObjectURL(f));
+});
+
+document.getElementById("btn-clear-image").addEventListener("click", async () => {
+  if (!editing) {
+    setPreview("/static/items/_placeholder.svg");
+    els.fileName.textContent = "";
+    pendingFile = null;
+    return;
+  }
+  try {
+    const res = await fetch(
+      `${API}/${encodeURIComponent(editing.case_id)}/${encodeURIComponent(editing.id)}/image/delete`,
+      { method: "POST", headers: { "X-CSRF": CSRF } }
+    );
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { alert(data.detail || "Không xoá được ảnh."); return; }
+    setPreview("/static/items/_placeholder.svg");
+    els.fileName.textContent = "";
+    await reload();
+  } catch (err) {
+    alert("Lỗi mạng: " + err.message);
+  }
+});
+
+render();
+</script>
+{% endblock %}
