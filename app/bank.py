@@ -80,7 +80,7 @@ async def sync_fresh(player: str, max_age: float = SYNC_MAX_AGE) -> float:
         return float(store.get_balance(player))
     try:
         return await sync(player)
-    except (HTTPException, MoneyError):
+    except (HTTPException, Exception):
         return float(store.get_balance(player))
 
 
