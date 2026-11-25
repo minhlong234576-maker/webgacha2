@@ -24,8 +24,10 @@
 <div class="upgrade-lists">
   <section>
     <h2 style="margin-top:0">Đồ của tôi</h2>
-    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-      <input id="stakes-search" type="text" placeholder="Tìm đồ cược..." style="flex:1;min-width:150px;padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px">
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <div style="flex:1;position:relative">
+        <input id="stakes-search" type="text" placeholder="🔍 Tìm đồ cược..." style="width:100%;padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px">
+      </div>
     </div>
     <div class="pick-grid" id="stakes">
       {% for item in items %}
@@ -46,8 +48,10 @@
         <option value="low">Giá: Thấp → Cao</option>
         <option value="high">Giá: Cao → Thấp</option>
       </select>
+      <div style="position:relative">
+        <input id="target-search" type="text" placeholder="🔍" style="width:30px;padding:6px 8px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px;text-align:center;cursor:pointer" title="Tìm đồ nâng">
+      </div>
     </div>
-    <input id="target-search" type="text" placeholder="Tìm đồ nâng..." style="width:100%;padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px;margin-bottom:12px">
     <div class="pick-grid" id="targets"><p class="meta">Chọn 1+ món cược trước.</p></div>
   </section>
 </div>
@@ -59,6 +63,7 @@
   let totalValue = 0;
   let target = null;
   let allTargets = [];
+  let searchMode = false;
   
   function slotHtml(item) {
     return `<img src="${item.image}" alt=""><div class="name">${item.name}</div><div class="price">${item.fmt} Coin</div>`;
@@ -106,17 +111,23 @@
     const search = document.getElementById("target-search").value.toLowerCase();
     const box = document.getElementById("targets");
     
-    let filtered = allTargets.filter(item => item.name.toLowerCase().includes(search));
+    // Filter by search only if search input has text
+    let filtered = search.trim() 
+      ? allTargets.filter(item => item.name.toLowerCase().includes(search))
+      : allTargets;
+    
+    if (!filtered.length) {
+      box.innerHTML = search.trim() 
+        ? "<p class='meta'>Không tìm thấy món nào.</p>"
+        : "<p class='meta'>Chọn 1+ món cược trước.</p>";
+      return;
+    }
+    
     filtered.sort((a, b) => {
       if (sort === "low") return a.coin - b.coin;
       if (sort === "high") return b.coin - a.coin;
       return 0;
     });
-    
-    if (!filtered.length) {
-      box.innerHTML = "<p class='meta'>Không có món đích phù hợp.</p>";
-      return;
-    }
     
     box.innerHTML = filtered.map((item) => `
       <button class="item-card pick tgt" type="button" data-id="${item.id}" data-coin="${item.coin}" data-chance="${item.chance}" data-name="${item.name}" data-image="${item.image}" data-color="${item.color}" data-fmt="${item.coin_fmt}" style="box-shadow:inset 0 -2px 0 0 ${item.color}">
@@ -139,6 +150,19 @@
   }
   
   document.getElementById("target-sort").addEventListener("change", renderTargets);
+  
+  // Toggle search mode
+  document.getElementById("target-search").addEventListener("focus", function() {
+    this.placeholder = "Nhập tên...";
+    this.style.width = "150px";
+  });
+  
+  document.getElementById("target-search").addEventListener("blur", function() {
+    this.placeholder = "🔍";
+    this.style.width = "30px";
+    this.value = "";
+  });
+  
   document.getElementById("target-search").addEventListener("input", renderTargets);
   
   // Search stakes
