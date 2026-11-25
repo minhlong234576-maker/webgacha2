@@ -73,9 +73,13 @@ Nguồn sự thật là file `/ops.json` trên server Minecraft.
 
 - Xóa `ADMIN_USERS=Trez1724` (đã có trong OP).
 - Xóa `PIKA_OPS_FILE=/ops.json` (dùng mặc định).
-- File còn 11 dòng: `SESSION_SECRET`, `HOST`, `PORT`, `PIKA_BASE_URL`,
+- File còn 10 dòng: `SESSION_SECRET`, `HOST`, `PORT`, `PIKA_BASE_URL`,
   `PIKA_API_KEY`, `PIKA_SERVER_UUID`, `PIKA_AUTHME_DB`,
   `PIKA_ECONOMY_DB`, `GACHA_DRY_RUN`.
+
+> Ghi chú: `ADMIN_USERS` **không cần khai báo**. Quyền admin lấy tự động từ
+> danh sách OP trên server (`ops.json` qua PikaMC), làm mới mỗi 60s.
+> Biến này chỉ dành cho trường hợp cần admin dự phòng khi API PikaMC lỗi.
 
 ### 2.4 Đẩy lên GitHub
 
