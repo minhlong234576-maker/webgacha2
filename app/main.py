@@ -52,6 +52,7 @@ KIND_LABELS = {
     "seed": "Nạp ví",
     "open": "Mở rương",
     "sell": "Bán đồ",
+    "withdraw": "Rút Nexo",
     "battle_pay": "Vào battle",
     "refund": "Hoàn Coin",
     "bonus": "Bonus ngày",
@@ -546,6 +547,9 @@ async def inventory_page(request: Request):
     if isinstance(ctx, RedirectResponse):
         return ctx
     held = [inv_view(row) for row in store.list_inventory(ctx["player"], "held")]
+    for row in held:
+        meta = find_listing(row.get("item_id", ""), int(row.get("value") or 0))
+        row["nexo_id"] = meta.nexo_id if meta else ""
     worth = sum(row["value"] for row in held)
     return render(
         request,
@@ -614,6 +618,43 @@ async def inventory_sell_all(request: Request):
         return json_error(exc)
     except MoneyError as exc:
         return JSONResponse({"detail": str(exc)}, status_code=503)
+    except HTTPException as exc:
+        return JSONResponse({"detail": str(exc.detail)}, status_code=503)
+
+
+@app.post("/api/inventory/withdraw")
+async def inventory_withdraw(request: Request):
+    """Rút vật phẩm trong túi vào server Minecraft qua lệnh `nexo give`."""
+    user = api_auth(request, csrf=True)
+    if isinstance(user, JSONResponse):
+        return user
+    if not is_nexo_withdraw_enabled():
+        return JSONResponse({"detail": "Tính năng rút đồ Nexo chưa bật."}, status_code=503)
+    if is_dry_run():
+        return JSONResponse({"detail": "Không thể rút đồ khi đang bật chế độ dry-run."}, status_code=400)
+    try:
+        body = await read_json_dict(request)
+        item_pk = parse_int(body.get("id"), field="ID món")
+        row = store.get_inventory_item(item_pk)
+        if not row or row["player"] != user:
+            raise game.GameError("Không phải đồ của bạn.", 403)
+        if row["status"] != "held":
+            raise game.GameError(f"{row['name']} không còn trong túi.", 400)
+        meta = find_listing(row["item_id"], int(row["value"]))
+        if not meta or not meta.nexo_id:
+            raise game.GameError("Món này chưa gắn nexo_id trong gacha.json.", 400)
+        await nexo_give_item(user, meta.nexo_id, meta.nexo_amount)
+        store.set_inventory_status([item_pk], "withdrawn")
+        return {
+            "withdrawn": True,
+            "id": item_pk,
+            "nexo_id": meta.nexo_id,
+            "amount": meta.nexo_amount,
+        }
+    except game.GameError as exc:
+        return json_error(exc)
+    except MoneyError as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=400)
     except HTTPException as exc:
         return JSONResponse({"detail": str(exc.detail)}, status_code=503)
 

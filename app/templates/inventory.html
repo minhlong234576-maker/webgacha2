@@ -26,7 +26,13 @@
     </div>
     <div class="inv-actions">
       <button class="cf-btn-ghost sell-one" type="button" data-id="{{ item.id }}">Bán</button>
-      <button class="cf-btn-ghost" type="button" disabled title="Rút đồ vào server — làm sau">Rút</button>
+      {% if nexo_withdraw_enabled and item.nexo_id %}
+      <button class="cf-btn-ghost withdraw-one" type="button" data-withdraw-id="{{ item.id }}" title="Rút {{ item.nexo_id }} vào server Minecraft">Rút</button>
+      {% elif item.nexo_id %}
+      <button class="cf-btn-ghost" type="button" disabled title="Bật GACHA_NEXO_WITHDRAW=true để rút vào server">Rút</button>
+      {% else %}
+      <button class="cf-btn-ghost" type="button" disabled title="Món chưa gắn nexo_id trong gacha.json">Rút</button>
+      {% endif %}
     </div>
   </article>
   {% else %}
@@ -58,6 +64,23 @@
   document.getElementById("sell-all")?.addEventListener("click", () => sell([], true));
   document.querySelectorAll(".sell-one").forEach((btn) => {
     btn.addEventListener("click", () => sell([Number(btn.dataset.id)]));
+  });
+  document.querySelectorAll(".withdraw-one").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      const res = await fetch("/api/inventory/withdraw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF": csrf },
+        body: JSON.stringify({ id: Number(btn.dataset.withdrawId) })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        hint.textContent = data.detail || "Không rút được vật phẩm.";
+        btn.disabled = false;
+        return;
+      }
+      location.reload();
+    });
   });
 </script>
 {% endblock %}
