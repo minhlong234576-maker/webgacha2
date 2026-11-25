@@ -184,8 +184,9 @@ def upgrade_odds(source: int, target: int) -> dict:
 
 
 def upgrade_targets(stake_value: int) -> list[dict]:
-    low = int(stake_value * UPGRADE_MIN_MULTIPLIER)
-    high = int((stake_value * UPGRADE_RTP) / UPGRADE_MIN_CHANCE)
+    import math
+    low = math.ceil(stake_value * UPGRADE_MIN_MULTIPLIER)
+    high = math.floor((stake_value * UPGRADE_RTP) / UPGRADE_MIN_CHANCE)
     out = []
     for item in market_listings():
         if low <= item.coin <= high:
