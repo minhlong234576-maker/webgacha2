@@ -508,12 +508,13 @@ async def open_case(request: Request, slug: str):
                 pass
         return json_error(exc)
     except Exception as exc:
+        log.exception("open_case loi bat ngo cho %s", user)
         if not is_dry_run():
             try:
                 await bank.give(user, total_cost)
             except (MoneyError, HTTPException):
                 pass
-        return JSONResponse({"detail": str(exc)}, status_code=500)
+        return JSONResponse({"detail": "Lỗi hệ thống, vui lòng thử lại."}, status_code=500)
 
     openings_resp = []
     for op in batch.openings:
@@ -557,6 +558,7 @@ async def inventory_page(request: Request):
         **ctx,
         items=held,
         worth_fmt=format_coin(worth),
+        nexo_withdraw_enabled=is_nexo_withdraw_enabled(),
     )
 
 
@@ -565,9 +567,12 @@ async def inventory_sell(request: Request):
     user = api_auth(request, csrf=True)
     if isinstance(user, JSONResponse):
         return user
-    body = await request.json()
-    ids = [int(x) for x in body.get("ids") or []]
     try:
+        body = await read_json_dict(request)
+        raw_ids = body.get("ids") or []
+        if not isinstance(raw_ids, list):
+            raise game.GameError("Danh sách món không hợp lệ.", 400)
+        ids = [parse_int(x, field="ID món") for x in raw_ids]
         # Tiền thật: cộng Coin in-game TRƯỚC, xong mới đánh dấu đồ đã bán.
         # Nếu cộng tiền thất bại thì đồ vẫn còn trong túi — người chơi không mất gì.
         amount = game.sell_preview(user, ids)
@@ -605,7 +610,7 @@ async def inventory_sell_all(request: Request):
                 await bank.give(user, amount)
             except (MoneyError, HTTPException):
                 raise
-        result = game.sell_all(user)
+        result = game.sell_items(user, ids)
         if not is_dry_run():
             await bank.sync(user)
             result["balance"] = store.get_balance(user)
@@ -767,12 +772,13 @@ async def battles_create(request: Request):
     user = api_auth(request, csrf=True)
     if isinstance(user, JSONResponse):
         return user
-    body = await request.json()
-    case_id = str(body.get("case_id") or "")
-    rounds = int(body.get("rounds") or 1)
-    # Chuẩn web gốc: cho phép gửi playlist lines [{case_id, count}].
-    raw_lines = body.get("lines") or body.get("cases")
     try:
+        body = await read_json_dict(request)
+        case_id = str(body.get("case_id") or "")
+        rounds = parse_int(body.get("rounds"), 1, field="rounds")
+        slots = parse_int(body.get("slots"), 2, field="slots")
+        # Chuẩn web gốc: cho phép gửi playlist lines [{case_id, count}].
+        raw_lines = body.get("lines") or body.get("cases")
         norm = game.battle_lines_normalize(raw_lines, case_id, rounds)
         paid = game.battle_entry_price(norm)
     except game.GameError as exc:
@@ -790,7 +796,7 @@ async def battles_create(request: Request):
             battle = game.create_battle(
                 user,
                 norm[0]["case_id"],
-                int(body.get("slots") or 2),
+                slots,
                 sum(int(line["count"]) for line in norm),
                 str(body.get("mode") or "STANDARD"),
                 lines=norm,
@@ -897,14 +903,14 @@ async def battles_config(request: Request, battle_id: int):
     if isinstance(user, JSONResponse):
         return user
     try:
-        body = await request.json()
-    except Exception:
-        body = {}
-    slug = str((body or {}).get("case_id") or "")
-    rounds = int((body or {}).get("rounds") or 1)
-    slots = int((body or {}).get("slots") or 2)
-    mode = str((body or {}).get("mode") or "STANDARD")
-    raw_lines = (body or {}).get("lines") or (body or {}).get("cases")
+        body = await read_json_dict(request)
+        slug = str(body.get("case_id") or "")
+        rounds = parse_int(body.get("rounds"), 1, field="rounds")
+        slots = parse_int(body.get("slots"), 2, field="slots")
+        mode = str(body.get("mode") or "STANDARD")
+        raw_lines = body.get("lines") or body.get("cases")
+    except game.GameError as exc:
+        return json_error(exc)
     battle = store.get_battle(battle_id)
     if not battle:
         return JSONResponse({"detail": "Không có trận này."}, status_code=404)
@@ -975,13 +981,13 @@ async def battles_rematch(request: Request, battle_id: int):
     if isinstance(user, JSONResponse):
         return user
     try:
-        body = await request.json()
-    except Exception:
-        body = {}
-    slug = str((body or {}).get("case_id") or "")
-    rounds = int((body or {}).get("rounds") or 1)
-    mode = str((body or {}).get("mode") or "STANDARD")
-    raw_lines = (body or {}).get("lines") or (body or {}).get("cases")
+        body = await read_json_dict(request)
+        slug = str(body.get("case_id") or "")
+        rounds = parse_int(body.get("rounds"), 1, field="rounds")
+        mode = str(body.get("mode") or "STANDARD")
+        raw_lines = body.get("lines") or body.get("cases")
+    except game.GameError as exc:
+        return json_error(exc)
     old = store.get_battle(battle_id)
     if not old:
         return JSONResponse({"detail": "Không có trận này."}, status_code=404)
@@ -1136,26 +1142,28 @@ async def api_bonus(request: Request):
     user = api_auth(request, csrf=True)
     if isinstance(user, JSONResponse):
         return user
-    try:
-        # Tiền thật: roll giải + cộng Coin in-game TRƯỚC, xong mới commit
-        # lần nhận. Nếu lệnh console fail thì lượt bonus chưa bị dùng.
-        prize = game.bonus_preview(user)
-        if not is_dry_run():
-            try:
-                await bank.give(user, prize)
-            except (MoneyError, HTTPException) as exc:
-                return JSONResponse({"detail": f"Cộng bonus thất bại: {exc}"}, status_code=503)
-        result = game.claim_bonus(user, prize)
-        if not is_dry_run():
-            await bank.sync(user)
-            result["balance"] = store.get_balance(user)
-        return {
-            **result,
-            "amount_fmt": format_coin(result["amount"]),
-            "balance_fmt": format_coin(result["balance"]),
-        }
-    except game.GameError as exc:
-        return json_error(exc)
+    lock = _bonus_locks.setdefault(user, asyncio.Lock())
+    async with lock:
+        try:
+            # Tiền thật: roll giải + cộng Coin in-game TRƯỚC, xong mới commit
+            # lần nhận. Nếu lệnh console fail thì lượt bonus chưa bị dùng.
+            prize = game.bonus_preview(user)
+            if not is_dry_run():
+                try:
+                    await bank.give(user, prize)
+                except (MoneyError, HTTPException) as exc:
+                    return JSONResponse({"detail": f"Cộng bonus thất bại: {exc}"}, status_code=503)
+            result = game.claim_bonus(user, prize)
+            if not is_dry_run():
+                await bank.sync(user)
+                result["balance"] = store.get_balance(user)
+            return {
+                **result,
+                "amount_fmt": format_coin(result["amount"]),
+                "balance_fmt": format_coin(result["balance"]),
+            }
+        except game.GameError as exc:
+            return json_error(exc)
 
 
 @app.get("/roulette", response_class=HTMLResponse)
@@ -1184,9 +1192,9 @@ async def api_roulette_bet(request: Request):
     if isinstance(user, JSONResponse):
         return user
     try:
-        body = await request.json()
+        body = await read_json_dict(request)
         side = str(body.get("side") or "").strip().lower()
-        amount = int(body.get("amount") or 0)
+        amount = parse_int(body.get("amount"), 0, field="amount")
 
         # Tiền thật: trừ Coin in-game TRƯỚC khi chốt cược.
         # `place_bet` chỉ ghi sổ ví web, nên nếu trừ tiền thật sau thì lệnh
@@ -1215,10 +1223,13 @@ async def api_roulette_bet(request: Request):
             "amount_fmt": format_coin(res["amount"]),
             "balance_fmt": format_coin(res["balance"]),
         }
+    except game.GameError as exc:
+        return json_error(exc)
     except ValueError as exc:
         return JSONResponse({"detail": str(exc)}, status_code=400)
-    except Exception as exc:
-        return JSONResponse({"detail": str(exc)}, status_code=500)
+    except Exception:
+        log.exception("api_roulette_bet loi bat ngo cho %s", user)
+        return JSONResponse({"detail": "Lỗi hệ thống, vui lòng thử lại."}, status_code=500)
 
 
 @app.get("/vi", response_class=HTMLResponse)
