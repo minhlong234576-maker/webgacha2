@@ -40,6 +40,7 @@ SUITES = [
     ("Realtime - UI", "test_realtime_ui.py", True, 8099),
     ("UI - menu", "test_ui_menu.py", True, 8101),
     ("UI - landing video nen", "test_landing_video.py", True, 8101),
+    ("UI - yeu cau dang nhap truoc khi choi", "test_require_login.py", True, 8101),
     ("UI - nang cap 2 mon len 1 mon", "test_upgrade_ui.py", True, 8101),
     ("Quyen admin realtime (doc OP tu PikaMC)", "test_admin_realtime.py", False, None),
     ("Quyen admin realtime - HTTP", "test_admin_http.py", True, 8101),
@@ -159,7 +160,8 @@ def main():
                                                  "test_ui_menu.py",
                                                  "test_admin_http.py",
                                                  "test_upgrade_ui.py",
-                                                 "test_landing_video.py")
+                                                 "test_landing_video.py",
+                                                 "test_require_login.py")
                    else [])],
                 cwd=str(ROOT),
                 capture_output=True,

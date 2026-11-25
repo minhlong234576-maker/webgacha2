@@ -278,6 +278,17 @@ button, select, input { font-family: inherit; }
   border-radius: 99px;
   background: currentColor;
 }
+/* Menu cho khách chưa đăng nhập: làm mờ + gắn biểu tượng ổ khóa để
+   nói rõ "cần đăng nhập", nhưng vẫn bấm được để tới trang đăng nhập. */
+.nav-link.is-locked { opacity: 0.62; }
+.nav-link.is-locked:hover { opacity: 1; }
+.nav-link.is-locked::before {
+  content: "🔒";
+  font-size: 9px;
+  margin-right: 4px;
+  vertical-align: 1px;
+  filter: grayscale(1);
+}
 .held-badge {
   display: inline-grid;
   place-items: center;
@@ -512,6 +523,13 @@ button, select, input { font-family: inherit; }
   padding: 10px 14px;
   border-radius: 10px;
   margin-bottom: 16px;
+}
+/* Bien bao "moi dang nhap" — khong phai loi, nen dung mau thong tin. */
+.alert-info {
+  background: hsl(var(--accent) / 0.12);
+  border-color: hsl(var(--accent) / 0.38);
+  color: hsl(var(--text-primary));
+  line-height: 1.5;
 }
 
 h1 {

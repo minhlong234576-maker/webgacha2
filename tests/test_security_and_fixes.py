@@ -63,8 +63,15 @@ async def run_tests() -> None:
             ("signed non-dict json", non_dict),
             ("tampered signature", "invalid.cookie.value"),
         ]:
+            # `/gacha` la trang co chuc nang -> khach chua dang nhap bi day ve
+            # `/login` (303). Dieu quan trong: KHONG duoc tra 500 (500 la loi).
             r_page = await client.get("/gacha", cookies={"jv_session": cookie_val})
-            check(f"GET /gacha with {label} -> 200", r_page.status_code == 200, str(r_page.status_code))
+            check(f"GET /gacha with {label} -> khong 5xx",
+                  r_page.status_code < 500, str(r_page.status_code))
+            check(f"GET /gacha with {label} -> 303 ve /login",
+                  r_page.status_code == 303
+                  and "/login" in r_page.headers.get("location", ""),
+                  f"{r_page.status_code} {r_page.headers.get('location', '')}")
 
             r_api = await client.get("/api/drops", cookies={"jv_session": cookie_val})
             check(f"GET /api/drops with {label} -> 200", r_api.status_code == 200, str(r_api.status_code))

@@ -35,15 +35,23 @@
       <a class="brand" href="/gacha">Jelly<span>Vale</span></a>
       <nav aria-label="Chính">
         {% set p = request.url.path %}
+        {% if player %}
         <a class="nav-link {% if p == '/gacha' or p.startswith('/case/') %}on{% endif %}" href="/gacha" {% if p == '/gacha' or p.startswith('/case/') %}aria-current="page"{% endif %}>Rương</a>
         <a class="nav-link {% if p.startswith('/roulette') %}on{% endif %}" href="/roulette" {% if p.startswith('/roulette') %}aria-current="page"{% endif %}>Roulette</a>
         <a class="nav-link {% if p.startswith('/battles') or p.startswith('/battle/') %}on{% endif %}" href="/battles" {% if p.startswith('/battles') or p.startswith('/battle/') %}aria-current="page"{% endif %}>Battle</a>
         <a class="nav-link {% if p.startswith('/upgrade') %}on{% endif %}" href="/upgrade" {% if p.startswith('/upgrade') %}aria-current="page"{% endif %}>Nâng cấp</a>
         <a class="nav-link {% if p.startswith('/bonus') %}on{% endif %}" href="/bonus" {% if p.startswith('/bonus') %}aria-current="page"{% endif %}>Bonus</a>
-        {% if player %}
         <a class="nav-link {% if p.startswith('/inventory') %}on{% endif %}" href="/inventory" {% if p.startswith('/inventory') %}aria-current="page"{% endif %}>Túi đồ{% if held %} <span class="held-badge">{{ held }}</span>{% endif %}</a>
-        {% endif %}
         {% if is_admin %}<a class="nav-link {% if p.startswith('/admin') %}on{% endif %}" href="/admin" {% if p.startswith('/admin') %}aria-current="page"{% endif %}>Admin</a>{% endif %}
+        {% else %}
+        {# Khách chưa đăng nhập: mọi chức năng đều cần đăng nhập. Menu vẫn
+           hiện để khách biết web có gì, nhưng bấm vào sẽ đưa tới trang đăng nhập. #}
+        <a class="nav-link is-locked {% if p == '/gacha' or p.startswith('/case/') %}on{% endif %}" href="/login?next=/gacha" title="Cần đăng nhập để dùng">Rương</a>
+        <a class="nav-link is-locked {% if p.startswith('/roulette') %}on{% endif %}" href="/login?next=/roulette" title="Cần đăng nhập để dùng">Roulette</a>
+        <a class="nav-link is-locked {% if p.startswith('/battles') or p.startswith('/battle/') %}on{% endif %}" href="/login?next=/battles" title="Cần đăng nhập để dùng">Battle</a>
+        <a class="nav-link is-locked {% if p.startswith('/upgrade') %}on{% endif %}" href="/login?next=/upgrade" title="Cần đăng nhập để dùng">Nâng cấp</a>
+        <a class="nav-link is-locked {% if p.startswith('/bonus') %}on{% endif %}" href="/login?next=/bonus" title="Cần đăng nhập để dùng">Bonus</a>
+        {% endif %}
       </nav>
       <div class="header-right">
         <button id="theme-toggle" class="theme-btn" type="button" title="Đổi giao diện Sáng / Tối" aria-label="Đổi giao diện Sáng / Tối">☀️</button>

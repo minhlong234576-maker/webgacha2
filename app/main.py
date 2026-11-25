@@ -6,10 +6,12 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.routing import Match
 from fastapi.templating import Jinja2Templates
 
 from . import admins, bank, bots, game, pika, store
@@ -103,6 +105,62 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="JellyVale Gacha", docs_url=None, redoc_url=None, lifespan=lifespan)
 
 
+# API doc cong khai (khong can dang nhap): dung o header cho ca khach.
+PUBLIC_API_PATHS = frozenset({
+    "/api/drops",     # dai "drop truc tiep" tren header
+    "/api/admins",    # danh sach nguoi quan tri (doc tu OP tren server)
+})
+
+
+def api_route_exists(path: str, method: str) -> bool:
+    """True neu `path` khop mot route API da dang ky (bat ke method).
+
+    Route da bi XOA phai tra 404 (khong phai 401) — nguoi goi can biet
+    "tinh nang khong con" thi moi dung, con 401 se lam ho nghi la "sai mat
+    khau". Middleware nen kiem tra route truoc khi chan.
+
+    `route.matches(scope)` la bo khop cua Starlette — no xu ly ca duong dan
+    co tham so nhu `/api/battles/{battle_id}`.
+
+    `Match.PARTIAL` duoc chap nhan o day: duong dan co that route (chi sai
+    method) van la "tinh nang co that" -> khach van phai dang nhap, thay vi
+    nhan 405 "Method Not Allowed" lo mong.
+    """
+    scope = {"type": "http", "path": path, "method": method, "headers": []}
+    for route in app.router.routes:
+        route_path = getattr(route, "path", "")
+        if not route_path.startswith("/api/"):
+            continue
+        try:
+            match, _ = route.matches(scope)
+        except Exception:
+            continue
+        if match in (Match.FULL, Match.PARTIAL):
+            return True
+    return False
+
+@app.middleware("http")
+async def require_login_for_api(request: Request, call_next):
+    """Chac moi API (tru API cong khai) yeu cau dang nhap.
+
+    Lop phong thu thu hai: tung route van tu goi `api_auth()` de kiem tra
+    CSRF, nhung middleware nay dam bao route API MOI theo sau deu khong
+    the quen mat `api_auth` va khong lo du lieu nguoi choi cho khach.
+
+    Route API da bi xoa van tra 404 de "tinh nang khong con" khong bi
+    hieu nham la "ban chua dang nhap".
+    """
+    path = request.url.path
+    if path.startswith("/api/") and path not in PUBLIC_API_PATHS:
+        if not request.session.get("user") and api_route_exists(path, request.method):
+            return JSONResponse(
+                {"detail": "Chưa đăng nhập.", "redirect": "/login?next="
+                 + quote(path, safe="")},
+                status_code=401,
+            )
+    return await call_next(request)
+
+
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
@@ -177,6 +235,44 @@ def require_login(request: Request) -> tuple[str, str] | RedirectResponse:
     if not user or not login_name:
         return RedirectResponse("/login", status_code=303)
     return user, login_name
+
+
+# Cac duong dan duoc phep quay lai sau khi dang nhap. Chi nhan path noi bo
+# (bat dau bang "/") va khong chua "//" — chong open-redirect.
+_SAFE_NEXT_PREFIXES = ("/gacha", "/case/", "/battles", "/battle/", "/bonus",
+                        "/roulette", "/upgrade", "/inventory", "/vi", "/admin")
+
+
+def safe_next(raw: str | None) -> str:
+    """Chuan hoa `next` ve duong dan trong he thong (khong phai domain ngoai)."""
+    if not raw:
+        return "/gacha"
+    target = raw.strip()
+    if not target.startswith("/") or target.startswith("//") or ":" in target.split("/")[0]:
+        return "/gacha"
+    if not any(target == p or target.startswith(p) for p in _SAFE_NEXT_PREFIXES):
+        return "/gacha"
+    return target
+
+
+def login_redirect(request: Request) -> RedirectResponse:
+    """Chuyen khach ve trang dang nhap, giu lai trang ho dich dang muon vao."""
+    nxt = request.url.path
+    if request.url.query:
+        nxt = f"{nxt}?{request.url.query}"
+    return RedirectResponse(f"/login?next={quote(nxt, safe='')}", status_code=303)
+
+
+async def require_player(request: Request):
+    """Context nguoi choi cho TRANG game — khach chua dang nhap bi day ve /login.
+
+    Moi trang co chuc nang (mo ruong, quay roulette, bonus, battle, nang cap)
+    deu di qua day. Landing page (`/`) van mo cho khach xem gioi thieu.
+    """
+    ctx = await player_ctx(request)
+    if isinstance(ctx, RedirectResponse):
+        return login_redirect(request)
+    return ctx
 
 
 def render(request: Request, name: str, **context) -> HTMLResponse:
@@ -401,12 +497,20 @@ async def home(request: Request):
 
 
 @app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request, error: str | None = None):
+async def login_page(request: Request, error: str | None = None, next: str | None = None):
     if request.session.get("user"):
-        return RedirectResponse("/gacha", status_code=303)
+        return RedirectResponse(safe_next(next), status_code=303)
     token = new_csrf_token()
     request.session["csrf"] = token
-    return render(request, "login.html", csrf=token, error=error, pika_ready=pika_ready())
+    return render(
+        request,
+        "login.html",
+        csrf=token,
+        error=error,
+        pika_ready=pika_ready(),
+        next_url=safe_next(next),
+        need_login=bool(next),
+    )
 
 
 @app.post("/login")
@@ -415,6 +519,7 @@ async def login_submit(
     username: str = Form(...),
     password: str = Form(...),
     csrf: str = Form(...),
+    next: str = Form(""),
 ):
     if not pika_ready():
         return RedirectResponse("/login?error=setup", status_code=303)
@@ -440,7 +545,7 @@ async def login_submit(
     request.session["login_name"] = row.get("username")
     # Dang nhap thanh cong -> xoa gioi han so lan that bai cua IP nay.
     clear_failed_logins(ip)
-    return RedirectResponse("/gacha", status_code=303)
+    return RedirectResponse(safe_next(next), status_code=303)
 
 
 @app.post("/logout")
@@ -453,9 +558,11 @@ async def logout(request: Request):
 
 @app.get("/gacha", response_class=HTMLResponse)
 async def catalogue(request: Request):
-    ctx = await optional_ctx(request)
-    last_bonus = store.last_bonus(ctx["player"]) if ctx["player"] else 0
-    bonus_ready = bool(ctx["player"]) and ((not last_bonus) or (store.now() - last_bonus >= 24 * 3600))
+    ctx = await require_player(request)
+    if isinstance(ctx, RedirectResponse):
+        return ctx
+    last_bonus = store.last_bonus(ctx["player"])
+    bonus_ready = (not last_bonus) or (store.now() - last_bonus >= 24 * 3600)
     return render(
         request,
         "catalogue.html",
@@ -468,7 +575,9 @@ async def catalogue(request: Request):
 
 @app.get("/case/{slug}", response_class=HTMLResponse)
 async def case_page(request: Request, slug: str):
-    ctx = await optional_ctx(request)
+    ctx = await require_player(request)
+    if isinstance(ctx, RedirectResponse):
+        return ctx
     case = get_case(slug)
     if not case:
         return RedirectResponse("/gacha", status_code=303)
@@ -559,7 +668,7 @@ async def open_case(request: Request, slug: str):
 
 @app.get("/inventory", response_class=HTMLResponse)
 async def inventory_page(request: Request):
-    ctx = await player_ctx(request)
+    ctx = await require_player(request)
     if isinstance(ctx, RedirectResponse):
         return ctx
     held = [inv_view(row) for row in store.list_inventory(ctx["player"], "held")]
@@ -681,7 +790,7 @@ async def inventory_withdraw(request: Request):
 
 @app.get("/upgrade", response_class=HTMLResponse)
 async def upgrade_page(request: Request):
-    ctx = await player_ctx(request)
+    ctx = await require_player(request)
     if isinstance(ctx, RedirectResponse):
         return ctx
     held = [inv_view(row) for row in store.list_inventory(ctx["player"], "held")]
@@ -745,7 +854,9 @@ async def upgrade_run(request: Request):
 
 @app.get("/battles", response_class=HTMLResponse)
 async def battles_page(request: Request):
-    ctx = await optional_ctx(request)
+    ctx = await require_player(request)
+    if isinstance(ctx, RedirectResponse):
+        return ctx
     lobby = store.list_battles()
     return render(
         request,
@@ -759,7 +870,9 @@ async def battles_page(request: Request):
 
 @app.get("/battles/{battle_id}", response_class=HTMLResponse)
 async def battle_page(request: Request, battle_id: int):
-    ctx = await optional_ctx(request)
+    ctx = await require_player(request)
+    if isinstance(ctx, RedirectResponse):
+        return ctx
     battle = store.get_battle(battle_id)
     if not battle:
         return RedirectResponse("/battles", status_code=303)
@@ -1139,9 +1252,11 @@ async def api_balance(request: Request):
 
 @app.get("/bonus", response_class=HTMLResponse)
 async def bonus_page(request: Request):
-    ctx = await optional_ctx(request)
-    last_bonus = store.last_bonus(ctx["player"]) if ctx["player"] else 0
-    bonus_ready = bool(ctx["player"]) and ((not last_bonus) or (store.now() - last_bonus >= 24 * 3600))
+    ctx = await require_player(request)
+    if isinstance(ctx, RedirectResponse):
+        return ctx
+    last_bonus = store.last_bonus(ctx["player"])
+    bonus_ready = (not last_bonus) or (store.now() - last_bonus >= 24 * 3600)
     slices = [{"amount": amount, "weight": weight} for amount, weight in game.BONUS_SLICES]
     return render(
         request,
@@ -1183,7 +1298,9 @@ async def api_bonus(request: Request):
 
 @app.get("/roulette", response_class=HTMLResponse)
 async def roulette_page(request: Request):
-    ctx = await optional_ctx(request)
+    ctx = await require_player(request)
+    if isinstance(ctx, RedirectResponse):
+        return ctx
     state = roulette_manager.get_state(ctx.get("player"))
     return render(
         request,
@@ -1196,7 +1313,9 @@ async def roulette_page(request: Request):
 
 @app.get("/api/roulette/state")
 async def api_roulette_state(request: Request):
-    user = request.session.get("user")
+    user = api_auth(request)
+    if isinstance(user, JSONResponse):
+        return user
     state = roulette_manager.get_state(user)
     return state
 
@@ -1249,7 +1368,7 @@ async def api_roulette_bet(request: Request):
 
 @app.get("/vi", response_class=HTMLResponse)
 async def wallet(request: Request):
-    ctx = await player_ctx(request)
+    ctx = await require_player(request)
     if isinstance(ctx, RedirectResponse):
         return ctx
     txs = store.recent_tx(ctx["player"], 20)
@@ -1262,7 +1381,7 @@ async def wallet(request: Request):
 
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_page(request: Request):
-    ctx = await player_ctx(request)
+    ctx = await require_player(request)
     if isinstance(ctx, RedirectResponse):
         return ctx
     if not require_admin(request):

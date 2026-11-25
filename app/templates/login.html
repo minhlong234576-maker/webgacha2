@@ -5,6 +5,12 @@
 <section class="login-card">
   <p class="eyebrow"><i></i> JellyVale · Case</p>
   <h1>Đăng nhập Minecraft</h1>
+  {% if need_login %}
+  <div class="alert alert-info" role="status">
+    Bạn cần đăng nhập để dùng chức năng này. Sau khi đăng nhập, bạn sẽ được
+    đưa trở lại đúng trang đang xem.
+  </div>
+  {% endif %}
   <p class="lead">Nick và mật khẩu khi gõ <strong>/login</strong> trong game. Không dùng Steam.</p>
   {% if not pika_ready %}
     <div class="alert">Chưa gắn PikaMC. Vào <a href="/setup">cài đặt</a>.</div>
@@ -15,6 +21,7 @@
   {% if error == "pika" %}<div class="alert">Không đọc được dữ liệu PikaMC.</div>{% endif %}
   <form method="post" action="/login">
     <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="next" value="{{ next_url }}">
     <label for="username">Tên nhân vật
       <input id="username" name="username" type="text" autocomplete="username" spellcheck="false" autocapitalize="none" enterkeyhint="next" required maxlength="32" autofocus>
     </label>

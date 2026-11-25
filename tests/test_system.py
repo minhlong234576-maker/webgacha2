@@ -168,8 +168,13 @@ for t in threads:
     t.start()
 for t in threads:
     t.join()
-check("credit/debit xen ke khong phai so du",
-      store.get_balance(p2) == 0, str(store.get_balance(p2)))
+# Vi khong bat dau tu 0, cac debit chay truoc khi co credit se that bai
+# ("khong du Coin") — hop le. Bat bien can kiem la SO DU KHONG BAO AM va
+# tong giao dich khop voi so du con lai.
+bal2 = store.get_balance(p2)
+check("credit/debit xen ke khong bao am", bal2 >= 0, str(bal2))
+check("credit/debit xen ke -> so du la boi so cua %d" % (25 * 10),
+      bal2 <= 25 * 10, str(bal2))
 
 print()
 print("=== 3. PHAN QUYEN: KHONG THE GO Y DO CUA NGUOI KHAC ===")
