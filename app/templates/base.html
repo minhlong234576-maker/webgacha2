@@ -3,17 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}JellyVale{% endblock %}</title>
+  <meta name="color-scheme" content="light dark">
   <script>
     (function() {
       try {
         const saved = localStorage.getItem("jv_theme");
-        if (saved === "dark") {
-          document.documentElement.classList.add("dark");
-        }
+        const meta = document.querySelector('meta[name="color-scheme"]');
+        if (meta) meta.content = (saved === "dark" || saved === "light") ? saved : "light dark";
+        const systemDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const isDark = saved === "dark" || (!saved && systemDark);
+        document.documentElement.classList.toggle("dark", isDark);
       } catch (e) {}
     })();
   </script>
+  <title>{% block title %}JellyVale{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -39,7 +42,7 @@
         {% if is_admin %}<a class="nav-link {% if p.startswith('/admin') %}on{% endif %}" href="/admin">Admin</a>{% endif %}
       </nav>
       <div class="header-right">
-        <button id="theme-toggle" class="theme-btn" type="button" title="Đổi giao diện Sáng / Tối">☀️</button>
+        <button id="theme-toggle" class="theme-btn" type="button" title="Đổi giao diện Sáng / Tối" aria-label="Đổi giao diện Sáng / Tối">☀️</button>
         {% if player %}
         <a class="coin-chip" href="/vi">
           <span id="coin-balance">{{ money_fmt or money }} Coin</span>
@@ -49,7 +52,10 @@
           <span class="avatar">{{ (player[:2] if player else '?')|upper }}</span>
           <span class="hide-sm">{{ player }}</span>
         </a>
-        <form method="post" action="/logout"><button class="signout" type="submit">Thoát</button></form>
+        <form method="post" action="/logout">
+          {% if csrf %}<input type="hidden" name="csrf" value="{{ csrf }}">{% endif %}
+          <button class="signout" type="submit">Thoát</button>
+        </form>
         {% else %}
         <a class="cf-btn-primary" href="/login" style="padding:8px 16px">Đăng nhập</a>
         {% endif %}
@@ -71,17 +77,54 @@
   <script>
     (function() {
       const toggleBtn = document.getElementById("theme-toggle");
+      const meta = document.querySelector('meta[name="color-scheme"]');
+      const mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
       if (!toggleBtn) return;
-      function updateIcon() {
-        const isDark = document.documentElement.classList.contains("dark");
-        toggleBtn.textContent = isDark ? "🌙" : "☀️";
+
+      function systemPref() {
+        return mq && mq.matches ? "dark" : "light";
       }
-      updateIcon();
+
+      function applyTheme() {
+        let saved = null;
+        try {
+          saved = localStorage.getItem("jv_theme");
+        } catch (e) {}
+        if (saved !== "dark" && saved !== "light") saved = null;
+        if (meta) meta.content = saved || "light dark";
+        const resolved = saved || systemPref();
+        const isDark = resolved === "dark";
+        document.documentElement.classList.toggle("dark", isDark);
+        toggleBtn.textContent = isDark ? "🌙" : "☀️";
+        toggleBtn.setAttribute("aria-pressed", String(isDark));
+        toggleBtn.setAttribute("aria-label", isDark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối");
+      }
+
+      applyTheme();
+
       toggleBtn.addEventListener("click", function() {
-        const isDark = document.documentElement.classList.toggle("dark");
-        localStorage.setItem("jv_theme", isDark ? "dark" : "light");
-        updateIcon();
+        const isCurrentlyDark = document.documentElement.classList.contains("dark");
+        const target = isCurrentlyDark ? "light" : "dark";
+        try {
+          if (target === systemPref()) {
+            localStorage.removeItem("jv_theme");
+          } else {
+            localStorage.setItem("jv_theme", target);
+          }
+        } catch (e) {
+          if (meta) meta.content = target;
+          document.documentElement.classList.toggle("dark", target === "dark");
+          return;
+        }
+        applyTheme();
       });
+
+      window.addEventListener("storage", function(e) {
+        if (e.key === "jv_theme") applyTheme();
+      });
+      if (mq && mq.addEventListener) {
+        mq.addEventListener("change", applyTheme);
+      }
     })();
   </script>
 </body>

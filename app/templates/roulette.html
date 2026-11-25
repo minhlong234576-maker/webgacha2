@@ -271,7 +271,7 @@
         if (!sideData.bets || sideData.bets.length === 0) {
           listEl.innerHTML = `<div class="bet-empty-hint">Chưa có ai đặt cược</div>`;
         } else {
-          listEl.innerHTML = sideData.bets.slice().reverse().map(b => {
+          listEl.innerHTML = sideData.bets.toReversed().map(b => {
             const isMe = CURRENT_PLAYER && b.player.toLowerCase() === CURRENT_PLAYER.toLowerCase();
             return `
               <div class="bet-row ${isMe ? 'is-me' : ''}">

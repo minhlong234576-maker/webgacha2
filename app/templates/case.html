@@ -85,8 +85,17 @@
   let selectedCount = 1;
   let isSpinning = false;
 
+  function esc(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
   function renderMultiSlots(count) {
-    multiWrap.innerHTML = "";
+    multiWrap.replaceChildren();
     for (let i = 0; i < count; i++) {
       const col = document.createElement("div");
       col.className = "multi-reel-col";
@@ -228,13 +237,15 @@
     `;
 
     openings.forEach((op, i) => {
-      const color = op.winner.color || "#b0c3d9";
+      const color = esc(op.winner.color || "#b0c3d9");
+      const name = esc(op.winner.name);
+      const image = esc(op.winner.image || "/static/items/_placeholder.svg");
       html += `
-        <div class="drop-result-card" id="drop-card-${op.inventory_id}" style="border-top-color:${color}">
-          <img src="${op.winner.image || '/static/items/_placeholder.svg'}" alt="${op.winner.name}">
-          <div class="name" title="${op.winner.name}">${op.winner.name}</div>
+        <div class="drop-result-card" id="drop-card-${Number(op.inventory_id)}" style="border-top-color:${color}">
+          <img src="${image}" alt="${name}">
+          <div class="name" title="${name}">${name}</div>
           <div class="price">${(op.winner.coin || 0).toLocaleString("vi-VN")} Coin</div>
-          <button class="sell-single-btn" data-id="${op.inventory_id}" type="button">Bán</button>
+          <button class="sell-single-btn" data-id="${Number(op.inventory_id)}" type="button">Bán</button>
         </div>
       `;
     });

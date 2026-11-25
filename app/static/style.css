@@ -1,5 +1,5 @@
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
   /* JELLYVALE TƯƠI SÁNG (LIGHT THEME - MẶC ĐỊNH) */
   --surface-base: 220 38% 97%;       /* Nền sáng tinh tươm, tươi tắn dịu mắt */
   --surface-raised: 0 0% 100%;       /* Thẻ / Panel trắng tinh sạch sẽ */
@@ -29,6 +29,13 @@
   --gold: hsl(var(--accent));
   --danger: hsl(var(--negative));
   --ok: hsl(var(--positive));
+}
+
+:root:has(> head > meta[name="color-scheme"][content="dark"]) {
+  color-scheme: dark;
+}
+:root:has(> head > meta[name="color-scheme"][content="light"]) {
+  color-scheme: light;
 }
 
 html.dark {

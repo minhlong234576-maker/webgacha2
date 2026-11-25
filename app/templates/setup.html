@@ -11,7 +11,7 @@
     <li>Mở <strong>Tài khoản → API Keys → Create</strong>.</li>
     <li>Đặt tên <code>jellyvale-gacha</code>. Để trống IP (hoặc chỉ IP máy chạy web).</li>
     <li>Bật quyền server: <code>files.read-content</code>, <code>files.query-raw</code>, và <code>control.console</code> (để trừ/cộng Coin khi quay). Không bật power, files.update, files.delete.</li>    <li>Lưu rồi <strong>copy key ngay</strong> (panel chỉ hiện một lần).</li>
-    <li>Mở file <code>E:\code\log\web-gacha\.env</code>, dán:
+    <li>Mở file <code>.env</code> ở thư mục gốc dự án, dán:
       <pre>PIKA_BASE_URL=https://hub.pikamc.vn
 PIKA_API_KEY=dan-key-vao-day
 PIKA_SERVER_UUID=
@@ -49,7 +49,7 @@ PIKA_ECONOMY_DB=/plugins/ExcellentEconomy/data.db</pre>
 
   <form method="post" action="/setup/test">
     <input type="hidden" name="csrf" value="{{ csrf }}">
-    <button type="submit">Test kết nối PikaMC</button>
+    <button class="cf-btn-primary" type="submit">Test kết nối PikaMC</button>
   </form>
   <p class="soon"><a href="/login">Quay lại đăng nhập</a></p>
 </section>

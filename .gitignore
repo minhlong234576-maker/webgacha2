@@ -34,3 +34,9 @@ Nexo/
 _shots/
 *.png
 !app/static/**/*.png
+
+# Log cua server dev (uvicorn) + file tam cua test
+logs_server.*
+srv*.out
+srv*.err
+tmp_*.py

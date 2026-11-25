@@ -432,6 +432,8 @@ async def login_submit(
 
 @app.post("/logout")
 async def logout(request: Request):
+    if not is_same_origin(request):
+        return JSONResponse({"detail": "Nguồn yêu cầu không hợp lệ."}, status_code=403)
     request.session.clear()
     return RedirectResponse("/gacha", status_code=303)
 
