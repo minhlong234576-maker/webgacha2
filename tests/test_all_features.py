@@ -8,6 +8,9 @@ Chay o che do DRY-RUN (khong dung Coin that), tren server local.
 
 Usage: python tests/test_all_features.py [port]
 """
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
 import asyncio
 import base64
 import json
@@ -17,12 +20,13 @@ import sys
 import httpx
 import itsdangerous
 
+
 os.environ["GACHA_DRY_RUN"] = "true"
-sys.path.insert(0, r"c:\code\web\webgacha-main")
+sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv  # noqa: E402
 
-load_dotenv(r"c:\code\web\webgacha-main\.env")
+load_dotenv(ROOT / ".env")
 
 PORT = sys.argv[1] if len(sys.argv) > 1 else "8101"
 BASE = f"http://127.0.0.1:{PORT}"
@@ -58,7 +62,7 @@ def reset_player(name, coin=500_000):
     Dry-run: Coin la 'a o' trong DB web nen nap truc tiep vao SQLite.
     """
     import sqlite3
-    db = r"c:\code\web\webgacha-main\data\gacha.db"
+    db = str(ROOT / "data" / "gacha.db")
     con = sqlite3.connect(db)
     con.execute(
         "INSERT INTO wallets (player, balance, is_bot, created_at) "
@@ -382,7 +386,7 @@ async def main():
 
     # Don dep: xoa hoan toan du lieu test cua player QA
     import sqlite3
-    db = r"c:\\code\\web\\webgacha-main\\data\\gacha.db"
+    db = str(ROOT / "data" / "gacha.db")
     con = sqlite3.connect(db)
     for tbl in ("inventory", "bonus", "pulls", "drops", "tx", "upgrades"):
         con.execute(f"DELETE FROM {tbl} WHERE player = ?", (QA_PLAYER,))

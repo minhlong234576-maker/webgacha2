@@ -3,6 +3,9 @@
 Dung Playwright headless (Chromium da cai san).
 Usage: python tests/test_ui_menu.py [port]
 """
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
 import asyncio
 import base64
 import json
@@ -12,9 +15,10 @@ import sys
 from dotenv import load_dotenv
 from playwright.async_api import async_playwright
 
+
 os.environ["GACHA_DRY_RUN"] = "true"
-sys.path.insert(0, r"c:\code\web\webgacha-main")
-load_dotenv(r"c:\code\web\webgacha-main\.env")
+sys.path.insert(0, str(ROOT))
+load_dotenv(ROOT / ".env")
 
 PORT = sys.argv[1] if len(sys.argv) > 1 else "8101"
 BASE = f"http://127.0.0.1:{PORT}"
@@ -52,7 +56,7 @@ async def main():
     cookie = make_cookie(QA_PLAYER)
     # Dam bao player QA ton tai trong DB (vi khong can login that)
     import sqlite3
-    con = sqlite3.connect(r"c:\\code\\web\\webgacha-main\\data\\gacha.db")
+    con = sqlite3.connect(str(ROOT / "data" / "gacha.db"))
     con.execute(
         "INSERT INTO wallets (player, balance, is_bot, created_at) "
         "VALUES (?, 500000, 0, 0) ON CONFLICT(player) DO UPDATE SET balance = 500000",
@@ -116,7 +120,7 @@ async def main():
         for want in ["Rương", "Roulette", "Battle", "Nâng cấp", "Bonus"]:
             check(f"menu co '{want}'", want in nav_text)
 
-        await page.screenshot(path=r"c:\code\web\webgacha-main\_menu.png")
+        await page.screenshot(path=str(ROOT / "_menu.png"))
 
         await browser.close()
 

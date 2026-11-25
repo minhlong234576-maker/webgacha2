@@ -4,16 +4,19 @@
 - OP tren server vao duoc `/admin` va thay menu co link Admin.
 - Nguoi khong phai OP bi day ra `/gacha`.
 """
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
 import asyncio
 import base64
 import json
 import os
 import sys
 
-sys.path.insert(0, r"c:\code\web\webgacha-main")
+sys.path.insert(0, str(ROOT))
 from dotenv import load_dotenv  # noqa: E402
 
-load_dotenv(r"c:\code\web\webgacha-main\.env")
+load_dotenv(ROOT / ".env")
 
 import httpx  # noqa: E402
 import itsdangerous  # noqa: E402

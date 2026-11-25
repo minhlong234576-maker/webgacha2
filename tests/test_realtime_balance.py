@@ -4,12 +4,15 @@
 2. `bank.sync_all()` mirror đúng vào ví web, KHÔNG ghi đè ví bot ảo.
 3. `/api/balance` trả số dư đúng.
 """
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
 import asyncio, os, sys
 os.environ['GACHA_DRY_RUN'] = 'false'
-sys.path.insert(0, r'c:\code\web\webgacha-main')
+sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv
-load_dotenv(r'c:\code\web\webgacha-main\.env')
+load_dotenv(ROOT / ".env")
 
 from app import bank, store
 from app.pika import economy_balances

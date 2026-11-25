@@ -10,18 +10,20 @@ Nhom kiem tra:
 7. Bonus: cooldown 24h
 8. Upgrade / Battle
 """
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
 import os
 import shutil
 import sys
 import tempfile
 import threading
-from pathlib import Path
 
 os.environ["GACHA_DRY_RUN"] = "true"
-sys.path.insert(0, r"c:\code\web\webgacha-main")
+sys.path.insert(0, str(ROOT))
 
 TMP = tempfile.mkdtemp(prefix="jvtest_")
-shutil.copy(r"c:\code\web\webgacha-main\data\gacha.db", os.path.join(TMP, "gacha.db"))
+shutil.copy(ROOT / "data" / "gacha.db", os.path.join(TMP, "gacha.db"))
 
 from app import game, store  # noqa: E402
 

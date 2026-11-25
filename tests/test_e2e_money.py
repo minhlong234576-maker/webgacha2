@@ -6,12 +6,15 @@ Dùng tài khoản Trez1724 (admin, ví 0 Coin). Sẽ:
 3. Bán đồ (kiểm tra tiền được cộng lại)
 4. Kiểm tra số dư server khớp số dư web
 """
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
 import asyncio, os, sys
 os.environ['GACHA_DRY_RUN'] = 'false'
-sys.path.insert(0, r'c:\code\web\webgacha-main')
+sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv
-load_dotenv(r'c:\code\web\webgacha-main\.env')
+load_dotenv(ROOT / ".env")
 
 import httpx
 from app import bank, game, store

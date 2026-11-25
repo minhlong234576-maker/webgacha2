@@ -6,16 +6,20 @@ Dùng DB tạm + mock console để kiểm tra:
 - give lỗi -> đồ vẫn còn trong túi
 - verify balance sau lệnh
 """
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
 import asyncio, os, sqlite3, sys, tempfile, shutil
+
 
 # Phải set TRƯỚC khi import app.config (dotenv không override env đã có).
 os.environ['GACHA_DRY_RUN'] = 'false'
 
-sys.path.insert(0, r'c:\code\web\webgacha-main')
-sys.path.insert(0, r'c:\code\web\webgacha-main\tests')
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / 'tests'))
 
 TMP = tempfile.mkdtemp(prefix='jvtest_')
-shutil.copy(r'c:\code\web\webgacha-main\data\gacha.db', os.path.join(TMP, 'gacha.db'))
+shutil.copy(ROOT / 'data' / 'gacha.db', os.path.join(TMP, 'gacha.db'))
 
 from app import store
 store.DB_PATH = __import__('pathlib').Path(TMP) / 'gacha.db'

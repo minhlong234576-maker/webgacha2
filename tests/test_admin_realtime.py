@@ -5,14 +5,17 @@
 - Nguoi khong phai OP phai bi chan.
 - Cache TTL va fallback khi API loi.
 """
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
 import asyncio
 import os
 import sys
 
-sys.path.insert(0, r"c:\code\web\webgacha-main")
+sys.path.insert(0, str(ROOT))
 from dotenv import load_dotenv  # noqa: E402
 
-load_dotenv(r"c:\code\web\webgacha-main\.env")
+load_dotenv(ROOT / ".env")
 
 from app import admins  # noqa: E402
 from app.pika import server_ops  # noqa: E402

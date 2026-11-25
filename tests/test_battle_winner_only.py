@@ -1,8 +1,25 @@
 """
 Test: Battle inventory - chỉ winner nhận đồ.
-"""
 
-from app import game, store
+Chạy trên DB tạm + DRY-RUN để không đụng ví thật (jellyvale-gacha-dev §4).
+"""
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
+import os
+import shutil
+import sys
+import tempfile
+
+os.environ["GACHA_DRY_RUN"] = "true"
+sys.path.insert(0, str(ROOT))
+
+TMP = tempfile.mkdtemp(prefix="jvbattle_")
+shutil.copy(ROOT / "data" / "gacha.db", os.path.join(TMP, "gacha.db"))
+
+from app import game, store  # noqa: E402
+
+store.DB_PATH = Path(TMP) / "gacha.db"
 
 
 def test_only_winner_gets_items():
@@ -11,6 +28,9 @@ def test_only_winner_gets_items():
     
     host = "Host"
     p2 = "Player2"
+    # Bản copy DB có thể mang số dư cũ (hoặc 0) -> set lại trong DB tạm.
+    store.set_wallet(host, 500_000)
+    store.set_wallet(p2, 500_000)
     game.seed_wallet(host)
     game.seed_wallet(p2)
     

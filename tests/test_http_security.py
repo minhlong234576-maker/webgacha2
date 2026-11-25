@@ -1,4 +1,7 @@
 """Kiem chung bao mat o tang HTTP: CSRF, session, rate limit, phan quyen."""
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
 import asyncio
 import base64
 import json
@@ -9,11 +12,11 @@ import httpx
 import itsdangerous
 
 os.environ["GACHA_DRY_RUN"] = "true"
-sys.path.insert(0, r"c:\code\web\webgacha-main")
+sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv  # noqa: E402
 
-load_dotenv(r"c:\code\web\webgacha-main\.env")
+load_dotenv(ROOT / ".env")
 
 SECRET = os.getenv("SESSION_SECRET")
 BASE = "http://127.0.0.1:8098"

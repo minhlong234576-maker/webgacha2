@@ -13,6 +13,11 @@ ROOT = HERE.parent
 # (ten, file, can server chay khong)
 SUITES = [
     ("Logic + bao mat he thong", "test_system.py", False),
+    ("Bao mat + regression (cookie 500, Nexo, input)", "test_security_and_fixes.py", False),
+    ("Duong dan test (khong hardcode)", "test_paths_static.py", False),
+    ("Battle - chi winner nhan do", "test_battle_winner_only.py", False),
+    ("Battle - chay song song (race)", "test_concurrent_battles.py", False),
+    ("Upgrade - 2 mon len 1 mon", "test_upgrade_two_to_one.py", False),
     ("Tat ca chuc nang web (can server 8101)", "test_all_features.py", True),
     ("Bao mat HTTP (CSRF/session/quyen)", "test_http_security.py", True),
     ("Tien that - don gian", "test_money.py", False),
@@ -23,6 +28,7 @@ SUITES = [
     ("Realtime - thuc (can server 8099)", "test_realtime_live.py", True),
     ("Realtime - UI (can server 8099)", "test_realtime_ui.py", True),
     ("UI - menu (can server 8101)", "test_ui_menu.py", True),
+    ("UI - nang cap 2 mon len 1 mon (can server 8101)", "test_upgrade_ui.py", True),
     ("Quyen admin realtime (doc OP tu PikaMC)", "test_admin_realtime.py", False),
     ("Quyen admin realtime - HTTP (can server 8101)", "test_admin_http.py", True),
     ("Dang nhap thuc (can server 8080)", "test_login_browser.py", True),

@@ -1,9 +1,12 @@
 """Kiểm chứng UI bằng Playwright: chip số dư realtime cập nhật khi Coin trên server đổi."""
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
 import asyncio, os, sys, json, base64, itsdangerous
 from dotenv import load_dotenv
 
-load_dotenv(r'c:\code\web\webgacha-main\.env')
-sys.path.insert(0, r'c:\code\web\webgacha-main')
+load_dotenv(ROOT / ".env")
+sys.path.insert(0, str(ROOT))
 
 from playwright.async_api import async_playwright
 from app.pika import economy_balance, send_command
@@ -64,7 +67,7 @@ async def main():
               f'{int(round(await economy_balance(ME)))}',
               f'{after} vs {await economy_balance(ME)}')
 
-        await page.screenshot(path=r'c:\code\web\webgacha-main\tests\_realtime.png')
+        await page.screenshot(path=str(ROOT / "tests" / "_realtime.png"))
 
         # Dọn dẹp
         delta = int(round(await economy_balance(ME) - srv_before))

@@ -1,10 +1,13 @@
 """Kiểm chứng realtime thật: nạp Coin trên server -> /api/balance phải thấy ngay."""
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
 import asyncio, os, sys, httpx, itsdangerous, json, base64
 os.environ['GACHA_DRY_RUN'] = 'false'
-sys.path.insert(0, r'c:\code\web\webgacha-main')
+sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv
-load_dotenv(r'c:\code\web\webgacha-main\.env')
+load_dotenv(ROOT / ".env")
 
 from app import bank
 from app.pika import economy_balance, send_command

@@ -7,16 +7,19 @@ request cung chay, ca hai deu co the doc duoc so du cu va ca hai deu chay
 Kiem tra: 5 request dong thoi, moi request 2000 Coin, so du 5000.
 Ket qua dung: chi 2 request thanh cong (2 x 2000 = 4000), 3 request that bai.
 """
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
 import asyncio
 import os
 import sys
 
 os.environ["GACHA_DRY_RUN"] = "false"
-sys.path.insert(0, r"c:\code\web\webgacha-main")
+sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv  # noqa: E402
 
-load_dotenv(r"c:\code\web\webgacha-main\.env")
+load_dotenv(ROOT / ".env")
 
 from app.errors import MoneyError  # noqa: E402
 from app.pika import eco_give, eco_take, economy_balance  # noqa: E402

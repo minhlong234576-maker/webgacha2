@@ -1,12 +1,14 @@
 """Test roulette payout path với tiền thật (mock console)."""
-import asyncio, os, sys, tempfile, shutil
 from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
+import asyncio, os, sys, tempfile, shutil
 os.environ['GACHA_DRY_RUN'] = 'false'
-sys.path.insert(0, r'c:\code\web\webgacha-main')
+sys.path.insert(0, str(ROOT))
 
 # Dùng DB tạm để KHÔNG đụng vào ví thật.
 TMP = tempfile.mkdtemp(prefix='jvroulette_')
-shutil.copy(r'c:\code\web\webgacha-main\data\gacha.db', os.path.join(TMP, 'gacha.db'))
+shutil.copy(ROOT / 'data' / 'gacha.db', os.path.join(TMP, 'gacha.db'))
 
 import app.pika as pika
 import app.roulette as roulette

@@ -1,11 +1,29 @@
 """
 Test: Nhiều trận battle chạy song song (concurrent) - kiểm tra race conditions.
-"""
 
+Chạy trên DB tạm + DRY-RUN để không đụng ví thật (jellyvale-gacha-dev §4).
+"""
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
+
+import os
+import shutil
+import sys
+import tempfile
 import threading
 import json
 from concurrent.futures import ThreadPoolExecutor
-from app import game, store
+
+os.environ["GACHA_DRY_RUN"] = "true"
+sys.path.insert(0, str(ROOT))
+
+TMP = tempfile.mkdtemp(prefix="jvconcurrent_")
+shutil.copy(ROOT / "data" / "gacha.db", os.path.join(TMP, "gacha.db"))
+
+from app import game, store  # noqa: E402
+
+store.DB_PATH = Path(TMP) / "gacha.db"
 
 
 def test_concurrent_battles_no_fixture():
@@ -21,6 +39,9 @@ def test_concurrent_battles_no_fixture():
     print("\n=== Phase 1: Seed ===")
     for p in players:
         try:
+            # Bản copy DB có thể đã mang ví P1..P10 với số dư cũ (0 hoặc hết) ->
+            # xoá hẳn dòng ví để `seed_wallet` tạo mới với số dư seed.
+            store.run(lambda con, n=p: con.execute("DELETE FROM wallets WHERE player = ?", (n,)))
             bal = game.seed_wallet(p)
             print(f"  {p}: {bal:,} Coin")
             assert bal > 0, f"{p} không có Coin"
@@ -108,8 +129,10 @@ def test_concurrent_battles_no_fixture():
         print(f"  Battle {idx}: {fresh['winner']} won. {p1}={c1} drops, {p2}={c2} drops (expected {expected_rounds} each)")
         assert c1 == expected_rounds and c2 == expected_rounds, f"Battle {idx} drops wrong"
     
-    print(f"\n✓ Total drops: {total_drops} (expected 20)")
-    assert total_drops == 20, f"Expected 20 total drops, got {total_drops}"
+    # Mỗi trận có `expected_rounds` vòng và MỖI người chơi roll 1 lần mỗi vòng
+    # -> tổng drops = 2 * tổng vòng = 2 * (2+3+4+5+6) = 40.
+    print(f"\n✓ Total drops: {total_drops} (expected 40)")
+    assert total_drops == 40, f"Expected 40 total drops, got {total_drops}"
 
 
 def test_join_full_auto_starts():
@@ -118,6 +141,7 @@ def test_join_full_auto_starts():
     
     host = "Host"
     p2 = "Player2"
+    store.run(lambda con: con.execute("DELETE FROM wallets WHERE player IN (?, ?)", (host, p2)))
     game.seed_wallet(host)
     game.seed_wallet(p2)
     

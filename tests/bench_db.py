@@ -1,7 +1,10 @@
 """Đo tốc độ DB hiện tại — baseline trước khi tối ưu."""
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
 import os, sys, time, statistics
 os.environ['GACHA_DRY_RUN'] = 'false'
-sys.path.insert(0, r'c:\code\web\webgacha-main')
+sys.path.insert(0, str(ROOT))
 
 from app import store
 

@@ -1,11 +1,14 @@
 """Đồng bộ ví web với Coin in-game cho toàn bộ người chơi thật."""
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+
 import os, sys, sqlite3
 os.environ['GACHA_DRY_RUN'] = 'false'
-sys.path.insert(0, r'c:\code\web\webgacha-main')
+sys.path.insert(0, str(ROOT))
 
 import httpx
 from dotenv import load_dotenv
-load_dotenv(r'c:\code\web\webgacha-main\.env')
+load_dotenv(ROOT / ".env")
 
 from app import store
 
