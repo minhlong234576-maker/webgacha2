@@ -1,0 +1,14 @@
+---
+description: Always respond in Vietnamese (tiếng Việt).
+alwaysApply: true
+globs:
+---
+
+# Ngôn ngữ trả lời
+
+**Luôn trả lời người dùng bằng tiếng Việt.**
+
+- Dùng tiếng Việt cho mọi tin nhắn, giải thích, tóm tắt và câu hỏi đối với người dùng.
+- Giữ nguyên tiếng Anh cho tên file, tên biến/hàm trong code, thông báo lỗi của hệ thống và các định danh kỹ thuật không dịch được.
+- Khi trích dẫn code hoặc log lỗi, giữ nguyên văn bản gốc; chỉ chú thích bằng tiếng Việt.
+- Ưu tiên dạng quen thuộc, thân thiện và súc tích (ví dụ: "Tôi đã cập nhật…", "Đã xong, các bước tiếp theo là…").

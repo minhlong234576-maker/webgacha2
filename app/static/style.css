@@ -1109,7 +1109,65 @@ th { color: hsl(var(--text-muted)); font-size: 12px; font-weight: 600; letter-sp
   padding: 14px;
   min-height: 200px;
 }
+/* Món trong túi vừa bán / rút: bay lên, thu nhỏ, mờ dần rồi mới tải lại */
+.inv-card.is-selling {
+  animation: inv-card-sell 0.26s var(--ease-out) var(--stagger, 0ms) forwards;
+  pointer-events: none;
+}
+.inv-card.is-gone { opacity: 0; }
+@keyframes inv-card-sell {
+  to {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.94);
+    filter: saturate(0.6) blur(1px);
+  }
+}
+.withdraw-one.is-withdrawing { position: relative; overflow: hidden; }
+.withdraw-one.is-withdrawing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, hsl(var(--text) / 0.12) 50%, transparent 80%);
+  animation: btn-sheen 1s linear infinite;
+}
+@keyframes btn-sheen {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
 .seat.win-seat { border-color: hsl(var(--accent) / 0.8); box-shadow: 0 0 24px -4px hsl(var(--accent) / 0.4); }
+.seat.seat-champion {
+  position: relative;
+  border-color: hsl(var(--accent));
+  box-shadow:
+    0 0 0 3px hsl(var(--accent) / 0.35),
+    0 0 42px -6px hsl(var(--accent) / 0.65);
+  animation: champion-glow 2.6s ease-in-out infinite;
+}
+.seat.seat-champion::after {
+  content: "★";
+  position: absolute;
+  top: -12px;
+  left: 14px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-strong)));
+  color: #fff;
+  font-size: 14px;
+  box-shadow: 0 4px 10px hsl(var(--accent-strong) / 0.5);
+  animation: champion-crown 2.6s ease-in-out infinite;
+}
+@keyframes champion-glow {
+  0%, 100% { box-shadow: 0 0 0 3px hsl(var(--accent) / 0.28), 0 0 36px -8px hsl(var(--accent) / 0.55); }
+  50% { box-shadow: 0 0 0 5px hsl(var(--accent) / 0.4), 0 0 54px -6px hsl(var(--accent) / 0.8); }
+}
+@keyframes champion-crown {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-3px) rotate(6deg); }
+}
 .seat-drops { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; margin: 10px 0; }
 .mini-drop {
   background: hsl(var(--surface-raised));
@@ -1260,6 +1318,16 @@ html.dark .case-card::after {
   35% { transform: scale(1.03); filter: drop-shadow(0 0 18px hsl(var(--positive) / 0.5)); }
   100% { transform: scale(1); filter: none; }
 }
+
+/* Thẻ rương lúc được bấm mở: nhún xuống rồi bung sáng (chạy nền cạnh việc điều hướng) */
+.case-card.is-launching {
+  animation: card-launch 0.42s var(--ease-out) both;
+}
+@keyframes card-launch {
+  0% { scale: 1; }
+  30% { scale: 0.965; box-shadow: 0 0 0 4px hsl(var(--accent) / 0.28); }
+  100% { scale: 1.01; box-shadow: 0 0 0 10px hsl(var(--accent) / 0); }
+}
 @keyframes stage-lose {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-5px); }
@@ -1403,6 +1471,8 @@ html.dark .case-card::after {
   .hero-inner { animation: none; }
   .case-card:hover, .case-card.is-tilting { transform: none; }
   .fx-wait { opacity: 1; translate: none; }
+  .inv-card.is-selling { animation: none; opacity: 0; }
+  .seat.seat-champion, .seat.seat-champion::after { animation: none; }
   ::view-transition-group(*),
   ::view-transition-old(*),
   ::view-transition-new(*) { animation: none !important; }

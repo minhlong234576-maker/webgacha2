@@ -2,6 +2,9 @@
 
 Read `CONSTRAINTS.md` before writing code. Do not weaken it to make a change pass.
 
+## Ngôn ngữ
+**Luôn trả lời người dùng bằng tiếng Việt.** Giữ nguyên tiếng Anh cho tên file, định danh kỹ thuật và thông báo lỗi gốc.
+
 ## Tech Stack
 - **Backend:** Python 3.12+, FastAPI, Starlette (`SafeSessionMiddleware`), Jinja2, SQLite (WAL mode, thread-local connections in `app/store.py`).
 - **Frontend:** Server-rendered Jinja2 templates (`app/templates/`), vanilla ES modules & scripts (`app/static/`), custom CSS tokens (`app/static/style.css`).

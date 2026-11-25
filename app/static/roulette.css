@@ -283,6 +283,43 @@ html.dark .timer-countdown {
   box-shadow: 0 0 22px rgba(245, 158, 11, 0.7);
   z-index: 10;
 }
+.roulette-card.winner-highlight .card-icon {
+  animation: winner-bounce 0.7s var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) both;
+}
+@keyframes winner-bounce {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.22) rotate(-6deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* Vòng đang quay: kim chỉ và dải có nhịp thở nhẹ, badge nhấp nháy */
+.roulette-viewport.is-rolling .roulette-pointer {
+  animation: pointer-pulse 0.9s ease-in-out infinite;
+}
+@keyframes pointer-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.7); }
+  50% { box-shadow: 0 0 22px rgba(245, 158, 11, 1), 0 0 34px rgba(245, 158, 11, 0.5); }
+}
+.state-badge.badge-rolling { animation: badge-blink 1.2s ease-in-out infinite; }
+@keyframes badge-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* Cột có người đặt cược: viền nhẹ sáng lên */
+.roulette-col.has-bets { border-color: hsl(var(--border-strong)); }
+.roulette-col.is-settled-winner { animation: col-win 1s var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) both; }
+@keyframes col-win {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.015); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bet-row, .roulette-card.winner-highlight .card-icon,
+  .state-badge.badge-rolling, .roulette-viewport.is-rolling .roulette-pointer,
+  .roulette-col.is-settled-winner { animation: none; }
+}
 
 /* BẢNG ĐIỀU KHIỂN CƯỢC */
 .bet-controls-panel {
@@ -504,6 +541,11 @@ html.dark .btn-steve {
   border-radius: 8px;
   font-size: 13px;
   transition: all 0.15s ease;
+  animation: bet-row-in 0.3s var(--ease-out, ease-out) both;
+}
+@keyframes bet-row-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: none; }
 }
 .bet-row .player-name {
   font-weight: 600;

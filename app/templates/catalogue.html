@@ -132,6 +132,16 @@
     // Reorder in DOM
     visible.forEach(el => grid.appendChild(el));
   }
+
+  // Bấm mở rương: phát sáng + nghiêng thẻ, nhưng điều hướng gần như tức thì
+  // (không trì hoãn sang trang chậm hơn; chuyển cảnh trang do View Transition lo).
+  grid.addEventListener("click", (e) => {
+    const card = e.target.closest(".case-card");
+    if (!card) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    card.classList.add("is-launching");
+  });
   
   searchInput.addEventListener("input", sortCases);
   sortSelect.addEventListener("change", sortCases);

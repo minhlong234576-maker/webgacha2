@@ -213,6 +213,7 @@
     isRollingAnim = true;
     roundBadgeEl.className = "state-badge badge-rolling";
     roundBadgeEl.textContent = "ĐANG QUAY...";
+    viewportEl?.classList.add("is-rolling");
 
     // Reset về vị trí đầu set
     snapToSlot(0, 0);
@@ -234,6 +235,7 @@
 
     setTimeout(() => {
       isRollingAnim = false;
+      viewportEl?.classList.remove("is-rolling");
       highlightWinningTile(targetSlotIndex);
     }, 5800);
   }
@@ -253,6 +255,7 @@
   function clearTileHighlights() {
     const tiles = trackEl.querySelectorAll(".roulette-card");
     tiles.forEach(tile => tile.classList.remove("winner-highlight"));
+    viewportEl?.classList.remove("is-rolling");
   }
 
   // 5. Cập nhật giao diện 3 cột cược & Lịch sử
@@ -266,6 +269,20 @@
 
       if (countEl) countEl.textContent = sideData.count;
       if (totalEl) totalEl.textContent = Number(sideData.total_amount).toLocaleString("vi-VN") + " Coin";
+      const colEl = document.getElementById(`col-${side}`);
+      if (colEl) {
+        colEl.classList.toggle("has-bets", sideData.count > 0);
+        // Chỉ chạy animation chiến thắng đúng lúc chuyển sang SETTLED (không lặp lại mỗi lần poll).
+        const won = localState.status === "SETTLED" && localState.winning_side === side;
+        const wasWon = colEl.classList.contains("is-settled-winner");
+        if (won && !wasWon) {
+          colEl.classList.remove("is-settled-winner");
+          void colEl.offsetWidth;
+          colEl.classList.add("is-settled-winner");
+        } else if (!won) {
+          colEl.classList.remove("is-settled-winner");
+        }
+      }
 
       if (listEl) {
         if (!sideData.bets || sideData.bets.length === 0) {

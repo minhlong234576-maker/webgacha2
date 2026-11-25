@@ -42,20 +42,61 @@
 <script>
   const csrf = document.querySelector("meta[name=csrf]").content;
   const hint = document.getElementById("hint");
+  const bag = document.getElementById("bag");
+  const sellBtn = document.getElementById("sell-selected");
+
   function selected() {
     return [...document.querySelectorAll("#bag input:checked")].map((el) => Number(el.value));
   }
-  async function sell(ids, all=false) {
+
+  // Cập nhật nút "Bán món chọn" theo số món đang tick (kèm số lượng).
+  function paintSelection() {
+    const ids = selected();
+    if (sellBtn) {
+      sellBtn.disabled = ids.length === 0;
+      sellBtn.textContent = ids.length ? `Bán món chọn (${ids.length})` : "Bán món chọn";
+    }
+  }
+  bag?.addEventListener("change", paintSelection);
+  paintSelection();
+
+  // Món vừa bán: chạy hiệu ứng bay lên mờ dần trước khi tải lại trang.
+  function animateOut(cards) {
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const list = [...cards];
+    list.forEach((card, i) => {
+      card.style.setProperty("--stagger", `${i * 40}ms`);
+      card.classList.add(reduced ? "is-gone" : "is-selling");
+    });
+    return reduced ? 0 : 260 + list.length * 40;
+  }
+
+  function cardFor(input) {
+    return input.closest(".inv-card");
+  }
+
+  async function sell(ids, all = false) {
     const url = all ? "/api/inventory/sell-all" : "/api/inventory/sell";
+    const cards = all
+      ? [...bag.querySelectorAll(".inv-card")]
+      : ids.map((id) => cardFor(bag.querySelector(`#bag input[value="${id}"]`))).filter(Boolean);
+    if (sellBtn) sellBtn.disabled = true;
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CSRF": csrf },
       body: JSON.stringify({ ids })
     });
     const data = await res.json();
-    if (!res.ok) { hint.textContent = data.detail; return; }
-    location.reload();
+    if (!res.ok) {
+      hint.textContent = data.detail;
+      document.querySelectorAll("#bag button").forEach((b) => { b.disabled = false; });
+      paintSelection();
+      return;
+    }
+    const wait = animateOut(cards);
+    setTimeout(() => location.reload(), wait);
   }
+
   document.getElementById("sell-selected")?.addEventListener("click", () => {
     const ids = selected();
     if (!ids.length) { hint.textContent = "Chọn món trước."; return; }
@@ -68,6 +109,8 @@
   document.querySelectorAll(".withdraw-one").forEach((btn) => {
     btn.addEventListener("click", async () => {
       btn.disabled = true;
+      btn.classList.add("is-withdrawing");
+      btn.textContent = "Đang rút...";
       const res = await fetch("/api/inventory/withdraw", {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-CSRF": csrf },
@@ -77,9 +120,14 @@
       if (!res.ok) {
         hint.textContent = data.detail || "Không rút được vật phẩm.";
         btn.disabled = false;
+        btn.classList.remove("is-withdrawing");
+        btn.textContent = "Rút";
         return;
       }
-      location.reload();
+      btn.textContent = "Đã rút";
+      const card = btn.closest(".inv-card");
+      const wait = animateOut(card ? [card] : []);
+      setTimeout(() => location.reload(), wait);
     });
   });
 </script>

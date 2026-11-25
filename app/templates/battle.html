@@ -70,6 +70,7 @@
 
 <script type="module">
   import { spinReel } from "/static/roulette.js";
+  import { celebrate } from "/static/fx.js";
 
   const csrf = document.querySelector("meta[name=csrf]")?.content;
   const battleId = {{ battle.id }};
@@ -294,6 +295,7 @@
         paintActions();
         paintHint();
         renderLobbyOrResult();
+        announceWinner();
       }
     }, 700);
   }
@@ -333,6 +335,22 @@
       paintActions(); paintHint(); renderLobbyOrResult();
       if (state.status === "WAITING" || state.status === "RUNNING") refresh();
     }
+    if (state.status === "FINISHED") announceWinner();
+  }
+
+  // Kết thúc trận: hào quang chiến thắng + confetti cho người thắng.
+  function announceWinner() {
+    if (!state.winner || !state.drops || !state.drops.length) return;
+    const winnerSeat = document.querySelector(`.seat[data-player="${cssEscape(state.winner)}"]`);
+    if (!winnerSeat) return;
+    if (winnerSeat.dataset.celebrated) return;
+    winnerSeat.dataset.celebrated = "1";
+    winnerSeat.classList.add("seat-champion");
+    if (state.winner === me) celebrate({ wins: (state.players || []).length || 2, tone: "gold", big: true });
+  }
+
+  function cssEscape(value) {
+    return (window.CSS && CSS.escape) ? CSS.escape(String(value)) : String(value).replace(/["\\]/g, "\\$&");
   }
 
   async function onJoin(ev) {
