@@ -664,7 +664,8 @@ def settle_battle(battle_id: int, expected_host: str | None = None) -> dict:
         winner = ranked[0]["player"]
         store.save_battle_result(battle_id, totals, drops, winner)
         for drop in drops:
-            store.add_inventory(winner, _drop_as_item(drop), "battle", drop.get("case_id") or battle["case_id"])
+            if drop["player"] == winner:
+                store.add_inventory(winner, _drop_as_item(drop), "battle", drop.get("case_id") or battle["case_id"])
         return store.get_battle(battle_id) or {}
     except Exception:
         # Roll / ghi DB lỗi giữa chừng: trả về WAITING để bấm lại được,
