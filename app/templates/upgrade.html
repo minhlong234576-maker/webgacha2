@@ -71,6 +71,7 @@
   function initStakes() {
     document.querySelectorAll(".stake").forEach((btn) => {
       btn.addEventListener("click", function() {
+        console.log("Stake clicked:", this.dataset.name, this.dataset.value);
         this.classList.toggle("on");
         
         stakeIds = [];
@@ -81,6 +82,8 @@
           totalValue += Number(el.dataset.value);
           html += slotHtml({ image: el.dataset.image, name: el.dataset.name, fmt: el.dataset.fmt }) + " ";
         });
+        
+        console.log("Selected:", stakeIds, "Total:", totalValue);
         
         if (!stakeIds.length) {
           document.getElementById("stakes-slot").innerHTML = '<span class="meta">Chọn 1+ món</span>';
@@ -96,6 +99,7 @@
         
         (async () => {
           const url = `/api/upgrade/targets?value=${totalValue}`;
+          console.log("Fetching:", url);
           const res = await fetch(url);
           if (!res.ok) {
             console.error(`API error ${res.status}`);
@@ -103,6 +107,7 @@
             return;
           }
           const data = await res.json();
+          console.log("API response:", data);
           allTargets = data.targets || [];
           renderTargets();
         })();
