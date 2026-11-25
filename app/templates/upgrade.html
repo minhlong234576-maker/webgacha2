@@ -63,57 +63,58 @@
   let totalValue = 0;
   let target = null;
   let allTargets = [];
-  let searchMode = false;
   
   function slotHtml(item) {
     return `<img src="${item.image}" alt=""><div class="name">${item.name}</div><div class="price">${item.fmt} Coin</div>`;
   }
 
-  // Multi-select stakes
-  document.querySelectorAll(".stake").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      btn.classList.toggle("on");
-      
-      // Collect selected
-      stakeIds = [];
-      totalValue = 0;
-      let html = "";
-      document.querySelectorAll(".stake.on").forEach((el) => {
-        stakeIds.push(Number(el.dataset.id));
-        totalValue += Number(el.dataset.value);
-        html += slotHtml({ image: el.dataset.image, name: el.dataset.name, fmt: el.dataset.fmt }) + " ";
+  function initStakes() {
+    document.querySelectorAll(".stake").forEach((btn) => {
+      btn.addEventListener("click", function() {
+        this.classList.toggle("on");
+        
+        stakeIds = [];
+        totalValue = 0;
+        let html = "";
+        document.querySelectorAll(".stake.on").forEach((el) => {
+          stakeIds.push(Number(el.dataset.id));
+          totalValue += Number(el.dataset.value);
+          html += slotHtml({ image: el.dataset.image, name: el.dataset.name, fmt: el.dataset.fmt }) + " ";
+        });
+        
+        if (!stakeIds.length) {
+          document.getElementById("stakes-slot").innerHTML = '<span class="meta">Chọn 1+ món</span>';
+          document.getElementById("stakes-info").textContent = "Chọn 1+ món";
+          document.getElementById("targets").innerHTML = '<p class="meta">Chọn 1+ món cược trước.</p>';
+          target = null;
+          document.getElementById("go").disabled = true;
+          return;
+        }
+        
+        document.getElementById("stakes-slot").innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap">${html}</div>`;
+        document.getElementById("stakes-info").textContent = `${stakeIds.length} món · ${totalValue.toLocaleString("vi-VN")} Coin`;
+        
+        (async () => {
+          const url = `/api/upgrade/targets?value=${totalValue}`;
+          const res = await fetch(url);
+          if (!res.ok) {
+            console.error(`API error ${res.status}`);
+            document.getElementById("targets").innerHTML = '<p class="meta">Lỗi tải danh sách.</p>';
+            return;
+          }
+          const data = await res.json();
+          allTargets = data.targets || [];
+          renderTargets();
+        })();
       });
-      
-      if (!stakeIds.length) {
-        document.getElementById("stakes-slot").innerHTML = '<span class="meta">Chọn 1+ món</span>';
-        document.getElementById("stakes-info").textContent = "Chọn 1+ món";
-        document.getElementById("targets").innerHTML = '<p class="meta">Chọn 1+ món cược trước.</p>';
-        target = null;
-        document.getElementById("go").disabled = true;
-        return;
-      }
-      
-      document.getElementById("stakes-slot").innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap">${html}</div>`;
-      document.getElementById("stakes-info").textContent = `${stakeIds.length} món · ${totalValue.toLocaleString("vi-VN")} Coin`;
-      
-      // Load targets
-      (async () => {
-        console.log(`Fetching targets for value: ${totalValue}`);
-        const res = await fetch(`/api/upgrade/targets?value=${totalValue}`);
-        const data = await res.json();
-        console.log("Targets response:", data);
-        allTargets = data.targets || [];
-        renderTargets();
-      })();
     });
-  });
+  }
   
   function renderTargets() {
     const sort = document.getElementById("target-sort").value;
     const search = document.getElementById("target-search").value.toLowerCase();
     const box = document.getElementById("targets");
     
-    // Filter by search only if search input has text
     let filtered = search.trim() 
       ? allTargets.filter(item => item.name.toLowerCase().includes(search))
       : allTargets;
@@ -121,7 +122,7 @@
     if (!filtered.length) {
       box.innerHTML = search.trim() 
         ? "<p class='meta'>Không tìm thấy món nào.</p>"
-        : "<p class='meta'>Chọn 1+ món cược trước.</p>";
+        : "<p class='meta'>Không có món phù hợp.</p>";
       return;
     }
     
@@ -139,10 +140,10 @@
       </button>`).join("");
     
     box.querySelectorAll(".tgt").forEach((el) => {
-      el.addEventListener("click", () => {
+      el.addEventListener("click", function() {
         box.querySelectorAll(".tgt").forEach((n) => n.classList.remove("on"));
-        el.classList.add("on");
-        target = { id: el.dataset.id, coin: Number(el.dataset.coin), chance: Number(el.dataset.chance), name: el.dataset.name, image: el.dataset.image, fmt: el.dataset.fmt, color: el.dataset.color };
+        this.classList.add("on");
+        target = { id: this.dataset.id, coin: Number(this.dataset.coin), chance: Number(this.dataset.chance), name: this.dataset.name, image: this.dataset.image, fmt: this.dataset.fmt, color: this.dataset.color };
         document.getElementById("target-slot").innerHTML = slotHtml(target);
         document.getElementById("target-slot").style.borderColor = target.color;
         gauge.setChance(target.chance / 100);
@@ -153,7 +154,6 @@
   
   document.getElementById("target-sort").addEventListener("change", renderTargets);
   
-  // Toggle search mode
   document.getElementById("target-search").addEventListener("focus", function() {
     this.placeholder = "Nhập tên...";
     this.style.width = "150px";
@@ -167,7 +167,6 @@
   
   document.getElementById("target-search").addEventListener("input", renderTargets);
   
-  // Search stakes
   document.getElementById("stakes-search").addEventListener("input", (e) => {
     const search = e.target.value.toLowerCase();
     document.querySelectorAll(".stake").forEach(el => {
@@ -194,5 +193,11 @@
       setTimeout(() => location.reload(), 1400);
     });
   });
+  
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initStakes);
+  } else {
+    initStakes();
+  }
 </script>
 {% endblock %}
