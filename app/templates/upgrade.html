@@ -98,8 +98,10 @@
       
       // Load targets
       (async () => {
+        console.log(`Fetching targets for value: ${totalValue}`);
         const res = await fetch(`/api/upgrade/targets?value=${totalValue}`);
         const data = await res.json();
+        console.log("Targets response:", data);
         allTargets = data.targets || [];
         renderTargets();
       })();
