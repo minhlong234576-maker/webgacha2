@@ -145,6 +145,7 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
     await pika.close_client()
+    store.close_all()
 
 
 app = FastAPI(title="JellyVale Gacha", docs_url=None, redoc_url=None, lifespan=lifespan)

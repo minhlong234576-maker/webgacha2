@@ -364,6 +364,89 @@ async def run_tests() -> None:
         roulette_tpl = (ROOT / "app" / "templates" / "roulette.html").read_text(encoding="utf-8")
         check("roulette.html escapes h.icon", "escapeHtml(h.icon)" in roulette_tpl)
 
+        print()
+        print("=== 9. SQLITE OPS & QUERY PLAN REGRESSIONS ===")
+        store.init()
+
+        def _sqlite_checks(con):
+            uv = con.execute("PRAGMA user_version").fetchone()[0]
+            check("PRAGMA user_version >= 2", uv >= 2, str(uv))
+            stat1 = con.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='sqlite_stat1'"
+            ).fetchone()
+            check("sqlite_stat1 exists (ANALYZE ran)", stat1 is not None)
+            idxs = {
+                row[0]
+                for row in con.execute(
+                    "SELECT name FROM sqlite_master WHERE type='index'"
+                )
+            }
+            for wanted in ("idx_inv_player_val", "idx_pulls_rarity_paid", "idx_pulls_player_cost"):
+                check(f"optimized index {wanted} present", wanted in idxs)
+            for dropped in (
+                "idx_pulls_recent",
+                "idx_drops_recent",
+                "idx_tx_created",
+                "idx_drops_created",
+                "idx_pulls_player",
+                "idx_inv_player",
+            ):
+                check(f"redundant index {dropped} dropped", dropped not in idxs)
+
+            def eqp_lines(sql):
+                return [str(r[-1]) for r in con.execute("EXPLAIN QUERY PLAN " + sql).fetchall()]
+
+            eqp_inv = eqp_lines(
+                "SELECT * FROM inventory WHERE player = 'QA_Tester_01' AND status = 'held' ORDER BY value DESC, id DESC"
+            )
+            check(
+                "list_inventory uses idx_inv_player_val without TEMP B-TREE",
+                any("idx_inv_player_val" in l for l in eqp_inv)
+                and not any("TEMP B-TREE" in l for l in eqp_inv),
+                str(eqp_inv),
+            )
+            eqp_rarity = eqp_lines(
+                "SELECT rarity, COUNT(*) AS n, COALESCE(SUM(prize_coin),0) AS paid FROM pulls GROUP BY rarity ORDER BY n DESC"
+            )
+            check(
+                "stats_pulls_by_rarity uses COVERING INDEX idx_pulls_rarity_paid",
+                any("COVERING INDEX idx_pulls_rarity_paid" in l for l in eqp_rarity),
+                str(eqp_rarity),
+            )
+            eqp_top = eqp_lines(
+                "SELECT player, COUNT(*) AS n, COALESCE(SUM(cost),0) AS spent FROM pulls GROUP BY player ORDER BY n DESC LIMIT 15"
+            )
+            check(
+                "stats_pulls_top_player uses COVERING INDEX idx_pulls_player_cost",
+                any("COVERING INDEX idx_pulls_player_cost" in l for l in eqp_top),
+                str(eqp_top),
+            )
+            eqp_bp = eqp_lines(
+                "SELECT * FROM battle_players WHERE battle_id IN (1, 2) ORDER BY battle_id, slot"
+            )
+            check(
+                "list_battles players uses idx_battle_players_battle without TEMP B-TREE",
+                any("idx_battle_players_battle" in l for l in eqp_bp)
+                and not any("TEMP B-TREE" in l for l in eqp_bp),
+                str(eqp_bp),
+            )
+
+        store.run_read(_sqlite_checks)
+        for idx_i in range(store.DROPS_KEEP + 5):
+            store.record_drop(
+                "QA_Tester_01",
+                {"id": "x", "name": f"Item {idx_i}", "rarity": "consumer", "coin": 10, "image": "", "color": "#fff"},
+                "jelly-starter",
+            )
+        drops_cnt = store.run_read(lambda c: c.execute("SELECT COUNT(*) FROM drops").fetchone()[0])
+        check("record_drop prune caps rows at DROPS_KEEP", drops_cnt == store.DROPS_KEEP, str(drops_cnt))
+
+        store_src = (ROOT / "app" / "store.py").read_text(encoding="utf-8")
+        check("store.py uses BEGIN IMMEDIATE", 'con.execute("BEGIN IMMEDIATE")' in store_src)
+        db_src = (ROOT / "app" / "db.py").read_text(encoding="utf-8")
+        check("db.py does not copy live WAL DB with shutil.copy2", "shutil.copy2" not in db_src)
+        store.close_all()
+
 
 asyncio.run(run_tests())
 shutil.rmtree(TMP, ignore_errors=True)

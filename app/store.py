@@ -12,7 +12,10 @@ from .config import ROOT
 # Cho phep tro sang DB tam (server test / test song song) qua env
 # `GACHA_DB_PATH`. Mac dinh van la `data/gacha.db` cua du an.
 DB_PATH = Path(os.getenv("GACHA_DB_PATH") or (ROOT / "data" / "gacha.db"))
-_lock = threading.Lock()
+_lock = threading.RLock()
+_initialized_paths: set[str] = set()
+_all_connections: list[sqlite3.Connection] = []
+_conn_gen = 0
 
 # Kết nối theo từng thread. sqlite3 không cho dùng chung connection giữa
 # các thread, nên mỗi thread giữ connection riêng và dùng lại — thay vì mở
@@ -37,33 +40,64 @@ DROPS_KEEP = 200
 
 
 def _connect() -> sqlite3.Connection:
-    """Connection thread-local, khởi tạo schema đúng 1 lần cho mỗi thread.
+    """Connection thread-local với autocommit (`isolation_level=None`) + `BEGIN IMMEDIATE`.
 
-    Trước đây mỗi lần gọi `run()` đều mở connection mới VÀ chạy lại toàn bộ
-    `CREATE TABLE`/`CREATE INDEX` — lãng phí phần lớn thời gian của mọi truy
-    vấn. Giờ schema chỉ tạo 1 lần, các lần sau dùng lại connection.
+    - Mở connection ở chế độ autocommit để mọi giao dịch ghi chủ động dùng
+      `BEGIN IMMEDIATE` (tránh upgrade deadlock `DEFERRED` -> write).
+    - Schema/migration + `ANALYZE` chỉ chạy 1 lần cho mỗi `DB_PATH` thay vì lặp
+      lại trên từng thread.
     """
+    db_key = str(DB_PATH)
     con = getattr(_local, "con", None)
-    if con is not None and getattr(_local, "path", None) == str(DB_PATH):
+    if (
+        con is not None
+        and getattr(_local, "path", None) == db_key
+        and getattr(_local, "gen", -1) == _conn_gen
+    ):
         return con
-    if con is not None:
-        con.close()
 
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(DB_PATH, timeout=30, check_same_thread=False)
-    con.row_factory = sqlite3.Row
-    con.execute("PRAGMA journal_mode=WAL")
-    # NORMAL là nhanh hơn FULL: WAL chỉ mất dữ liệu khi máy mất điện, không
-    # mất khi app crash — đủ an toàn cho ví tiền trong game.
-    con.execute("PRAGMA synchronous=NORMAL")
-    con.execute("PRAGMA foreign_keys=ON")
-    con.execute("PRAGMA busy_timeout=30000")
-    con.execute("PRAGMA cache_size=-16000")  # 16 MB page cache
-    _init(con)
-    con.commit()
-    _local.con = con
-    _local.path = str(DB_PATH)
-    return con
+    with _lock:
+        con = getattr(_local, "con", None)
+        if (
+            con is not None
+            and getattr(_local, "path", None) == db_key
+            and getattr(_local, "gen", -1) == _conn_gen
+        ):
+            return con
+        if con is not None:
+            try:
+                con.close()
+            except sqlite3.Error:
+                pass
+            if con in _all_connections:
+                _all_connections.remove(con)
+
+        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+        con = sqlite3.connect(
+            DB_PATH,
+            timeout=30,
+            check_same_thread=False,
+            isolation_level=None,
+        )
+        con.row_factory = sqlite3.Row
+        con.execute("PRAGMA journal_mode=WAL")
+        # NORMAL nhanh hơn FULL: WAL chỉ mất dữ liệu khi máy mất điện, không
+        # mất khi app crash — đủ an toàn cho ví tiền trong game.
+        con.execute("PRAGMA synchronous=NORMAL")
+        con.execute("PRAGMA foreign_keys=ON")
+        con.execute("PRAGMA busy_timeout=30000")
+        con.execute("PRAGMA cache_size=-16000")  # 16 MB page cache
+        con.execute("PRAGMA temp_store=MEMORY")
+
+        if db_key not in _initialized_paths:
+            _init(con)
+            _initialized_paths.add(db_key)
+
+        _all_connections.append(con)
+        _local.con = con
+        _local.path = db_key
+        _local.gen = _conn_gen
+        return con
 
 
 def _init(con: sqlite3.Connection) -> None:
@@ -174,63 +208,102 @@ def _init(con: sqlite3.Connection) -> None:
             note TEXT NOT NULL DEFAULT '',
             created_at INTEGER NOT NULL
         );
-        CREATE INDEX IF NOT EXISTS idx_pulls_player ON pulls(player);
-        CREATE INDEX IF NOT EXISTS idx_pulls_recent ON pulls(id DESC);
-        CREATE INDEX IF NOT EXISTS idx_pulls_rarity ON pulls(rarity);
-        CREATE INDEX IF NOT EXISTS idx_pulls_player_count ON pulls(player, id DESC);
-        CREATE INDEX IF NOT EXISTS idx_inv_player ON inventory(player, status);
+        CREATE INDEX IF NOT EXISTS idx_pulls_rarity_paid ON pulls(rarity, prize_coin);
+        CREATE INDEX IF NOT EXISTS idx_pulls_player_cost ON pulls(player, cost);
+        CREATE INDEX IF NOT EXISTS idx_inv_player_val ON inventory(player, status, value DESC, id DESC);
         CREATE INDEX IF NOT EXISTS idx_inv_status ON inventory(status);
-        CREATE INDEX IF NOT EXISTS idx_drops_created ON drops(created_at DESC);
-        CREATE INDEX IF NOT EXISTS idx_drops_recent ON drops(id DESC);
         CREATE INDEX IF NOT EXISTS idx_battles_status ON battles(status, id DESC);
         CREATE INDEX IF NOT EXISTS idx_battle_players_battle ON battle_players(battle_id, slot);
         CREATE INDEX IF NOT EXISTS idx_battle_drops_battle ON battle_drops(battle_id, round, id);
         CREATE INDEX IF NOT EXISTS idx_tx_player ON tx(player, id DESC);
-        CREATE INDEX IF NOT EXISTS idx_tx_created ON tx(created_at DESC);
-        CREATE INDEX IF NOT EXISTS idx_upgrades_player ON upgrades(player, id DESC);
+        DROP INDEX IF EXISTS idx_pulls_recent;
+        DROP INDEX IF EXISTS idx_drops_recent;
+        DROP INDEX IF EXISTS idx_pulls_player;
+        DROP INDEX IF EXISTS idx_pulls_player_count;
+        DROP INDEX IF EXISTS idx_pulls_rarity;
+        DROP INDEX IF EXISTS idx_inv_player;
+        DROP INDEX IF EXISTS idx_drops_created;
+        DROP INDEX IF EXISTS idx_tx_created;
+        DROP INDEX IF EXISTS idx_upgrades_player;
         """
     )
-    cols = {row[1] for row in con.execute("PRAGMA table_info(pulls)")}
-    if "case_id" not in cols:
-        con.execute("ALTER TABLE pulls ADD COLUMN case_id TEXT NOT NULL DEFAULT ''")
-    if "dry_run" not in cols:
-        con.execute("ALTER TABLE pulls ADD COLUMN dry_run INTEGER NOT NULL DEFAULT 0")
-    # Battle multi-rương (chuẩn web gốc): mỗi trận là 1 playlist các line
-    # [{case_id, count}], giá ghế = tổng giá mọi vòng, thứ tự vòng giữ nguyên.
-    bcols = {row[1] for row in con.execute("PRAGMA table_info(battles)")}
-    if "entry_price" not in bcols:
-        con.execute("ALTER TABLE battles ADD COLUMN entry_price INTEGER NOT NULL DEFAULT 0")
-    if "lines" not in bcols:
-        con.execute("ALTER TABLE battles ADD COLUMN lines TEXT NOT NULL DEFAULT ''")
-    dcols = {row[1] for row in con.execute("PRAGMA table_info(battle_drops)")}
-    if "case_id" not in dcols:
-        con.execute("ALTER TABLE battle_drops ADD COLUMN case_id TEXT NOT NULL DEFAULT ''")
+    user_ver = con.execute("PRAGMA user_version").fetchone()[0]
+    if user_ver < 2:
+        cols = {row[1] for row in con.execute("PRAGMA table_info(pulls)")}
+        if "case_id" not in cols:
+            con.execute("ALTER TABLE pulls ADD COLUMN case_id TEXT NOT NULL DEFAULT ''")
+        if "dry_run" not in cols:
+            con.execute("ALTER TABLE pulls ADD COLUMN dry_run INTEGER NOT NULL DEFAULT 0")
+        # Battle multi-rương (chuẩn web gốc): mỗi trận là 1 playlist các line
+        # [{case_id, count}], giá ghế = tổng giá mọi vòng, thứ tự vòng giữ nguyên.
+        bcols = {row[1] for row in con.execute("PRAGMA table_info(battles)")}
+        if "entry_price" not in bcols:
+            con.execute("ALTER TABLE battles ADD COLUMN entry_price INTEGER NOT NULL DEFAULT 0")
+        if "lines" not in bcols:
+            con.execute("ALTER TABLE battles ADD COLUMN lines TEXT NOT NULL DEFAULT ''")
+        dcols = {row[1] for row in con.execute("PRAGMA table_info(battle_drops)")}
+        if "case_id" not in dcols:
+            con.execute("ALTER TABLE battle_drops ADD COLUMN case_id TEXT NOT NULL DEFAULT ''")
 
-    # Bảng `contracts` đã bị gỡ khỏi tính năng Hợp đồng — xóa đi cho sạch.
-    # Bảng rỗng nên không mất dữ liệu nào.
-    con.execute("DROP TABLE IF EXISTS contracts")
+        # Bảng `contracts` đã bị gỡ khỏi tính năng Hợp đồng — xóa đi cho sạch.
+        con.execute("DROP TABLE IF EXISTS contracts")
+        con.execute("PRAGMA user_version = 2")
+
+    has_stat1 = con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='sqlite_stat1'"
+    ).fetchone()
+    if not has_stat1:
+        con.execute("ANALYZE")
 
 
 def init() -> None:
     with _lock:
+        _initialized_paths.discard(str(DB_PATH))
         con = _connect()
-        try:
+        if str(DB_PATH) not in _initialized_paths:
             _init(con)
-            con.commit()
-        finally:
-            pass
+            _initialized_paths.add(str(DB_PATH))
 
 
 def run(fn):
     with _lock:
         con = _connect()
+        con.execute("BEGIN IMMEDIATE")
         try:
             result = fn(con)
-            con.commit()
+            con.execute("COMMIT")
             return result
         except Exception:
-            con.rollback()
+            if con.in_transaction:
+                con.execute("ROLLBACK")
             raise
+
+
+def run_read(fn):
+    """Chạy truy vấn chỉ đọc không giữ `_lock` ghi (tận dụng WAL đọc song song)."""
+    con = _connect()
+    return fn(con)
+
+
+def close_all() -> None:
+    """Chạy `PRAGMA optimize`, checkpoint WAL và đóng toàn bộ kết nối khi tắt app."""
+    global _conn_gen
+    with _lock:
+        conns = list(_all_connections)
+        _all_connections.clear()
+        _initialized_paths.clear()
+        _conn_gen += 1
+        for idx, con in enumerate(conns):
+            try:
+                con.execute("PRAGMA optimize")
+                if idx == len(conns) - 1:
+                    con.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            except sqlite3.Error:
+                pass
+            try:
+                con.close()
+            except sqlite3.Error:
+                pass
 
 
 def now() -> int:
@@ -291,7 +364,7 @@ def get_balance(player: str) -> int:
         row = con.execute("SELECT balance FROM wallets WHERE player = ?", (player,)).fetchone()
         return int(row["balance"]) if row else 0
 
-    return run(inner)
+    return run_read(inner)
 
 
 def credit(player: str, amount: int, kind: str, note: str = "") -> int:
@@ -378,7 +451,7 @@ def add_inventory(player: str, item, source: str, case_id: str = "") -> int:
 
 
 def get_inventory_item(item_pk: int) -> dict[str, Any] | None:
-    return run(
+    return run_read(
         lambda con: row_dict(
             con.execute("SELECT * FROM inventory WHERE id = ?", (item_pk,)).fetchone()
         )
@@ -394,7 +467,7 @@ def get_inventory_items(item_pks: list[int]) -> dict[int, dict[str, Any]]:
     if not item_pks:
         return {}
     placeholders = ",".join("?" * len(item_pks))
-    return run(
+    return run_read(
         lambda con: {
             row["id"]: dict(row)
             for row in con.execute(
@@ -405,7 +478,7 @@ def get_inventory_items(item_pks: list[int]) -> dict[int, dict[str, Any]]:
 
 
 def list_inventory(player: str, status: str = "held") -> list[dict[str, Any]]:
-    return run(
+    return run_read(
         lambda con: rows(
             con.execute(
                 """
@@ -601,21 +674,17 @@ def record_drop(player: str, item, case_id: str, is_bot: bool = False) -> None:
                 now(),
             ),
         )
-        # Chỉ dọn khi vượt ngưỡng — trước đây mỗi lần drop đều quét toàn
-        # bảng để tìm dòng thừa, tốn công vô ích khi bảng còn nhỏ.
-        count = con.execute("SELECT COUNT(*) FROM drops").fetchone()[0]
-        if count > DROPS_KEEP:
-            con.execute(
-                "DELETE FROM drops WHERE id NOT IN "
-                "(SELECT id FROM drops ORDER BY id DESC LIMIT ?)",
-                (DROPS_KEEP,),
-            )
+        # Cắt thẳng theo mốc id thứ DROPS_KEEP bằng index PK thay vì COUNT(*) + NOT IN.
+        con.execute(
+            "DELETE FROM drops WHERE id < COALESCE((SELECT id FROM drops ORDER BY id DESC LIMIT 1 OFFSET ?), 0)",
+            (DROPS_KEEP - 1,),
+        )
 
     run(inner)
 
 
 def recent_drops(limit: int = 30) -> list[dict[str, Any]]:
-    return run(
+    return run_read(
         lambda con: rows(
             con.execute(
                 "SELECT * FROM drops ORDER BY id DESC LIMIT ?",
@@ -681,7 +750,7 @@ def last_bonus(player: str) -> int:
         row = con.execute("SELECT last_claim FROM bonus WHERE player = ?", (player,)).fetchone()
         return int(row["last_claim"]) if row else 0
 
-    return run(inner)
+    return run_read(inner)
 
 
 def set_bonus(player: str) -> None:
@@ -751,7 +820,7 @@ def get_battle(battle_id: int) -> dict[str, Any] | None:
         )
         return battle
 
-    return run(inner)
+    return run_read(inner)
 
 
 def list_battles() -> dict[str, list[dict[str, Any]]]:
@@ -787,7 +856,7 @@ def list_battles() -> dict[str, list[dict[str, Any]]]:
         if ids:
             placeholders = ",".join("?" * len(ids))
             for player in con.execute(
-                f"SELECT * FROM battle_players WHERE battle_id IN ({placeholders}) ORDER BY slot",
+                f"SELECT * FROM battle_players WHERE battle_id IN ({placeholders}) ORDER BY battle_id, slot",
                 ids,
             ):
                 players_by.setdefault(player["battle_id"], []).append(dict(player))
@@ -795,7 +864,7 @@ def list_battles() -> dict[str, list[dict[str, Any]]]:
             row["players"] = players_by.get(row["id"], [])
         return {"open": open_rows, "finished": finished}
 
-    return run(inner)
+    return run_read(inner)
 
 
 def join_battle(battle_id: int, player: str, is_bot: bool, paid: int) -> dict[str, Any]:
@@ -937,7 +1006,7 @@ def stale_running_battles(limit: int = 20) -> list[dict[str, Any]]:
             )
         )
 
-    return run(inner)
+    return run_read(inner)
 
 
 def leave_battle_player(battle_id: int, player: str) -> dict[str, Any]:
@@ -1046,56 +1115,28 @@ def save_battle_result(battle_id: int, totals: dict[str, int], drops: list[dict[
                 "UPDATE battle_players SET total = ? WHERE battle_id = ? AND player = ?",
                 (total, battle_id, player),
             )
-        # Tương thích DB cũ chưa có cột case_id: chèn kèm cột nếu có.
-        try:
-            cols = {row[1] for row in con.execute("PRAGMA table_info(battle_drops)")}
-        except Exception:
-            cols = {"case_id"}
-        if "case_id" in cols:
-            con.executemany(
-                """
-                INSERT INTO battle_drops (
-                    battle_id, player, round, item_id, name, rarity, value, image, color, case_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                [
-                    (
-                        battle_id,
-                        drop["player"],
-                        drop["round"],
-                        drop["id"],
-                        drop["name"],
-                        drop["rarity"],
-                        drop["value"],
-                        drop["image"],
-                        drop["color"],
-                        drop.get("case_id") or "",
-                    )
-                    for drop in drops
-                ],
-            )
-        else:
-            con.executemany(
-                """
-                INSERT INTO battle_drops (
-                    battle_id, player, round, item_id, name, rarity, value, image, color
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                [
-                    (
-                        battle_id,
-                        drop["player"],
-                        drop["round"],
-                        drop["id"],
-                        drop["name"],
-                        drop["rarity"],
-                        drop["value"],
-                        drop["image"],
-                        drop["color"],
-                    )
-                    for drop in drops
-                ],
-            )
+        con.executemany(
+            """
+            INSERT INTO battle_drops (
+                battle_id, player, round, item_id, name, rarity, value, image, color, case_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    battle_id,
+                    drop["player"],
+                    drop["round"],
+                    drop["id"],
+                    drop["name"],
+                    drop["rarity"],
+                    drop["value"],
+                    drop["image"],
+                    drop["color"],
+                    drop.get("case_id") or "",
+                )
+                for drop in drops
+            ],
+        )
         con.execute(
             "UPDATE battles SET status = 'FINISHED', winner = ?, started_at = COALESCE(started_at, ?), finished_at = ? WHERE id = ?",
             (winner, stamp, stamp, battle_id),
@@ -1119,7 +1160,7 @@ def waiting_battles() -> list[dict[str, Any]]:
             )
         )
 
-    return run(inner)
+    return run_read(inner)
 
 
 def battle_player_names(battle_id: int) -> set[str]:
@@ -1132,11 +1173,11 @@ def battle_player_names(battle_id: int) -> set[str]:
             )
         }
 
-    return run(inner)
+    return run_read(inner)
 
 
 def recent_tx(player: str, limit: int = 20) -> list[dict[str, Any]]:
-    return run(
+    return run_read(
         lambda con: rows(
             con.execute(
                 "SELECT * FROM tx WHERE player = ? ORDER BY id DESC LIMIT ?",
@@ -1203,4 +1244,4 @@ def stats() -> dict[str, Any]:
             "users": users_n,
         }
 
-    return run(inner)
+    return run_read(inner)
