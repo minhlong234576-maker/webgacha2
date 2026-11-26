@@ -1,0 +1,37 @@
+{# Trợ lý lệnh console — panel chat dùng NLP + Claude để trả lời câu hỏi
+   về các lệnh người chơi có thể thao tác trong game.
+   Dùng native <dialog> + showModal(): browser lo sẵn top layer, focus trap,
+   đóng bằng Esc, và trả focus về nút đã bấm. #}
+<dialog id="chatbot" class="chatbot" aria-labelledby="chatbot-title">
+  <header class="chatbot-head">
+    <span class="chatbot-avatar" aria-hidden="true">
+      <svg viewBox="0 0 8 8" role="presentation" focusable="false" shape-rendering="crispEdges">
+        <path fill="#3b4a63" d="M1 0h6v1H1z M0 1h8v5H0z M1 6h6v2H1z"/>
+        <path fill="#6b7f9e" d="M1 1h6v1H1z M1 5h6v1H1z"/>
+        <path fill="#8fe8b0" d="M1 2h2v2H1z M5 2h2v2H5z"/>
+        <path fill="#1d2a3d" d="M2 2h1v1H2z M5 2h1v1H5z"/>
+        <path fill="#f7c948" d="M3 4h2v1H3z"/>
+      </svg>
+    </span>
+    <div class="chatbot-title-wrap">
+      <h2 id="chatbot-title">Trợ lý lệnh</h2>
+      <p class="chatbot-sub">Hỏi về lệnh nào bạn có thể dùng trong server</p>
+    </div>
+    <button type="button" class="chatbot-close" id="chatbot-close" aria-label="Đóng trợ lý lệnh">
+      <svg viewBox="0 0 12 12" aria-hidden="true" focusable="false" shape-rendering="crispEdges">
+        <path fill="currentColor" d="M2 2h1v1H2z M3 3h1v1H3z M4 4h1v1H4z M5 5h1v1H5z M6 6h1v1H6z M7 7h1v1H7z M8 8h1v1H8z M9 7h1v1H9z M8 6h1v1H8z M7 5h1v1H7z M6 4h1v1H6z M5 3h1v1H5z M4 2h1v1H4z M3 1h1v1H3z M2 0h1v1H2z M1 1h1v1H1z M7 5h1v1H7z M8 4h1v1H8z M9 3h1v1H9z M10 2h1v1h-1z M11 1h1v1h-1z"/>
+      </svg>
+    </button>
+  </header>
+
+  <div class="chatbot-log" id="chatbot-log" role="log" aria-live="polite" aria-label="Cuộc trò chuyện"></div>
+
+  <div class="chatbot-chips" id="chatbot-chips" aria-label="Câu hỏi gợi ý"></div>
+
+  <form class="chatbot-form" id="chatbot-form">
+    <label class="visually-hidden" for="chatbot-input">Câu hỏi của bạn</label>
+    <input id="chatbot-input" class="chatbot-input" type="text" name="q"
+           placeholder="Ví dụ: lệnh xem số dư là gì?" autocomplete="off" maxlength="500">
+    <button type="submit" class="chatbot-send" id="chatbot-send">Gửi</button>
+  </form>
+</dialog>

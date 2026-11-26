@@ -35,6 +35,7 @@ Read `CONSTRAINTS.md` before writing code. Do not weaken it to make a change pas
 - `app/bank.py` & `app/pika.py` — Real-money sync (`eco take`/`eco give`, `nexo give`) and PikaMC API client.
 - `app/gacha.py` — `gacha.json` loader, image auto-resolver (`png > webp > jpg > jpeg > svg`), Nexo command builder.
 - `app/roulette.py` & `app/bots.py` — Background Coinflip Roulette and bot loops.
+- `app/chatbot.py` & `app/commands_data.json` — Chatbot trợ lý lệnh console: offline NLP matching (không dấu) + Claude API fallback; `/api/chat` (CSRF + rate limit 20 req/60s).
 
 ## Non-Negotiable Boundaries
 1. **Real-Money Ordering (`GACHA_DRY_RUN=false`):**

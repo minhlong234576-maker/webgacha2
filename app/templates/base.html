@@ -26,12 +26,12 @@
   <link rel="stylesheet" href="/static/voxel.css">
   <link rel="stylesheet" href="/static/intro.css">
   <link rel="stylesheet" href="/static/roulette.css">
+  <link rel="stylesheet" href="/static/chatbot.css">
   <link rel="preload" as="video" href="/static/media/loading-intro.mp4" type="video/mp4">
 
   {% if landing %}<link rel="stylesheet" href="/static/landing.css">{% endif %}
   {% if csrf %}<meta name="csrf" content="{{ csrf }}">{% endif %}
-</head>
-<body>
+</head><body>
   <a class="skip-link" href="#main">Bỏ qua điều hướng</a>
   <div id="live-drops" class="live-strip" aria-label="Drop trực tiếp"></div>
   <header class="site-header">
@@ -85,6 +85,15 @@
   <main class="page {% block page_class %}{% endblock %}" id="main">
     {% block content %}{% endblock %}
   </main>
+  {# Nút nổi để mở trợ lý lệnh từ mọi trang. #}
+  <button type="button" class="chat-fab" data-open-chatbot
+          aria-haspopup="dialog" aria-controls="chatbot" aria-label="Mở trợ lý lệnh">
+    <svg viewBox="0 0 12 12" aria-hidden="true" focusable="false" shape-rendering="crispEdges">
+      <path fill="currentColor" d="M2 0h8v1H2z M1 1h10v7H1z M2 8h8v1H2z M5 9h2v2H5z"/>
+      <path fill="#1a1b22" d="M3 3h1v1H3z M5 3h1v1H5z M7 3h1v1H7z M3 5h1v1H3z M5 5h1v1H5z M7 5h1v1H7z"/>
+    </svg>
+  </button>
+  {% include "_chatbot.html" %}
   <footer class="site-footer">
     <div class="footer-inner">
       <span>JellyVale Case — roll trên server, nhận đồ Minecraft.</span>
@@ -95,6 +104,10 @@
   <script src="/static/balance.js"></script>
   <script src="/static/intro.js"></script>
   <script type="module" src="/static/fx.js"></script>
+  <script type="module">
+    import { initChatbot } from "/static/chatbot.js";
+    initChatbot();
+  </script>
   {% block extra_scripts %}{% endblock %}
   <script>
     (function() {

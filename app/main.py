@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
+from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -14,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.routing import Match
 from fastapi.templating import Jinja2Templates
 
-from . import admins, bank, bots, catalog_admin, game, liveplayers, pika, store
+from . import admins, bank, bots, catalog_admin, chatbot, game, liveplayers, pika, store
 from .roulette import roulette_manager
 from .config import PIKA_SERVER_UUID, SESSION_SECRET, pika_ready, session_https_only
 from .errors import MoneyError
@@ -47,6 +49,32 @@ from .security import (
 
 log = logging.getLogger("jellyvale.web")
 _bonus_locks: dict[str, asyncio.Lock] = {}
+
+# --- Gioi han cau hoi chatbot ------------------------------------------------
+# Endpoint /api/chat cong khai. Khi bat Claude API, moi cau hoi la mot request
+# co tien -> phai gioi han de mot nguoi spam khong lam hao chi phi.
+_CHAT_MAX_PER_WINDOW = 20
+_CHAT_WINDOW_SECONDS = 60
+_chat_hits: dict[str, deque[float]] = defaultdict(deque)
+
+
+def chat_rate_allowed(ip: str) -> bool:
+    """True neu IP nay chua vuot gioi han cau hoi trong cua so thoi gian."""
+    now = time.time()
+    bucket = _chat_hits[ip]
+    while bucket and now - bucket[0] > _CHAT_WINDOW_SECONDS:
+        bucket.popleft()
+    return len(bucket) < _CHAT_MAX_PER_WINDOW
+
+
+def record_chat_request(ip: str) -> None:
+    """Ghi nhan mot cau hoi chatbot vua duoc gui."""
+    if len(_chat_hits) >= 4096 and ip not in _chat_hits:
+        now = time.time()
+        for key, hits in list(_chat_hits.items()):
+            if not hits or now - hits[-1] > _CHAT_WINDOW_SECONDS:
+                del _chat_hits[key]
+    _chat_hits[ip].append(time.time())
 
 VN_TZ = timezone(timedelta(hours=7))
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
@@ -123,6 +151,7 @@ PUBLIC_API_PATHS = frozenset({
     "/api/drops",     # dai "drop truc tiep" tren header
     "/api/admins",    # danh sach nguoi quan tri (doc tu OP tren server)
     "/api/online",    # so nguoi dang online tren server Minecraft
+    "/api/chat",      # tro ly tra loi ve lenh console (khong chua du lieu nguoi choi)
 })
 
 
@@ -1277,6 +1306,47 @@ async def api_online():
         "max": live["max"],
         "players": live["players"],
     }
+
+
+@app.post("/api/chat")
+async def api_chat(request: Request):
+    """Tro ly tra loi cau hoi ve lenh console cua nguoi choi.
+
+    Công khai vì chỉ tra lời về lệnh console (dữ liệu công khai của server),
+    không đụng tới dữ liệu người chơi. Nhưng vẫn nhận CSRF token để chặn
+    việc site khác lén gọi từ trình duyệt của người dùng.
+
+    Trả về: `{"reply", "commands": [{name, desc, admin_only}], "source"}`.
+    """
+    payload = await read_json_dict(request)
+    question = str(payload.get("q") or payload.get("question") or "").strip()
+    if not question:
+        return JSONResponse({"detail": "Câu hỏi trống."}, status_code=400)
+    if len(question) > 500:
+        question = question[:500]
+
+    auth = api_auth(request, csrf=True)
+    if isinstance(auth, JSONResponse):
+        return auth
+
+    # Gioi han so cau hoi theo IP: endpoint cong khai, va khi bat Claude API
+    # moi cau hoi deu ton tien. Khong gioi han -> mot nguoi spam se lam hao
+    # chi phi API cho ca may chu.
+    ip = client_ip(request)
+    if not chat_rate_allowed(ip):
+        return JSONResponse(
+            {"detail": "Bạn hỏi hơi nhiều. Chờ một chút rồi thử lại nhé."},
+            status_code=429,
+        )
+    record_chat_request(ip)
+
+    try:
+        result = await chatbot.answer(question)
+    except Exception:
+        # Không trả lỗi nội bộ ra ngoài — chỉ log.
+        log.exception("chatbot loi")
+        return JSONResponse({"detail": "Trợ lý đang bận, thử lại sau."}, status_code=503)
+    return result
 
 
 @app.get("/api/balance")

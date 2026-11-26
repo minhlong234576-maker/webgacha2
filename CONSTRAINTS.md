@@ -21,6 +21,8 @@ Read this file before writing code. Do not weaken thresholds or delete checks to
 | Upgrade 2-to-1 | No duplicate-id double-count, no clone-item race, failed upgrade keeps stakes | `.\.venv\Scripts\python.exe tests\test_upgrade_two_to_one.py` | upgrade edit |
 | Test Path Hygiene | No hardcoded repo paths; `ROOT` defined before use | `.\.venv\Scripts\python.exe tests\test_paths_static.py` | test edit |
 | Frontend Web Standards | Zero legacy-pattern findings across `app/` | `npx.cmd -y modern-web-guidance@latest legacy-scan app --json` | HTML/CSS/JS edit |
+| Chatbot Knowledge Base | `app/commands_data.json` loads, offline matching resolves, Claude path is optional and degrades gracefully | `.\.venv\Scripts\python.exe tests\test_chatbot.py` | chatbot edit |
+| Chatbot Route Safety | CSRF enforced, empty/oversized input rejected, no raw exception strings leak, per-IP rate limit returns 429 | `.\.venv\Scripts\python.exe tests\test_chatbot.py` | chatbot edit |
 | Secrets | Zero tracked `.env` or credential prefixes | `git diff --cached` / `Select-String -Path app\*,tests\* -Pattern "ghp_|c7sp_|PIKA_API_KEY=."` | pre-commit |
 
 ## Exceptions

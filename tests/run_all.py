@@ -35,6 +35,7 @@ SUITES = [
     ("Logic + bao mat he thong", "test_system.py", False, None),
     ("Bao mat + regression (cookie 500, Nexo, input)", "test_security_and_fixes.py", False, None),
     ("Duong dan test (khong hardcode)", "test_paths_static.py", False, None),
+    ("Chatbot - tra loi lenh console", "test_chatbot.py", False, None),
     ("Battle - chi winner nhan do", "test_battle_winner_only.py", False, None),
     ("Battle - chay song song (race)", "test_concurrent_battles.py", False, None),
     ("Upgrade - 2 mon len 1 mon", "test_upgrade_two_to_one.py", False, None),

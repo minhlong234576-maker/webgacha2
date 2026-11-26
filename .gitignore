@@ -47,4 +47,6 @@ logs_server.*
 srv*.out
 srv*.err
 srv*.log
+uvicorn*.log
+uvicorn*.err.log
 tmp_*.py

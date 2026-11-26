@@ -1,0 +1,3080 @@
+{
+ "total": 615,
+ "commands": [
+  {
+   "name": ".s",
+   "desc": "Execute last CraftScript",
+   "admin_only": false
+  },
+  {
+   "name": "/",
+   "desc": "Toggle the super pickaxe function",
+   "admin_only": false
+  },
+  {
+   "name": "/calculate",
+   "desc": "Evaluate a mathematical expression",
+   "admin_only": false
+  },
+  {
+   "name": "/center",
+   "desc": "Set the center block(s)",
+   "admin_only": false
+  },
+  {
+   "name": "/chunk",
+   "desc": "Set the selection to your current chunk.",
+   "admin_only": false
+  },
+  {
+   "name": "/cone",
+   "desc": "Generates a cone.",
+   "admin_only": false
+  },
+  {
+   "name": "/contract",
+   "desc": "Contract the selection area",
+   "admin_only": false
+  },
+  {
+   "name": "/copy",
+   "desc": "Copy the selection to the clipboard",
+   "admin_only": false
+  },
+  {
+   "name": "/count",
+   "desc": "Counts the number of blocks matching a mask",
+   "admin_only": false
+  },
+  {
+   "name": "/curve",
+   "desc": "Draws a spline through selected points",
+   "admin_only": false
+  },
+  {
+   "name": "/cut",
+   "desc": "Cut the selection to the clipboard",
+   "admin_only": false
+  },
+  {
+   "name": "/cyl",
+   "desc": "Generates a cylinder.",
+   "admin_only": false
+  },
+  {
+   "name": "/deform",
+   "desc": "Deforms a selected region with an expression",
+   "admin_only": false
+  },
+  {
+   "name": "/distr",
+   "desc": "Get the distribution of blocks in the selection",
+   "admin_only": false
+  },
+  {
+   "name": "/drain",
+   "desc": "Drain a pool",
+   "admin_only": false
+  },
+  {
+   "name": "/drawsel",
+   "desc": "Toggle drawing the current selection",
+   "admin_only": false
+  },
+  {
+   "name": "/expand",
+   "desc": "Expand the selection area",
+   "admin_only": false
+  },
+  {
+   "name": "/faces",
+   "desc": "Build the walls, ceiling, and floor of a selection",
+   "admin_only": false
+  },
+  {
+   "name": "/fast",
+   "desc": "Toggle fast mode",
+   "admin_only": false
+  },
+  {
+   "name": "/feature",
+   "desc": "Generate Minecraft features",
+   "admin_only": false
+  },
+  {
+   "name": "/fill",
+   "desc": "Fill a hole",
+   "admin_only": false
+  },
+  {
+   "name": "/fillr",
+   "desc": "Fill a hole recursively",
+   "admin_only": false
+  },
+  {
+   "name": "/flip",
+   "desc": "Flip the contents of the clipboard across the origin",
+   "admin_only": false
+  },
+  {
+   "name": "/flora",
+   "desc": "Make flora within the region",
+   "admin_only": false
+  },
+  {
+   "name": "/forest",
+   "desc": "Make a forest within the region",
+   "admin_only": false
+  },
+  {
+   "name": "/generate",
+   "desc": "Generates a shape according to a formula.",
+   "admin_only": false
+  },
+  {
+   "name": "/generatebiome",
+   "desc": "Sets biome according to a formula.",
+   "admin_only": false
+  },
+  {
+   "name": "/hcyl",
+   "desc": "Generates a hollow cylinder.",
+   "admin_only": false
+  },
+  {
+   "name": "/help",
+   "desc": "Displays help for WorldEdit commands",
+   "admin_only": false
+  },
+  {
+   "name": "/hollow",
+   "desc": "Hollows out the object contained in this selection",
+   "admin_only": false
+  },
+  {
+   "name": "/hpos1",
+   "desc": "Set position 1 to targeted block",
+   "admin_only": false
+  },
+  {
+   "name": "/hpos2",
+   "desc": "Set position 2 to targeted block",
+   "admin_only": false
+  },
+  {
+   "name": "/hpyramid",
+   "desc": "Generate a hollow pyramid",
+   "admin_only": false
+  },
+  {
+   "name": "/hsphere",
+   "desc": "Generates a hollow sphere.",
+   "admin_only": false
+  },
+  {
+   "name": "/inset",
+   "desc": "Inset the selection area",
+   "admin_only": false
+  },
+  {
+   "name": "/limit",
+   "desc": "Modify block change limit",
+   "admin_only": false
+  },
+  {
+   "name": "/line",
+   "desc": "Draws line segments between cuboid selection corners or convex polyhedral selection vertices",
+   "admin_only": false
+  },
+  {
+   "name": "/move",
+   "desc": "Move the contents of the selection",
+   "admin_only": false
+  },
+  {
+   "name": "/naturalize",
+   "desc": "3 layers of dirt on top then rock below",
+   "admin_only": false
+  },
+  {
+   "name": "/outset",
+   "desc": "Outset the selection area",
+   "admin_only": false
+  },
+  {
+   "name": "/overlay",
+   "desc": "Set a block on top of blocks in the region",
+   "admin_only": false
+  },
+  {
+   "name": "/paste",
+   "desc": "Paste the clipboard's contents",
+   "admin_only": false
+  },
+  {
+   "name": "/perf",
+   "desc": "Toggle side effects for performance",
+   "admin_only": false
+  },
+  {
+   "name": "/pos",
+   "desc": "Set positions",
+   "admin_only": false
+  },
+  {
+   "name": "/pos1",
+   "desc": "Set position 1",
+   "admin_only": false
+  },
+  {
+   "name": "/pos2",
+   "desc": "Set position 2",
+   "admin_only": false
+  },
+  {
+   "name": "/pyramid",
+   "desc": "Generate a filled pyramid",
+   "admin_only": false
+  },
+  {
+   "name": "/regen",
+   "desc": "Regenerates the contents of the selection",
+   "admin_only": false
+  },
+  {
+   "name": "/registry",
+   "desc": "Search through the given registry",
+   "admin_only": false
+  },
+  {
+   "name": "/reorder",
+   "desc": "Sets the reorder mode of WorldEdit",
+   "admin_only": false
+  },
+  {
+   "name": "/replace",
+   "desc": "Replace all blocks in the selection with another",
+   "admin_only": false
+  },
+  {
+   "name": "/replacebiome",
+   "desc": "Replaces the biome of your current block or region.",
+   "admin_only": false
+  },
+  {
+   "name": "/revolve",
+   "desc": "Revolve the selection around a vertical axis",
+   "admin_only": false
+  },
+  {
+   "name": "/rotate",
+   "desc": "Rotate the contents of the clipboard",
+   "admin_only": false
+  },
+  {
+   "name": "/sel",
+   "desc": "Choose a region selector",
+   "admin_only": false
+  },
+  {
+   "name": "/set",
+   "desc": "Sets all the blocks in the region",
+   "admin_only": false
+  },
+  {
+   "name": "/setbiome",
+   "desc": "Sets the biome of your current block or region.",
+   "admin_only": false
+  },
+  {
+   "name": "/shift",
+   "desc": "Shift the selection area",
+   "admin_only": false
+  },
+  {
+   "name": "/size",
+   "desc": "Get information about the selection",
+   "admin_only": false
+  },
+  {
+   "name": "/smooth",
+   "desc": "Smooth the elevation in the selection",
+   "admin_only": false
+  },
+  {
+   "name": "/snowsmooth",
+   "desc": "Smooth the elevation in the selection with snow layers",
+   "admin_only": false
+  },
+  {
+   "name": "/sphere",
+   "desc": "Generates a filled sphere.",
+   "admin_only": false
+  },
+  {
+   "name": "/stack",
+   "desc": "Repeat the contents of the selection",
+   "admin_only": false
+  },
+  {
+   "name": "/structure",
+   "desc": "Generate Minecraft structures",
+   "admin_only": false
+  },
+  {
+   "name": "/timeout",
+   "desc": "Modify evaluation timeout time.",
+   "admin_only": false
+  },
+  {
+   "name": "/trim",
+   "desc": "Minimize the selection to encompass matching blocks",
+   "admin_only": false
+  },
+  {
+   "name": "/update",
+   "desc": "Apply side effects to your selection",
+   "admin_only": false
+  },
+  {
+   "name": "/walls",
+   "desc": "Build the four sides of the selection",
+   "admin_only": false
+  },
+  {
+   "name": "/wand",
+   "desc": "Get the wand item",
+   "admin_only": false
+  },
+  {
+   "name": "/watchdog",
+   "desc": "Changes watchdog hook state.",
+   "admin_only": false
+  },
+  {
+   "name": "/world",
+   "desc": "Sets the world override",
+   "admin_only": false
+  },
+  {
+   "name": "abandonallclaims",
+   "desc": "Deletes ALL your claims.",
+   "admin_only": false
+  },
+  {
+   "name": "abandonclaim",
+   "desc": "Deletes a claim.",
+   "admin_only": false
+  },
+  {
+   "name": "abandontoplevelclaim",
+   "desc": "Deletes a claim and all its subdivisions.",
+   "admin_only": false
+  },
+  {
+   "name": "abtoggle",
+   "desc": "Toggles your own skills action bar.",
+   "admin_only": false
+  },
+  {
+   "name": "accesstrust",
+   "desc": "Grants a player entry to your claim(s) and use of your bed, buttons, and levers.",
+   "admin_only": false
+  },
+  {
+   "name": "addpin",
+   "desc": "quickly adds a pin",
+   "admin_only": false
+  },
+  {
+   "name": "adjustbonusclaimblocks",
+   "desc": "Adds or subtracts bonus claim blocks for a player.",
+   "admin_only": false
+  },
+  {
+   "name": "adjustbonusclaimblocksall",
+   "desc": "Adds or subtracts bonus claim blocks for all online players.",
+   "admin_only": false
+  },
+  {
+   "name": "adminclaims",
+   "desc": "Switches the shovel tool to administrative claims mode.",
+   "admin_only": false
+  },
+  {
+   "name": "adminclaimslist",
+   "desc": "Lists all administrative claims.",
+   "admin_only": false
+  },
+  {
+   "name": "admindelhome",
+   "desc": "Admin command to delete a player's home",
+   "admin_only": false
+  },
+  {
+   "name": "adminlisthomes",
+   "desc": "Admin command to list all homes of a player",
+   "admin_only": false
+  },
+  {
+   "name": "advanced_command",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "advancedenchantments",
+   "desc": "Main AE Command",
+   "admin_only": false
+  },
+  {
+   "name": "advancedredeem",
+   "desc": "Create, delete, reload codes, and reset codes for players.",
+   "admin_only": false
+  },
+  {
+   "name": "advancedserverlist",
+   "desc": "Cleares the Favicon and/or Player Cache.",
+   "admin_only": false
+  },
+  {
+   "name": "advancedsets",
+   "desc": "Advanced sets Main command.",
+   "admin_only": false
+  },
+  {
+   "name": "advancement",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "aegive",
+   "desc": "Give Enchanted Items .",
+   "admin_only": false
+  },
+  {
+   "name": "afk",
+   "desc": "Marks you as away-from-keyboard.",
+   "admin_only": false
+  },
+  {
+   "name": "agility",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "ah",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "alchemist",
+   "desc": "alchemist: Combine unique items using economy.",
+   "admin_only": false
+  },
+  {
+   "name": "alchemy",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "allowfire",
+   "desc": "Allows all fire spread temporarily",
+   "admin_only": true
+  },
+  {
+   "name": "announcement",
+   "desc": "Announce a message to the entire server.",
+   "admin_only": false
+  },
+  {
+   "name": "antioch",
+   "desc": "A little surprise for operators.",
+   "admin_only": false
+  },
+  {
+   "name": "antiswear",
+   "desc": "Shows a list of commands for the anti-swear feature.",
+   "admin_only": false
+  },
+  {
+   "name": "anvil",
+   "desc": "Opens up an anvil.",
+   "admin_only": false
+  },
+  {
+   "name": "apply",
+   "desc": "Reapply worn armor.",
+   "admin_only": false
+  },
+  {
+   "name": "archery",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "ascend",
+   "desc": "Go up a floor",
+   "admin_only": false
+  },
+  {
+   "name": "asl",
+   "desc": "Cleares the Favicon and/or Player Cache.",
+   "admin_only": false
+  },
+  {
+   "name": "attribute",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "authme",
+   "desc": "AuthMe op commands",
+   "admin_only": false
+  },
+  {
+   "name": "autobroadcast",
+   "desc": "Shows a list of commands for the auto broadcast feature.",
+   "admin_only": false
+  },
+  {
+   "name": "back",
+   "desc": "Teleports you to your location prior to tp/spawn/warp.",
+   "admin_only": false
+  },
+  {
+   "name": "backup",
+   "desc": "Runs the backup if configured.",
+   "admin_only": false
+  },
+  {
+   "name": "balance",
+   "desc": "Xem số dư hiện tại.",
+   "admin_only": false
+  },
+  {
+   "name": "balancetop",
+   "desc": "Bảng xếp hạng đại gia.",
+   "admin_only": false
+  },
+  {
+   "name": "ban",
+   "desc": "Bans a player.",
+   "admin_only": true
+  },
+  {
+   "name": "ban-ip",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "banip",
+   "desc": "Bans an IP address.",
+   "admin_only": true
+  },
+  {
+   "name": "banlist",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "bannedcommands",
+   "desc": "Shows a list of commands for the banned commands feature.",
+   "admin_only": true
+  },
+  {
+   "name": "basic_command",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "basicclaims",
+   "desc": "Switches the shovel tool back to basic claims mode.",
+   "admin_only": false
+  },
+  {
+   "name": "bb",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "beezooka",
+   "desc": "Throw an exploding bee at your opponent.",
+   "admin_only": false
+  },
+  {
+   "name": "bigtree",
+   "desc": "Spawn a big tree where you are looking.",
+   "admin_only": false
+  },
+  {
+   "name": "biomeinfo",
+   "desc": "Get the biome of the targeted block.",
+   "admin_only": false
+  },
+  {
+   "name": "biomelist",
+   "desc": "Gets all biomes available.",
+   "admin_only": false
+  },
+  {
+   "name": "book",
+   "desc": "Allows reopening and editing of sealed books.",
+   "admin_only": false
+  },
+  {
+   "name": "boombox",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "bossbar",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "bottom",
+   "desc": "Teleport to the lowest block at your current position.",
+   "admin_only": false
+  },
+  {
+   "name": "break",
+   "desc": "Breaks the block you are looking at.",
+   "admin_only": false
+  },
+  {
+   "name": "broadcast",
+   "desc": "Broadcasts a message to the entire server.",
+   "admin_only": false
+  },
+  {
+   "name": "broadcastworld",
+   "desc": "Broadcasts a message to a world.",
+   "admin_only": false
+  },
+  {
+   "name": "brush",
+   "desc": "Brushing commands",
+   "admin_only": false
+  },
+  {
+   "name": "bukkit",
+   "desc": "about: Gets the version of this server including any plugins in use",
+   "admin_only": false
+  },
+  {
+   "name": "burn",
+   "desc": "Set a player on fire.",
+   "admin_only": false
+  },
+  {
+   "name": "butcher",
+   "desc": "Kill all or nearby mobs",
+   "admin_only": false
+  },
+  {
+   "name": "buyclaimblocks",
+   "desc": "Purchases additional claim blocks with server money.  Doesn't work on servers without a Vault-compatible economy plugin.",
+   "admin_only": false
+  },
+  {
+   "name": "captcha",
+   "desc": "Captcha command",
+   "admin_only": false
+  },
+  {
+   "name": "cartographytable",
+   "desc": "Opens up a cartography table.",
+   "admin_only": false
+  },
+  {
+   "name": "cauca",
+   "desc": "Lenh chinh cho he thong cau ca dac biet",
+   "admin_only": false
+  },
+  {
+   "name": "ceil",
+   "desc": "Go to the ceiling",
+   "admin_only": false
+  },
+  {
+   "name": "changepassword",
+   "desc": "Change password of an account",
+   "admin_only": false
+  },
+  {
+   "name": "chatmanager",
+   "desc": "Main command for the plugin chat manager.",
+   "admin_only": false
+  },
+  {
+   "name": "chatradius",
+   "desc": "Chat radius command.",
+   "admin_only": false
+  },
+  {
+   "name": "chunkinfo",
+   "desc": "Get information about the chunk you're inside",
+   "admin_only": false
+  },
+  {
+   "name": "chunky",
+   "desc": "Generates chunks",
+   "admin_only": false
+  },
+  {
+   "name": "citizens",
+   "desc": "Administration commands",
+   "admin_only": false
+  },
+  {
+   "name": "claim",
+   "desc": "Creates a land claim centered at your current location with the given radius.",
+   "admin_only": false
+  },
+  {
+   "name": "claimbook",
+   "desc": "Gives a player a manual about claiming land.",
+   "admin_only": false
+  },
+  {
+   "name": "claimexplosions",
+   "desc": "Toggles whether explosives may be used in a specific land claim.",
+   "admin_only": false
+  },
+  {
+   "name": "claimslist",
+   "desc": "Lists information about a player's claim blocks and claims.",
+   "admin_only": false
+  },
+  {
+   "name": "clearchat",
+   "desc": "Clears chat for everyone on the server.",
+   "admin_only": false
+  },
+  {
+   "name": "clearclipboard",
+   "desc": "Clear your clipboard",
+   "admin_only": false
+  },
+  {
+   "name": "clearhistory",
+   "desc": "Clear your history",
+   "admin_only": false
+  },
+  {
+   "name": "clearinventory",
+   "desc": "Clear all items in your inventory.",
+   "admin_only": false
+  },
+  {
+   "name": "clearinventoryconfirmtoggle",
+   "desc": "Toggles whether you are prompted to confirm inventory clears.",
+   "admin_only": false
+  },
+  {
+   "name": "clickmobs",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "clone",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "co",
+   "desc": "Utilize the plugin",
+   "admin_only": false
+  },
+  {
+   "name": "coins",
+   "desc": "Lệnh quản lý Xu.",
+   "admin_only": false
+  },
+  {
+   "name": "commandspy",
+   "desc": "See what commands every player types on the server.",
+   "admin_only": false
+  },
+  {
+   "name": "compass",
+   "desc": "Describes your current bearing.",
+   "admin_only": false
+  },
+  {
+   "name": "condense",
+   "desc": "Condenses items into a more compact blocks.",
+   "admin_only": false
+  },
+  {
+   "name": "conditionalevents",
+   "desc": "Main command of ConditionalEvents",
+   "admin_only": false
+  },
+  {
+   "name": "containertrust",
+   "desc": "Grants a player access to your claim's containers, crops, animals, bed, buttons, and levers.",
+   "admin_only": false
+  },
+  {
+   "name": "core",
+   "desc": "Utilize the plugin",
+   "admin_only": false
+  },
+  {
+   "name": "coreprotect",
+   "desc": "Utilize the plugin",
+   "admin_only": false
+  },
+  {
+   "name": "crate",
+   "desc": "Crates root command.",
+   "admin_only": false
+  },
+  {
+   "name": "cratekey",
+   "desc": "The root command for crate keys.",
+   "admin_only": false
+  },
+  {
+   "name": "cratereward",
+   "desc": "Root command for managing rewards.",
+   "admin_only": false
+  },
+  {
+   "name": "createkit",
+   "desc": "Create a kit in game!",
+   "admin_only": false
+  },
+  {
+   "name": "cs",
+   "desc": "Execute a CraftScript",
+   "admin_only": true
+  },
+  {
+   "name": "currentbiome",
+   "desc": "View name of biome currently in",
+   "admin_only": false
+  },
+  {
+   "name": "customtext",
+   "desc": "Allows you to create custom text commands.",
+   "admin_only": false
+  },
+  {
+   "name": "cycler",
+   "desc": "Block data cycler tool",
+   "admin_only": false
+  },
+  {
+   "name": "damage",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "data",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "datapack",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "debug",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "defaultgamemode",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "defense",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "delchunks",
+   "desc": "Delete chunks that your selection includes",
+   "admin_only": false
+  },
+  {
+   "name": "deletealladminclaims",
+   "desc": "Deletes all administrative claims.",
+   "admin_only": false
+  },
+  {
+   "name": "deleteallclaims",
+   "desc": "Deletes all of another player's claims.",
+   "admin_only": false
+  },
+  {
+   "name": "deleteclaim",
+   "desc": "Deletes the claim you're standing in, even if it's not your claim.",
+   "admin_only": false
+  },
+  {
+   "name": "deleteclaimsinworld",
+   "desc": "Deletes all the claims in a world.  Only usable at the server console.",
+   "admin_only": false
+  },
+  {
+   "name": "deleteuserclaimsinworld",
+   "desc": "Deletes all the non-admin claims in a world.  Only usable at the server console.",
+   "admin_only": false
+  },
+  {
+   "name": "delhome",
+   "desc": "Removes a home.",
+   "admin_only": false
+  },
+  {
+   "name": "deljail",
+   "desc": "Removes a jail.",
+   "admin_only": false
+  },
+  {
+   "name": "delkit",
+   "desc": "Deletes the specified kit.",
+   "admin_only": false
+  },
+  {
+   "name": "deltree",
+   "desc": "Floating tree remover tool",
+   "admin_only": false
+  },
+  {
+   "name": "deluxemenus",
+   "desc": "DeluxeMenus main commands",
+   "admin_only": false
+  },
+  {
+   "name": "delwarp",
+   "desc": "Deletes the specified warp.",
+   "admin_only": false
+  },
+  {
+   "name": "deop",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "depth",
+   "desc": "States current depth, relative to sea level.",
+   "admin_only": false
+  },
+  {
+   "name": "descend",
+   "desc": "Go down a floor",
+   "admin_only": false
+  },
+  {
+   "name": "dialog",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "difficulty",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "disposal",
+   "desc": "Opens a portable disposal menu.",
+   "admin_only": false
+  },
+  {
+   "name": "eco",
+   "desc": "Manages the server economy.",
+   "admin_only": true
+  },
+  {
+   "name": "ecobridge",
+   "desc": "",
+   "admin_only": true
+  },
+  {
+   "name": "ecoset",
+   "desc": "Thiết lập số dư cho người chơi.",
+   "admin_only": true
+  },
+  {
+   "name": "ecotake",
+   "desc": "Trừ tiền của người chơi.",
+   "admin_only": true
+  },
+  {
+   "name": "ecrates",
+   "desc": "Main command for ExcellentCrates",
+   "admin_only": false
+  },
+  {
+   "name": "editshop",
+   "desc": "Allows to edit the shop with ingame commands",
+   "admin_only": false
+  },
+  {
+   "name": "editsign",
+   "desc": "Edits a sign in the world.",
+   "admin_only": false
+  },
+  {
+   "name": "effect",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "eliteanimationsbridge",
+   "desc": "shop: Open the master shop menu",
+   "admin_only": false
+  },
+  {
+   "name": "email",
+   "desc": "Add email or recover password",
+   "admin_only": false
+  },
+  {
+   "name": "enchant",
+   "desc": "Enchants the item the user is holding.",
+   "admin_only": true
+  },
+  {
+   "name": "enchanting",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "enchants",
+   "desc": "enchants:",
+   "admin_only": false
+  },
+  {
+   "name": "enderchest",
+   "desc": "Lets you see inside an enderchest.",
+   "admin_only": true
+  },
+  {
+   "name": "essentials",
+   "desc": "Reloads essentials.",
+   "admin_only": false
+  },
+  {
+   "name": "excavation",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "excellenteconomy",
+   "desc": "execo:",
+   "admin_only": false
+  },
+  {
+   "name": "execo",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "execute",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "exp",
+   "desc": "Give, set, reset, or look at a players experience.",
+   "admin_only": false
+  },
+  {
+   "name": "experience",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "ext",
+   "desc": "Extinguish players.",
+   "admin_only": false
+  },
+  {
+   "name": "extendclaim",
+   "desc": "Resizes the land claim you're standing in by pushing or pulling its boundary in the direction you're facing.",
+   "admin_only": false
+  },
+  {
+   "name": "extinguish",
+   "desc": "Extinguish nearby fire",
+   "admin_only": false
+  },
+  {
+   "name": "farming",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "farwand",
+   "desc": "Wand at a distance tool",
+   "admin_only": false
+  },
+  {
+   "name": "feed",
+   "desc": "Satisfy the hunger.",
+   "admin_only": false
+  },
+  {
+   "name": "fetchprofile",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "fighting",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "fill",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "fillbiome",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "filter",
+   "desc": "Add or remove programmable filters to the packet listeners.",
+   "admin_only": false
+  },
+  {
+   "name": "fireball",
+   "desc": "Throw a fireball or other assorted projectiles.",
+   "admin_only": false
+  },
+  {
+   "name": "firework",
+   "desc": "Allows you to modify a stack of fireworks.",
+   "admin_only": false
+  },
+  {
+   "name": "fishing",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "fixlava",
+   "desc": "Fix lava to be stationary",
+   "admin_only": false
+  },
+  {
+   "name": "fixwater",
+   "desc": "Fix water to be stationary",
+   "admin_only": false
+  },
+  {
+   "name": "floodfill",
+   "desc": "Flood fill tool",
+   "admin_only": false
+  },
+  {
+   "name": "floodgate",
+   "desc": "A set of Floodgate related actions in one command",
+   "admin_only": false
+  },
+  {
+   "name": "fly",
+   "desc": "Take off, and soar!",
+   "admin_only": false
+  },
+  {
+   "name": "foraging",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "forceload",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "forestgen",
+   "desc": "Generate a forest",
+   "admin_only": false
+  },
+  {
+   "name": "freemium",
+   "desc": "Disable premium mode",
+   "admin_only": false
+  },
+  {
+   "name": "function",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "fwhitelist",
+   "desc": "Easy way to whitelist Bedrock players",
+   "admin_only": false
+  },
+  {
+   "name": "gamemode",
+   "desc": "Change player gamemode.",
+   "admin_only": true
+  },
+  {
+   "name": "gamerule",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "gbellyflop",
+   "desc": "Bellyflop command",
+   "admin_only": false
+  },
+  {
+   "name": "gc",
+   "desc": "Reports memory, uptime and tick info.",
+   "admin_only": true
+  },
+  {
+   "name": "gcrawl",
+   "desc": "Crawl command",
+   "admin_only": false
+  },
+  {
+   "name": "getpos",
+   "desc": "Get your current coordinates or those of a player.",
+   "admin_only": false
+  },
+  {
+   "name": "geyser",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "geyser-spigot",
+   "desc": "geyser:",
+   "admin_only": false
+  },
+  {
+   "name": "give",
+   "desc": "Give a player an item.",
+   "admin_only": false
+  },
+  {
+   "name": "givepet",
+   "desc": "Allows a player to give away a pet he or she tamed.",
+   "admin_only": false
+  },
+  {
+   "name": "gkit",
+   "desc": "Open God Kits.",
+   "admin_only": false
+  },
+  {
+   "name": "glay",
+   "desc": "Lay command",
+   "admin_only": false
+  },
+  {
+   "name": "glegsup",
+   "desc": "Legs up command",
+   "admin_only": false
+  },
+  {
+   "name": "gmask",
+   "desc": "Set the global mask",
+   "admin_only": true
+  },
+  {
+   "name": "god",
+   "desc": "Enable godmode on a player",
+   "admin_only": true
+  },
+  {
+   "name": "gpblockinfo",
+   "desc": "Allows an administrator to get technical information about blocks in the world and items in hand.",
+   "admin_only": false
+  },
+  {
+   "name": "gpreload",
+   "desc": "Reloads Grief Prevention's configuration settings.  Does NOT totally reload the entire plugin.",
+   "admin_only": false
+  },
+  {
+   "name": "green",
+   "desc": "Converts dirt to grass blocks in the area",
+   "admin_only": false
+  },
+  {
+   "name": "grindstone",
+   "desc": "Opens up a grindstone.",
+   "admin_only": false
+  },
+  {
+   "name": "gsit",
+   "desc": "Sit command",
+   "admin_only": false
+  },
+  {
+   "name": "gsitreload",
+   "desc": "Plugin reload command",
+   "admin_only": false
+  },
+  {
+   "name": "gspin",
+   "desc": "Spin command",
+   "admin_only": false
+  },
+  {
+   "name": "halt-activity",
+   "desc": "Attempts to cease as much activity in order to stop lag",
+   "admin_only": true
+  },
+  {
+   "name": "hat",
+   "desc": "Get some cool new headgear.",
+   "admin_only": false
+  },
+  {
+   "name": "heal",
+   "desc": "Heal a player",
+   "admin_only": false
+  },
+  {
+   "name": "help",
+   "desc": "Views a list of available commands.",
+   "admin_only": false
+  },
+  {
+   "name": "helpop",
+   "desc": "Message online admins.",
+   "admin_only": false
+  },
+  {
+   "name": "hideplugins",
+   "desc": "HidePlugins admin command",
+   "admin_only": false
+  },
+  {
+   "name": "home",
+   "desc": "Teleport to your home.",
+   "admin_only": false
+  },
+  {
+   "name": "ice",
+   "desc": "Cools a player off.",
+   "admin_only": false
+  },
+  {
+   "name": "ignore",
+   "desc": "Ignore or unignore other players.",
+   "admin_only": false
+  },
+  {
+   "name": "ignoreclaims",
+   "desc": "Toggles ignore claims mode.",
+   "admin_only": false
+  },
+  {
+   "name": "ignoredplayerlist",
+   "desc": "Lists the players you're ignoring in chat.",
+   "admin_only": false
+  },
+  {
+   "name": "ignoreplayer",
+   "desc": "Ignores another player's chat messages.",
+   "admin_only": false
+  },
+  {
+   "name": "info",
+   "desc": "Block information tool",
+   "admin_only": false
+  },
+  {
+   "name": "intro",
+   "desc": "Test and configure login intro animations (Admin only)",
+   "admin_only": false
+  },
+  {
+   "name": "invsee",
+   "desc": "See the inventory of other players.",
+   "admin_only": false
+  },
+  {
+   "name": "item",
+   "desc": "Spawn an item.",
+   "admin_only": true
+  },
+  {
+   "name": "itemdb",
+   "desc": "Searches for an item.",
+   "admin_only": false
+  },
+  {
+   "name": "itemedit",
+   "desc": "allows to edit item in hand",
+   "admin_only": false
+  },
+  {
+   "name": "itemeditequipment",
+   "desc": "allows to edit item in hand",
+   "admin_only": false
+  },
+  {
+   "name": "itemeditfood",
+   "desc": "allows to edit item in hand",
+   "admin_only": false
+  },
+  {
+   "name": "itemeditimport",
+   "desc": "import configurations from other plugins",
+   "admin_only": false
+  },
+  {
+   "name": "itemeditinfo",
+   "desc": "display info of itemedit",
+   "admin_only": false
+  },
+  {
+   "name": "itemeditkinetic",
+   "desc": "allows to edit item in hand",
+   "admin_only": false
+  },
+  {
+   "name": "itemeditpiercing",
+   "desc": "allows to edit item in hand",
+   "admin_only": false
+  },
+  {
+   "name": "itemeditreload",
+   "desc": "reload configurations",
+   "admin_only": false
+  },
+  {
+   "name": "itemlore",
+   "desc": "Edit the lore of an item.",
+   "admin_only": false
+  },
+  {
+   "name": "itemname",
+   "desc": "Names an item.",
+   "admin_only": false
+  },
+  {
+   "name": "itemstorage",
+   "desc": "allows to save and retrieve personal items previusly created",
+   "admin_only": false
+  },
+  {
+   "name": "jailedplayers",
+   "desc": "List all jailed players.",
+   "admin_only": false
+  },
+  {
+   "name": "jails",
+   "desc": "List all jails.",
+   "admin_only": false
+  },
+  {
+   "name": "jfr",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "jump",
+   "desc": "Jumps to the nearest block in the line of sight.",
+   "admin_only": false
+  },
+  {
+   "name": "jumpto",
+   "desc": "Teleport to a location",
+   "admin_only": false
+  },
+  {
+   "name": "kick",
+   "desc": "Kicks a specified player with a reason.",
+   "admin_only": true
+  },
+  {
+   "name": "kickall",
+   "desc": "Kicks all players off the server except the issuer.",
+   "admin_only": false
+  },
+  {
+   "name": "kill",
+   "desc": "Kills specified player.",
+   "admin_only": true
+  },
+  {
+   "name": "kit",
+   "desc": "Obtains the specified kit or views all available kits.",
+   "admin_only": false
+  },
+  {
+   "name": "kitreset",
+   "desc": "Resets the cooldown on the specified kit.",
+   "admin_only": false
+  },
+  {
+   "name": "kittycannon",
+   "desc": "Throw an exploding kitten at your opponent.",
+   "admin_only": false
+  },
+  {
+   "name": "lagg",
+   "desc": "Main ClearLAGGG command.",
+   "admin_only": false
+  },
+  {
+   "name": "lightning",
+   "desc": "The power of Thor. Strike at cursor or player.",
+   "admin_only": false
+  },
+  {
+   "name": "linkaccount",
+   "desc": "Link your Java account with your Bedrock account",
+   "admin_only": false
+  },
+  {
+   "name": "list",
+   "desc": "List all online players.",
+   "admin_only": false
+  },
+  {
+   "name": "listchunks",
+   "desc": "List chunks that your selection includes",
+   "admin_only": false
+  },
+  {
+   "name": "listhomes",
+   "desc": "Admin command to list all homes of a player",
+   "admin_only": false
+  },
+  {
+   "name": "locate",
+   "desc": "Locate a player",
+   "admin_only": true
+  },
+  {
+   "name": "login",
+   "desc": "Login command",
+   "admin_only": false
+  },
+  {
+   "name": "logout",
+   "desc": "Logout command",
+   "admin_only": false
+  },
+  {
+   "name": "loom",
+   "desc": "Opens up a loom.",
+   "admin_only": false
+  },
+  {
+   "name": "loot",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "lrbuild",
+   "desc": "Long-range building tool",
+   "admin_only": false
+  },
+  {
+   "name": "luckperms",
+   "desc": "Manage permissions",
+   "admin_only": false
+  },
+  {
+   "name": "mail",
+   "desc": "Manages inter-player, intra-server mail.",
+   "admin_only": false
+  },
+  {
+   "name": "mana",
+   "desc": "Display your or another player's current and max mana",
+   "admin_only": false
+  },
+  {
+   "name": "market",
+   "desc": "Opens the server shop",
+   "admin_only": false
+  },
+  {
+   "name": "mask",
+   "desc": "Set the brush mask",
+   "admin_only": true
+  },
+  {
+   "name": "material",
+   "desc": "Set the brush material",
+   "admin_only": true
+  },
+  {
+   "name": "mcpets",
+   "desc": "Command to manage your pets",
+   "admin_only": false
+  },
+  {
+   "name": "me",
+   "desc": "Describes an action in the context of the player.",
+   "admin_only": false
+  },
+  {
+   "name": "meg",
+   "desc": "All things Model Engine related.",
+   "admin_only": false
+  },
+  {
+   "name": "message",
+   "desc": "Sends a private message to the specified player.",
+   "admin_only": false
+  },
+  {
+   "name": "minecraft",
+   "desc": "advancement: A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "mining",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "money",
+   "desc": "Lệnh quản lý Coin.",
+   "admin_only": true
+  },
+  {
+   "name": "more",
+   "desc": "Fills the item stack in hand to specified amount, or to maximum size if none is specified.",
+   "admin_only": false
+  },
+  {
+   "name": "motd",
+   "desc": "Views the Message Of The Day.",
+   "admin_only": false
+  },
+  {
+   "name": "msg",
+   "desc": "Sends a private message to the specified player.",
+   "admin_only": false
+  },
+  {
+   "name": "msgtoggle",
+   "desc": "Blocks receiving all private messages.",
+   "admin_only": false
+  },
+  {
+   "name": "mspt",
+   "desc": "View server tick times",
+   "admin_only": false
+  },
+  {
+   "name": "mua",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "mute",
+   "desc": "Mutes or unmutes a player.",
+   "admin_only": true
+  },
+  {
+   "name": "mutechat",
+   "desc": "Mutes the server chat preventing players from talking in chat.",
+   "admin_only": false
+  },
+  {
+   "name": "mv",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "mvinv",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "mvsetspawn",
+   "desc": "Sets the spawn location of the specified world",
+   "admin_only": false
+  },
+  {
+   "name": "mvspawn",
+   "desc": "Teleports the specified player to the spawn of the world they are in",
+   "admin_only": false
+  },
+  {
+   "name": "mvtp",
+   "desc": "Allows you to teleport to a location on your server!",
+   "admin_only": false
+  },
+  {
+   "name": "mythicmobs",
+   "desc": "MythicMobs base command",
+   "admin_only": false
+  },
+  {
+   "name": "mythicmobsmenu",
+   "desc": "MythicMobs menu command",
+   "admin_only": false
+  },
+  {
+   "name": "n",
+   "desc": "Nexo command",
+   "admin_only": false
+  },
+  {
+   "name": "napbank",
+   "desc": "Nap tien qua chuyen khoan ngan hang",
+   "admin_only": false
+  },
+  {
+   "name": "napthe",
+   "desc": "Nap the cao vao server",
+   "admin_only": false
+  },
+  {
+   "name": "navwand",
+   "desc": "Navigation wand tool",
+   "admin_only": false
+  },
+  {
+   "name": "near",
+   "desc": "Lists the players near by or around a player.",
+   "admin_only": false
+  },
+  {
+   "name": "nexo",
+   "desc": "Nexo command",
+   "admin_only": false
+  },
+  {
+   "name": "nhiemvu",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "nick",
+   "desc": "Change your nickname or that of another player.",
+   "admin_only": false
+  },
+  {
+   "name": "nightcore",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "noithat",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "none",
+   "desc": "Unbind a bound tool from your current item",
+   "admin_only": false
+  },
+  {
+   "name": "npc",
+   "desc": "Basic commands for all NPC-related things",
+   "admin_only": false
+  },
+  {
+   "name": "nuke",
+   "desc": "May death rain upon them.",
+   "admin_only": false
+  },
+  {
+   "name": "nx",
+   "desc": "Nexo command",
+   "admin_only": false
+  },
+  {
+   "name": "oneplayersleep",
+   "desc": "Toggle OnePlayerSleep on or off or reload configuration",
+   "admin_only": false
+  },
+  {
+   "name": "op",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "open_shop_enchant",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "openbook",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "packet",
+   "desc": "Add or remove a simple packet listener.",
+   "admin_only": false
+  },
+  {
+   "name": "packet_filter",
+   "desc": "Add or remove programmable filters to the packet listeners.",
+   "admin_only": false
+  },
+  {
+   "name": "packetlog",
+   "desc": "Logs hex representations of packets to a file or console",
+   "admin_only": false
+  },
+  {
+   "name": "paper",
+   "desc": "Paper related commands",
+   "admin_only": false
+  },
+  {
+   "name": "pardon-ip",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "particle",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "pay",
+   "desc": "Chuyển tiền cho người chơi khác.",
+   "admin_only": false
+  },
+  {
+   "name": "payconfirmtoggle",
+   "desc": "Toggles whether you are prompted to confirm payments.",
+   "admin_only": false
+  },
+  {
+   "name": "paytoggle",
+   "desc": "Bật/tắt nhận tiền chuyển khoản từ người chơi khác.",
+   "admin_only": false
+  },
+  {
+   "name": "perf",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "permissiontrust",
+   "desc": "Grants a player permission to grant his level of permission to others.",
+   "admin_only": false
+  },
+  {
+   "name": "perworldchat",
+   "desc": "Allow players to see what you type in chat in every world.",
+   "admin_only": false
+  },
+  {
+   "name": "petitem",
+   "desc": "Nhan Than Thu Lenh hoac cap cho nguoi choi khi mua tren shop",
+   "admin_only": false
+  },
+  {
+   "name": "ping",
+   "desc": "Pong!",
+   "admin_only": false
+  },
+  {
+   "name": "pins",
+   "desc": "Easier command for pins",
+   "admin_only": false
+  },
+  {
+   "name": "pl",
+   "desc": "Gets a list of plugins running on the server",
+   "admin_only": false
+  },
+  {
+   "name": "place",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "placeholderapi",
+   "desc": "PlaceholderAPI Command",
+   "admin_only": false
+  },
+  {
+   "name": "placement",
+   "desc": "Select which placement to use",
+   "admin_only": false
+  },
+  {
+   "name": "playsound",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "playtime",
+   "desc": "Shows a player's time played in game",
+   "admin_only": false
+  },
+  {
+   "name": "plugins",
+   "desc": "Gets a list of plugins running on the server",
+   "admin_only": false
+  },
+  {
+   "name": "pnc",
+   "desc": "Show Help menu",
+   "admin_only": false
+  },
+  {
+   "name": "points",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "potion",
+   "desc": "Adds custom potion effects to a potion.",
+   "admin_only": false
+  },
+  {
+   "name": "powertool",
+   "desc": "Assigns a command to the item in hand.",
+   "admin_only": false
+  },
+  {
+   "name": "powertoollist",
+   "desc": "Lists all current powertools.",
+   "admin_only": false
+  },
+  {
+   "name": "powertooltoggle",
+   "desc": "Enables or disables all current powertools.",
+   "admin_only": false
+  },
+  {
+   "name": "premium",
+   "desc": "Enable premium mode",
+   "admin_only": false
+  },
+  {
+   "name": "pro_command",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "prodigynightclub",
+   "desc": "Show Help menu",
+   "admin_only": false
+  },
+  {
+   "name": "protocol",
+   "desc": "Performs administrative tasks regarding ProtocolLib.",
+   "admin_only": false
+  },
+  {
+   "name": "protocollib",
+   "desc": "filter: Add or remove programmable filters to the packet listeners.",
+   "admin_only": false
+  },
+  {
+   "name": "ptime",
+   "desc": "Adjust player's client time. Add @ prefix to fix.",
+   "admin_only": false
+  },
+  {
+   "name": "pumpkins",
+   "desc": "Generate pumpkin patches",
+   "admin_only": false
+  },
+  {
+   "name": "punish",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "pweather",
+   "desc": "Adjust a player's weather",
+   "admin_only": false
+  },
+  {
+   "name": "r",
+   "desc": "Quickly reply to the last player to message you.",
+   "admin_only": false
+  },
+  {
+   "name": "random",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "range",
+   "desc": "Set the brush range",
+   "admin_only": false
+  },
+  {
+   "name": "realisticseasons",
+   "desc": "Main realisticseasons command",
+   "admin_only": false
+  },
+  {
+   "name": "realname",
+   "desc": "Displays the username of a user based on nick.",
+   "admin_only": false
+  },
+  {
+   "name": "recipe",
+   "desc": "Displays how to craft items.",
+   "admin_only": true
+  },
+  {
+   "name": "redeem",
+   "desc": "Redeem a code for a reward.",
+   "admin_only": false
+  },
+  {
+   "name": "redo",
+   "desc": "Redoes the last action (from history)",
+   "admin_only": false
+  },
+  {
+   "name": "region",
+   "desc": "Region management commands",
+   "admin_only": true
+  },
+  {
+   "name": "register",
+   "desc": "Register an account",
+   "admin_only": false
+  },
+  {
+   "name": "reload",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "remove",
+   "desc": "Remove all entities of a type",
+   "admin_only": true
+  },
+  {
+   "name": "removeabove",
+   "desc": "Remove blocks above your head.",
+   "admin_only": false
+  },
+  {
+   "name": "removebelow",
+   "desc": "Remove blocks below you.",
+   "admin_only": false
+  },
+  {
+   "name": "removenear",
+   "desc": "Remove blocks near you.",
+   "admin_only": false
+  },
+  {
+   "name": "renamehome",
+   "desc": "Renames a home.",
+   "admin_only": false
+  },
+  {
+   "name": "repair",
+   "desc": "Repairs the durability of one or all items.",
+   "admin_only": false
+  },
+  {
+   "name": "repl",
+   "desc": "Block replacer tool",
+   "admin_only": false
+  },
+  {
+   "name": "replacenear",
+   "desc": "Replace nearby blocks",
+   "admin_only": false
+  },
+  {
+   "name": "reply",
+   "desc": "Quickly reply to the last player to message you.",
+   "admin_only": false
+  },
+  {
+   "name": "rest",
+   "desc": "Rests you or the given player.",
+   "admin_only": false
+  },
+  {
+   "name": "restart",
+   "desc": "Restarts the server",
+   "admin_only": true
+  },
+  {
+   "name": "restore",
+   "desc": "Restore the selection from a snapshot",
+   "admin_only": false
+  },
+  {
+   "name": "restorenature",
+   "desc": "Switches the shovel tool to restoration mode.",
+   "admin_only": false
+  },
+  {
+   "name": "restorenatureaggressive",
+   "desc": "Switches the shovel tool to aggressive restoration mode.",
+   "admin_only": false
+  },
+  {
+   "name": "restorenaturefill",
+   "desc": "Switches the shovel tool to fill mode.",
+   "admin_only": false
+  },
+  {
+   "name": "restrictsubclaim",
+   "desc": "Restricts a subclaim, so that it inherits no permissions from the parent claim",
+   "admin_only": false
+  },
+  {
+   "name": "ride",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "rotate",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "rs",
+   "desc": "Alias of realisticseasons",
+   "admin_only": false
+  },
+  {
+   "name": "rtoggle",
+   "desc": "Change whether the recipient of the reply is last recipient or last sender",
+   "admin_only": false
+  },
+  {
+   "name": "rtp",
+   "desc": "Teleport to a random spot. Use /rtp biome <biome> for current world, or /rtp <world> [radius] [biome].",
+   "admin_only": false
+  },
+  {
+   "name": "rtpgui",
+   "desc": "Open the RTP GUI.",
+   "admin_only": false
+  },
+  {
+   "name": "rtpreload",
+   "desc": "Reload Simple RTP.",
+   "admin_only": false
+  },
+  {
+   "name": "rules",
+   "desc": "Views the server rules.",
+   "admin_only": false
+  },
+  {
+   "name": "rwd",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "save-all",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "save-off",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "save-on",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "say",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "sb",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "scaffold",
+   "desc": "Reconvert the Nexo resource pack to Bedrock (Geyser)",
+   "admin_only": false
+  },
+  {
+   "name": "scaffolding",
+   "desc": "Reconvert the Nexo resource pack to Bedrock (Geyser)",
+   "admin_only": false
+  },
+  {
+   "name": "scaffoldingextension",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "scf",
+   "desc": "Reconvert the Nexo resource pack to Bedrock (Geyser)",
+   "admin_only": false
+  },
+  {
+   "name": "schedule",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "schematic",
+   "desc": "Schematic commands for saving/loading areas",
+   "admin_only": false
+  },
+  {
+   "name": "scoreboard",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "searchitem",
+   "desc": "Search for an item",
+   "admin_only": false
+  },
+  {
+   "name": "season",
+   "desc": "Display current season info",
+   "admin_only": false
+  },
+  {
+   "name": "seasondump",
+   "desc": "Uploads information about server to the support server. Should only be used when asked by support and requires a special key.",
+   "admin_only": false
+  },
+  {
+   "name": "seed",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "seen",
+   "desc": "Shows the last logout time of a player.",
+   "admin_only": false
+  },
+  {
+   "name": "sell",
+   "desc": "Sells the item currently in your hand.",
+   "admin_only": false
+  },
+  {
+   "name": "sellall",
+   "desc": "Sell all items from your inventory, hand items or specific items",
+   "admin_only": false
+  },
+  {
+   "name": "sellclaimblocks",
+   "desc": "Sells your claim blocks for server money.  Doesn't work on servers without a Vault-compatible economy plugin.",
+   "admin_only": false
+  },
+  {
+   "name": "sellgui",
+   "desc": "Opens the sell GUI",
+   "admin_only": false
+  },
+  {
+   "name": "selwand",
+   "desc": "Selection wand tool",
+   "admin_only": false
+  },
+  {
+   "name": "separate",
+   "desc": "Forces two players to ignore each other in chat.",
+   "admin_only": false
+  },
+  {
+   "name": "serveritem",
+   "desc": "allows to save and retrieve items previusly created and also sell or buy them to players with console commands",
+   "admin_only": false
+  },
+  {
+   "name": "setaccruedclaimblocks",
+   "desc": "Updates a player's accrued claim block total.",
+   "admin_only": false
+  },
+  {
+   "name": "setblock",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "sethome",
+   "desc": "Set your home to your current location.",
+   "admin_only": false
+  },
+  {
+   "name": "setidletimeout",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "setjail",
+   "desc": "Creates a jail where you specified named [jailname].",
+   "admin_only": false
+  },
+  {
+   "name": "settpr",
+   "desc": "Set the random teleport location and parameters.",
+   "admin_only": false
+  },
+  {
+   "name": "setwarp",
+   "desc": "Creates a new warp.",
+   "admin_only": false
+  },
+  {
+   "name": "setworldspawn",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "setworth",
+   "desc": "Set the sell value of an item.",
+   "admin_only": false
+  },
+  {
+   "name": "shards",
+   "desc": "Lệnh quản lý Shards.",
+   "admin_only": false
+  },
+  {
+   "name": "shop",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "shopgive",
+   "desc": "Give a shop item to a player",
+   "admin_only": false
+  },
+  {
+   "name": "showkit",
+   "desc": "Show contents of a kit.",
+   "admin_only": false
+  },
+  {
+   "name": "siege",
+   "desc": "Initiates a siege versus another player.",
+   "admin_only": false
+  },
+  {
+   "name": "simpletpa",
+   "desc": "tpa: Send a teleport request to another player",
+   "admin_only": false
+  },
+  {
+   "name": "size",
+   "desc": "Set the brush size",
+   "admin_only": false
+  },
+  {
+   "name": "sk",
+   "desc": "Opens the Skills menu where you can browse skills, progress, and abilities.",
+   "admin_only": false
+  },
+  {
+   "name": "skill",
+   "desc": "Opens the Skills menu where you can browse skills, progress, and abilities.",
+   "admin_only": false
+  },
+  {
+   "name": "skillrank",
+   "desc": "Shows your skill rankings.",
+   "admin_only": false
+  },
+  {
+   "name": "skills",
+   "desc": "Opens the Skills menu where you can browse skills, progress, and abilities.",
+   "admin_only": false
+  },
+  {
+   "name": "skilltop",
+   "desc": "Shows the top players in a skill",
+   "admin_only": false
+  },
+  {
+   "name": "skin",
+   "desc": "Changes your own skin.",
+   "admin_only": false
+  },
+  {
+   "name": "skins",
+   "desc": "Opens the skins GUI.",
+   "admin_only": false
+  },
+  {
+   "name": "skull",
+   "desc": "Gives you a skull.",
+   "admin_only": false
+  },
+  {
+   "name": "skyportal",
+   "desc": "SkyOlympus portal and password chest manager",
+   "admin_only": false
+  },
+  {
+   "name": "slay",
+   "desc": "Slay a player",
+   "admin_only": true
+  },
+  {
+   "name": "smithingtable",
+   "desc": "Opens up a smithing table.",
+   "admin_only": false
+  },
+  {
+   "name": "snapshot",
+   "desc": "Snapshot commands for restoring backups",
+   "admin_only": false
+  },
+  {
+   "name": "snow",
+   "desc": "Simulates snow",
+   "admin_only": false
+  },
+  {
+   "name": "socialspy",
+   "desc": "Toggles if you can see msg/mail commands in chat.",
+   "admin_only": false
+  },
+  {
+   "name": "softmute",
+   "desc": "Toggles whether a player's messages will only reach other soft-muted players.",
+   "admin_only": false
+  },
+  {
+   "name": "spark",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "spawner",
+   "desc": "Change the mob type of a spawner.",
+   "admin_only": false
+  },
+  {
+   "name": "spawnmob",
+   "desc": "Spawn a mob",
+   "admin_only": false
+  },
+  {
+   "name": "spawnpoint",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "spectate",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "speed",
+   "desc": "Change your speed limits.",
+   "admin_only": false
+  },
+  {
+   "name": "spigot",
+   "desc": "Spigot related commands",
+   "admin_only": false
+  },
+  {
+   "name": "spreadplayers",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "sr",
+   "desc": "Admin commands for SkinsRestorer.",
+   "admin_only": false
+  },
+  {
+   "name": "sreload",
+   "desc": "Reloads the plugin",
+   "admin_only": false
+  },
+  {
+   "name": "stack",
+   "desc": "Stack items",
+   "admin_only": true
+  },
+  {
+   "name": "staff",
+   "desc": "Shows a list of all the staff members online.",
+   "admin_only": false
+  },
+  {
+   "name": "staffchat",
+   "desc": "Talk secretly to other staff members online.",
+   "admin_only": false
+  },
+  {
+   "name": "stats",
+   "desc": "Opens the Stats menu where you can see current stat levels and descriptions.",
+   "admin_only": false
+  },
+  {
+   "name": "stonecutter",
+   "desc": "Opens up a stonecutter.",
+   "admin_only": false
+  },
+  {
+   "name": "stop",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "stopfire",
+   "desc": "Disables all fire spread temporarily",
+   "admin_only": true
+  },
+  {
+   "name": "stopsound",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "stopwatch",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "subdivideclaims",
+   "desc": "Switches the shovel tool to subdivision mode, used to subdivide your claims.",
+   "admin_only": false
+  },
+  {
+   "name": "sudo",
+   "desc": "Make another user perform a command.",
+   "admin_only": false
+  },
+  {
+   "name": "suicide",
+   "desc": "Causes you to perish.",
+   "admin_only": false
+  },
+  {
+   "name": "summon",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "superpickaxe",
+   "desc": "Super-pickaxe commands",
+   "admin_only": false
+  },
+  {
+   "name": "swing",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "tab",
+   "desc": "Plugin's main command",
+   "admin_only": false
+  },
+  {
+   "name": "tag",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "team",
+   "desc": "All commands for teams",
+   "admin_only": true
+  },
+  {
+   "name": "teamadmin",
+   "desc": "All admin commands for teams",
+   "admin_only": false
+  },
+  {
+   "name": "teammsg",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "tellraw",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "tempban",
+   "desc": "Temporary ban a user.",
+   "admin_only": false
+  },
+  {
+   "name": "tempbanip",
+   "desc": "Temporarily ban an IP Address.",
+   "admin_only": false
+  },
+  {
+   "name": "template",
+   "desc": "Template commands",
+   "admin_only": false
+  },
+  {
+   "name": "test",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "thaw",
+   "desc": "Thaws the area",
+   "admin_only": false
+  },
+  {
+   "name": "thru",
+   "desc": "Pass through walls",
+   "admin_only": false
+  },
+  {
+   "name": "thunder",
+   "desc": "Enable/disable thunder.",
+   "admin_only": false
+  },
+  {
+   "name": "tick",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "ticket",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "time",
+   "desc": "Display/Change the world time. Defaults to current world.",
+   "admin_only": true
+  },
+  {
+   "name": "timings",
+   "desc": "Manages Spigot Timings data to see performance of the server.",
+   "admin_only": false
+  },
+  {
+   "name": "tinkerer",
+   "desc": "tinkerer: Trade custom enchantments for economy.",
+   "admin_only": false
+  },
+  {
+   "name": "title",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "tm",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "togglechat",
+   "desc": "Blocks a player from receiving chat messages.",
+   "admin_only": false
+  },
+  {
+   "name": "toggleeditwand",
+   "desc": "Remind the user that the wand is now a tool and can be unbound with /tool none.",
+   "admin_only": false
+  },
+  {
+   "name": "togglefahrenheit",
+   "desc": "Toggle between fahrenheit and celcius, a personal setting",
+   "admin_only": false
+  },
+  {
+   "name": "togglejail",
+   "desc": "Jails/Unjails a player, TPs them to the jail specified.",
+   "admin_only": false
+  },
+  {
+   "name": "togglementions",
+   "desc": "Blocks players from receiving mention notifications.",
+   "admin_only": false
+  },
+  {
+   "name": "toggleplace",
+   "desc": "Switch between your position and pos1 for placement",
+   "admin_only": false
+  },
+  {
+   "name": "togglepm",
+   "desc": "Blocks players from sending private messages to you.",
+   "admin_only": false
+  },
+  {
+   "name": "toggleseasoncolors",
+   "desc": "Toggle colors of seasons, a personal setting.",
+   "admin_only": false
+  },
+  {
+   "name": "toggleseasonparticles",
+   "desc": "Toggle all seasons particles, a personal setting.",
+   "admin_only": false
+  },
+  {
+   "name": "toggletemperature",
+   "desc": "Toggle temperature, a personal setting.",
+   "admin_only": false
+  },
+  {
+   "name": "tool",
+   "desc": "Binds a tool to the item in your hand",
+   "admin_only": true
+  },
+  {
+   "name": "top",
+   "desc": "Teleport to the highest block at your current position.",
+   "admin_only": false
+  },
+  {
+   "name": "totp",
+   "desc": "TOTP commands",
+   "admin_only": false
+  },
+  {
+   "name": "tp",
+   "desc": "Teleport to a player.",
+   "admin_only": true
+  },
+  {
+   "name": "tpa",
+   "desc": "Request to teleport to the specified player.",
+   "admin_only": false
+  },
+  {
+   "name": "tpaall",
+   "desc": "Requests all players online to teleport to you.",
+   "admin_only": false
+  },
+  {
+   "name": "tpacancel",
+   "desc": "Cancel all outstanding teleport requests. Specify [player] to cancel requests with them.",
+   "admin_only": false
+  },
+  {
+   "name": "tpaccept",
+   "desc": "Accepts teleport requests.",
+   "admin_only": false
+  },
+  {
+   "name": "tpahere",
+   "desc": "Request that the specified player teleport to you.",
+   "admin_only": false
+  },
+  {
+   "name": "tpall",
+   "desc": "Teleport all online players to another player.",
+   "admin_only": false
+  },
+  {
+   "name": "tpareload",
+   "desc": "Reload the plugin configuration",
+   "admin_only": false
+  },
+  {
+   "name": "tpatoggle",
+   "desc": "Toggle receiving teleport requests",
+   "admin_only": false
+  },
+  {
+   "name": "tpauto",
+   "desc": "Automatically accept teleportation requests.",
+   "admin_only": false
+  },
+  {
+   "name": "tpdeny",
+   "desc": "Rejects teleport requests.",
+   "admin_only": false
+  },
+  {
+   "name": "tphere",
+   "desc": "Teleport a player to you.",
+   "admin_only": false
+  },
+  {
+   "name": "tpo",
+   "desc": "Teleport override for tptoggle.",
+   "admin_only": false
+  },
+  {
+   "name": "tpoffline",
+   "desc": "Teleport to a player's last known logout location",
+   "admin_only": false
+  },
+  {
+   "name": "tpohere",
+   "desc": "Teleport here override for tptoggle.",
+   "admin_only": false
+  },
+  {
+   "name": "tppos",
+   "desc": "Teleport to coordinates.",
+   "admin_only": false
+  },
+  {
+   "name": "tpr",
+   "desc": "Teleport randomly.",
+   "admin_only": false
+  },
+  {
+   "name": "tps",
+   "desc": "Gets the current ticks per second for the server",
+   "admin_only": true
+  },
+  {
+   "name": "tptoggle",
+   "desc": "Blocks all forms of teleportation.",
+   "admin_only": false
+  },
+  {
+   "name": "tracemask",
+   "desc": "Set the mask used to stop tool traces",
+   "admin_only": false
+  },
+  {
+   "name": "trait",
+   "desc": "Trait commands",
+   "admin_only": false
+  },
+  {
+   "name": "transfer",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "transferclaim",
+   "desc": "Converts an administrative claim to a private claim.",
+   "admin_only": false
+  },
+  {
+   "name": "trapped",
+   "desc": "Ejects you to nearby unclaimed land.  Has a substantial cooldown period.",
+   "admin_only": false
+  },
+  {
+   "name": "tree",
+   "desc": "Tree generator tool",
+   "admin_only": true
+  },
+  {
+   "name": "trigger",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "trust",
+   "desc": "Grants a player full access to your claim(s).",
+   "admin_only": false
+  },
+  {
+   "name": "trustlist",
+   "desc": "Lists permissions for the claim you're standing in.",
+   "admin_only": false
+  },
+  {
+   "name": "unban",
+   "desc": "Unbans the specified player.",
+   "admin_only": true
+  },
+  {
+   "name": "unbanip",
+   "desc": "Unbans the specified IP address.",
+   "admin_only": false
+  },
+  {
+   "name": "undo",
+   "desc": "Undoes the last action (from history)",
+   "admin_only": true
+  },
+  {
+   "name": "ungod",
+   "desc": "Disable godmode on a player",
+   "admin_only": true
+  },
+  {
+   "name": "unignoreplayer",
+   "desc": "Unignores another player's chat messages.",
+   "admin_only": false
+  },
+  {
+   "name": "unlimited",
+   "desc": "Allows the unlimited placing of items.",
+   "admin_only": false
+  },
+  {
+   "name": "unlinkaccount",
+   "desc": "Unlink your Java account from your Bedrock account",
+   "admin_only": false
+  },
+  {
+   "name": "unlockdrops",
+   "desc": "Allows other players to pick up the items you dropped when you died.",
+   "admin_only": false
+  },
+  {
+   "name": "unregister",
+   "desc": "Unregister an account",
+   "admin_only": false
+  },
+  {
+   "name": "unseparate",
+   "desc": "Reverses /separate.",
+   "admin_only": false
+  },
+  {
+   "name": "unstuck",
+   "desc": "Escape from being stuck inside a block",
+   "admin_only": false
+  },
+  {
+   "name": "untrust",
+   "desc": "Revokes a player's access to your claim(s).",
+   "admin_only": false
+  },
+  {
+   "name": "up",
+   "desc": "Go upwards some distance",
+   "admin_only": false
+  },
+  {
+   "name": "vanish",
+   "desc": "Hide yourself from other players.",
+   "admin_only": true
+  },
+  {
+   "name": "vdt",
+   "desc": "ViewDistanceTweaks main command",
+   "admin_only": false
+  },
+  {
+   "name": "veinminer",
+   "desc": "Veinminer command",
+   "admin_only": false
+  },
+  {
+   "name": "ver",
+   "desc": "Gets the version of this server including any plugins in use",
+   "admin_only": false
+  },
+  {
+   "name": "verification",
+   "desc": "Verification command",
+   "admin_only": false
+  },
+  {
+   "name": "version",
+   "desc": "Gets the version of this server including any plugins in use",
+   "admin_only": false
+  },
+  {
+   "name": "viaversion",
+   "desc": "Shows ViaVersion Version and more.",
+   "admin_only": false
+  },
+  {
+   "name": "vjobs",
+   "desc": "Opens the VJobs system",
+   "admin_only": false
+  },
+  {
+   "name": "wallet",
+   "desc": "Xem toàn bộ ví tiền của bạn.",
+   "admin_only": false
+  },
+  {
+   "name": "warning",
+   "desc": "Sends a warning message to the entire server.",
+   "admin_only": false
+  },
+  {
+   "name": "warp",
+   "desc": "List all warps or warp to the specified location.",
+   "admin_only": false
+  },
+  {
+   "name": "warpinfo",
+   "desc": "Finds location information for a specified warp.",
+   "admin_only": false
+  },
+  {
+   "name": "waypoint",
+   "desc": "A Mojang provided command.",
+   "admin_only": false
+  },
+  {
+   "name": "waypoints",
+   "desc": "Waypoint commands",
+   "admin_only": false
+  },
+  {
+   "name": "weather",
+   "desc": "Sets the weather.",
+   "admin_only": true
+  },
+  {
+   "name": "whitelist",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "whois",
+   "desc": "Determine basic information about the specified player.",
+   "admin_only": false
+  },
+  {
+   "name": "withdrawsouls",
+   "desc": "Withdraw collected souls from an item.",
+   "admin_only": false
+  },
+  {
+   "name": "workbench",
+   "desc": "Opens up a workbench.",
+   "admin_only": false
+  },
+  {
+   "name": "world",
+   "desc": "Switch between worlds.",
+   "admin_only": false
+  },
+  {
+   "name": "worldborder",
+   "desc": "A Mojang provided command.",
+   "admin_only": true
+  },
+  {
+   "name": "worldedit",
+   "desc": "WorldEdit commands",
+   "admin_only": true
+  },
+  {
+   "name": "worldguard",
+   "desc": "WorldGuard commands",
+   "admin_only": false
+  },
+  {
+   "name": "worth",
+   "desc": "Calculates the worth of items in hand or as specified.",
+   "admin_only": false
+  },
+  {
+   "name": "zm",
+   "desc": "",
+   "admin_only": false
+  },
+  {
+   "name": "zmenu",
+   "desc": "",
+   "admin_only": false
+  }
+ ]
+}
