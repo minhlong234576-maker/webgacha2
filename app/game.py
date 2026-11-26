@@ -11,7 +11,7 @@ from .gacha import (
     market_listings,
     roll,
 )
-from . import store
+from . import liveplayers, store
 
 BATTLE_MAX_ROUNDS = 30
 BATTLE_MAX_LINES = 6
@@ -811,18 +811,32 @@ def claim_bonus(player: str, prize: int | None = None) -> dict:
     return {"amount": prize, "balance": store.get_balance(player), "slices": list(BONUS_SLICES)}
 
 
-def site_stats_bar() -> dict:
+def site_stats_bar(online: int | None = None) -> dict:
+    """Số liệu thanh thống kê trên trang catalogue.
+
+    Chỉ hai con số là số thật:
+      - `cases` / `item_count`: đếm trực tiếp từ danh mục rương.
+      - `online`: đọc từ `liveplayers` (đọc log server qua PikaMC), có cache
+        TTL để thời gian render không phụ thuộc hosting.
+
+    Các chỉ số lịch sử (đã mở / nâng cấp / battle / tài khoản) để 0 — chỉ số
+    từ web cũ không còn ý nghĩa với dữ liệu thật trên server Minecraft.
+
+    `online` do caller truyền vào; không truyền thì đọc cache hiện có, chưa có
+    cache thì 0.
+    """
+    if online is None:
+        live = liveplayers.cached()
+        online = live["online"] if live else 0
     cases = load_cases()
     items = market_listings()
-    data = store.stats()
     return {
         "cases": len(cases),
         "item_count": len(items),
-        "pulls": data["pulls"],
-        "battles": data["battles"],
-        "upgrades": data.get("upgrades", 0),
-        "users": data.get("users", 0),
-        "online": len(store.BOT_NAMES),
-        "online_bots": len(store.BOT_NAMES),
+        "pulls": 0,
+        "battles": 0,
+        "upgrades": 0,
+        "users": 0,
+        "online": online,
         "rtp": "90%",
     }

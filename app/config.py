@@ -19,6 +19,12 @@ PIKA_ECONOMY_DB = os.getenv("PIKA_ECONOMY_DB", "/plugins/ExcellentEconomy/data.d
 # admin trên web — đọc trực tiếp từ server nên luôn khớp, không cần sửa
 # tay danh sách ADMIN_USERS khi thêm/bớt OP.
 PIKA_OPS_FILE = os.getenv("PIKA_OPS_FILE", "/ops.json")
+# server.properties chứa `online-players=<danh sách đang online>` — nguồn
+# miễn phí cho số người online trên web (không cần websocket console).
+PIKA_SERVER_PROPERTIES = os.getenv("PIKA_SERVER_PROPERTIES", "/server.properties")
+# Log server Minecraft — nguồn thực cho số người đang online (Paper ghi rõ
+# lúc vào/rời game). Đọc 1 file, không cần websocket console.
+PIKA_SERVER_LOG = os.getenv("PIKA_SERVER_LOG", "/logs/latest.log")
 # Admin khai báo thêm trong .env — rỗng mặc định vì quyền admin đã lấy từ
 # OP trên server. Điền vào chỉ khi cần ai đó có quyền web mà KHÔNG có OP
 # (ví dụ khi API PikaMC lỗi và cần một admin dự phòng).

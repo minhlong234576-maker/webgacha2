@@ -63,3 +63,22 @@ if (video && stage) {
     }
   });
 }
+
+// So nguoi dang online tren server Minecraft — server render so luc mo trang,
+// frontend poll nhe de con so khong bi cu khi nguoi choi vao/ra.
+(function pollOnline() {
+  const chip = document.querySelector("[data-online-count]");
+  if (!chip) return;
+  setInterval(async () => {
+    if (document.hidden) return;
+    try {
+      const res = await fetch("/api/online", { credentials: "same-origin" });
+      if (!res.ok) return;
+      const data = await res.json();
+      const n = Number(data.online);
+      if (Number.isFinite(n)) chip.textContent = String(n);
+    } catch (err) {
+      /* ignore — giu so hien tai */
+    }
+  }, 15000);
+})();

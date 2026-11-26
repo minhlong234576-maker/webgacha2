@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.routing import Match
 from fastapi.templating import Jinja2Templates
 
-from . import admins, bank, bots, catalog_admin, game, pika, store
+from . import admins, bank, bots, catalog_admin, game, liveplayers, pika, store
 from .roulette import roulette_manager
 from .config import PIKA_SERVER_UUID, SESSION_SECRET, pika_ready, session_https_only
 from .errors import MoneyError
@@ -82,6 +82,7 @@ async def lifespan(app: FastAPI):
     bank.start(app)
     roulette_manager.start_loop()
     admins.start(app)
+    liveplayers.start(app)
     yield
     task = getattr(app.state, "bot_task", None)
     if task:
@@ -104,6 +105,13 @@ async def lifespan(app: FastAPI):
             await admins_task
         except asyncio.CancelledError:
             pass
+    live_task = getattr(app.state, "liveplayers_task", None)
+    if live_task:
+        live_task.cancel()
+        try:
+            await live_task
+        except asyncio.CancelledError:
+            pass
     await pika.close_client()
 
 
@@ -114,6 +122,7 @@ app = FastAPI(title="JellyVale Gacha", docs_url=None, redoc_url=None, lifespan=l
 PUBLIC_API_PATHS = frozenset({
     "/api/drops",     # dai "drop truc tiep" tren header
     "/api/admins",    # danh sach nguoi quan tri (doc tu OP tren server)
+    "/api/online",    # so nguoi dang online tren server Minecraft
 })
 
 
@@ -507,12 +516,13 @@ def api_auth(request: Request, *, csrf: bool = False) -> str | JSONResponse:
 async def home(request: Request):
     """Trang chủ (landing page) — giới thiệu dự án cho khách chưa đăng nhập."""
     ctx = await optional_ctx(request)
+    live = await liveplayers.snapshot()
     return render(
         request,
         "landing.html",
         **ctx,
         cases=[case_view(item) for item in load_cases()],
-        site=game.site_stats_bar(),
+        site=game.site_stats_bar(online=live["online"]),
     )
 
 
@@ -583,12 +593,13 @@ async def catalogue(request: Request):
         return ctx
     last_bonus = store.last_bonus(ctx["player"])
     bonus_ready = (not last_bonus) or (store.now() - last_bonus >= 24 * 3600)
+    live = await liveplayers.snapshot()
     return render(
         request,
         "catalogue.html",
         **ctx,
         cases=[case_view(item) for item in load_cases()],
-        site=game.site_stats_bar(),
+        site=game.site_stats_bar(online=live["online"]),
         bonus_ready=bonus_ready,
     )
 
@@ -1250,6 +1261,22 @@ async def api_drops():
 async def api_admins():
     """Danh sách quản trị viên, đọc realtime từ OP trên server PikaMC."""
     return {"admins": await admins.admin_list()}
+
+
+@app.get("/api/online")
+async def api_online():
+    """Số người đang online trên server Minecraft, đọc từ PikaMC.
+
+    Công khai (không cần đăng nhập) vì đây là số liệu server, không phải dữ
+    liệu người chơi. Có cache TTL ngắn phía server nên poll nhiều tab không
+    bắn mỗi tab một request ra hosting.
+    """
+    live = await liveplayers.snapshot()
+    return {
+        "online": live["online"],
+        "max": live["max"],
+        "players": live["players"],
+    }
 
 
 @app.get("/api/balance")
