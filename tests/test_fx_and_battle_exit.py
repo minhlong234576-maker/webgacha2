@@ -107,6 +107,13 @@ def test_leave_battle_cancels_bot_only_room() -> None:
     check("phong co 2 nguoi (that + bot)", len(detail["players"]) == 2)
     check("phong van WAITING", detail["status"] == "WAITING", f"({detail['status']})")
 
+    # So du bot + so tien da tru khi ngoi ghe (de check hoan tien sau).
+    bot_balance_before = store.get_balance(bot)
+    bot_paid = next(
+        (int(p["paid"] or 0) for p in detail["players"] if p["player"] == bot),
+        0,
+    )
+
     balance_before = store.get_balance(host)
     check("host bi tru tien ghe khi tao phong", balance_before < 500_000, f"({balance_before})")
 
@@ -129,11 +136,15 @@ def test_leave_battle_cancels_bot_only_room() -> None:
     )
 
     # Bot trong phong cung phai duoc hoan tien ghe (khong bi "bi lot" mat coin).
+    # Do CHENH LECH truoc/sau, khong do mot con so co dinh: vi bot duoc copy
+    # tu `data/gacha.db` that, so du cua `JellyBot` co the da thay doi theo
+    # thoi gian (truoc day 918.780, khong phai 1.000.000). Kiem tra bang
+    # "da hoan dung so tien da tru" — dung y nghia hon con so tuy yet.
     bot_balance = store.get_balance(bot)
     check(
         "bot duoc hoan tien ghe khi phong bi huy",
-        bot_balance >= 1_000_000,
-        f"({bot_balance})",
+        bot_balance == bot_balance_before + bot_paid,
+        f"({bot_balance_before} + {bot_paid} -> {bot_balance})",
     )
 
 

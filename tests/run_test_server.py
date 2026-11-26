@@ -25,6 +25,14 @@ sys.path.insert(0, str(ROOT))
 LIVE = "--live" in sys.argv
 os.environ["GACHA_DRY_RUN"] = "false" if LIVE else "true"
 
+# Server test chay tren `http://127.0.0.1` nen cookie session KHONG duoc co
+# co "secure" — trinh duyet/httpx se bo qua cookie Secure khi goi qua HTTP
+# thuan -> moi request tra 401 "Chua dang nhap" du da gui cookie dung.
+#
+# `load_dotenv` KHONG ghi de bien moi truong da co san, nen gan o day duoc.
+# (`.env` production van giu `SESSION_HTTPS_ONLY=true` cho Cloudflare Tunnel.)
+os.environ["SESSION_HTTPS_ONLY"] = "false"
+
 # DB test dung DUNG mot file co dinh de server va test process tro ve cung
 # mot noi dung (UI test can them mon cho QA_Tester_01 truoc khi chay).
 # File nay KHONG bao gio la du lieu that — luon la ban sao tam.
