@@ -79,7 +79,7 @@
     {% for case in cases %}
     <a class="case-card" href="/case/{{ case.id }}" data-name="{{ case.name }}" data-price="{{ case.pull_cost }}" style="--glow: {{ case.glow }}">
       <div class="case-art" style="--glow: {{ case.glow }}33">
-        <img src="{{ case.image }}" alt="{{ case.name }}">
+        <img src="{{ case.image }}" alt="{{ case.name }}" data-case-id="{{ case.id }}">
       </div>
       <div class="case-line" style="--glow: {{ case.glow }}"></div>
       <div class="body">

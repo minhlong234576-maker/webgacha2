@@ -1,0 +1,371 @@
+/* intro.css — Màn hình chờ (loading screen) video + hiệu ứng chuyển cảnh 3D.
+ *
+ * Nạp SAU style.css + voxel.css, CHỈ dùng trên trang được render lần đầu.
+ * Tôn trọng prefers-reduced-motion: bỏ toàn bộ animation, overlay ẩn hẳn.
+ */
+
+/* ---------------------------------------------------------------------------
+   1. Overlay loading
+   ------------------------------------------------------------------------ */
+html[data-intro="showing"],
+html[data-intro="closing"] {
+  overflow: hidden;
+}
+
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  background: #06070b;
+  color: #f4f1e7;
+  animation: intro-in 0.4s var(--ease-out, ease-out) both;
+}
+
+/* Video nền: phủ toàn màn hình, tối + vignette để chữ nổi. */
+.intro-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  filter: saturate(1.05) contrast(1.02);
+}
+
+/* Lớp phủ gradient tối + lưới voxel + vignette. */
+.intro-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 55%, transparent 0%, rgba(4, 5, 9, 0.55) 70%, rgba(4, 5, 9, 0.92) 100%),
+    linear-gradient(180deg, rgba(4, 5, 9, 0.5) 0%, rgba(4, 5, 9, 0.15) 40%, rgba(4, 5, 9, 0.75) 100%),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(255, 255, 255, 0.03) 31px 32px),
+    repeating-linear-gradient(90deg, transparent 0 31px, rgba(255, 255, 255, 0.03) 31px 32px);
+  pointer-events: none;
+}
+
+/* Panel trung tâm: logo + progress + tip + nút bỏ qua. */
+.intro-panel {
+  position: relative;
+  z-index: 2;
+  width: min(520px, calc(100vw - 40px));
+  padding: 36px 32px 26px;
+  text-align: center;
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+}
+
+/* Khung "cửa sập" 3D cho logo. */
+.intro-badge {
+  inline-size: 84px;
+  block-size: 84px;
+  display: grid;
+  place-items: center;
+  background: hsl(var(--accent, 187 76% 47%));
+  color: #0b1016;
+  font-family: var(--font-display, "Bungee", Impact, sans-serif);
+  font-size: 34px;
+  letter-spacing: 0.02em;
+  border: 3px solid hsl(var(--accent-strong, 192 78% 40%));
+  box-shadow:
+    inset 3px 3px 0 rgba(255, 255, 255, 0.4),
+    inset -3px -3px 0 rgba(0, 0, 0, 0.35),
+    0 6px 0 hsl(var(--accent-strong, 192 78% 40%)),
+    0 0 0 6px rgba(255, 255, 255, 0.06);
+  transform: rotate(-4deg);
+  animation: intro-badge-float 3.8s var(--ease-spring, ease-in-out) infinite alternate;
+}
+
+.intro-title {
+  margin: 4px 0 0;
+  font-family: var(--font-display, "Bungee", Impact, sans-serif);
+  font-weight: 400;
+  font-size: clamp(28px, 6.4vw, 40px);
+  letter-spacing: 0.02em;
+  color: #f7f3ea;
+  text-shadow:
+    3px 3px 0 rgba(0, 0, 0, 0.55),
+    0 0 22px rgba(255, 201, 60, 0.35);
+}
+.intro-title::before { display: none; }
+
+.intro-sub {
+  margin: 0;
+  color: rgba(244, 241, 231, 0.72);
+  font-size: 13px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* Thanh tiến trình: ô vuốt sọc 8px, viền bevel. */
+.intro-progress {
+  position: relative;
+  inline-size: min(360px, 80%);
+  block-size: 14px;
+  background: rgba(8, 10, 16, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 2px 2px 0 rgba(0, 0, 0, 0.6),
+    inset -2px -2px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.intro-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 7px,
+    rgba(0, 0, 0, 0.35) 7px 8px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+.intro-progress-fill {
+  display: block;
+  block-size: 100%;
+  inline-size: 0%;
+  background: linear-gradient(180deg, #ffd76b 0%, #f5b631 55%, #d98c14 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.35);
+  transition: width 0.28s linear;
+}
+
+.intro-pct {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: rgba(244, 241, 231, 0.86);
+  font-variant-numeric: tabular-nums;
+  margin-top: -6px;
+}
+
+/* Dòng tip cuộn: chừa 2 dòng cho không "nhảy" bố cục. */
+.intro-tip {
+  margin: 6px 0 0;
+  min-height: 2.8em;
+  color: rgba(244, 241, 231, 0.7);
+  font-size: 13px;
+  line-height: 1.4;
+  max-width: 420px;
+  text-wrap: balance;
+}
+.intro-tip.is-swap {
+  animation: intro-tip-in 0.4s var(--ease-out, ease-out) both;
+}
+
+.intro-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.intro-skip {
+  padding: 9px 18px;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f4f1e7;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+}
+.intro-skip:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Khi overlay đóng: "trượt lên + co vào" như block Minecraft mất đi. */
+.intro.is-closing {
+  animation: intro-out 0.6s cubic-bezier(0.6, 0, 0.35, 1) both;
+  pointer-events: none;
+}
+.intro.is-closing .intro-video { animation: intro-zoom 0.6s ease-out both; }
+.intro.is-closing .intro-panel { animation: intro-panel-out 0.5s ease-in both; }
+
+/* Trang "pop-in" sau khi overlay biến mất. */
+main.intro-entered {
+  animation: intro-main-in 0.55s var(--ease-out, ease-out) both;
+}
+
+@keyframes intro-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes intro-out {
+  0% { opacity: 1; clip-path: inset(0 0 0 0); }
+  60% { opacity: 0.9; clip-path: inset(0 0 6% 0); }
+  100% { opacity: 0; clip-path: inset(0 0 100% 0); }
+}
+@keyframes intro-zoom {
+  to { transform: scale(1.06); filter: blur(2px) saturate(1.1); }
+}
+@keyframes intro-panel-out {
+  to { opacity: 0; transform: translateY(-14px) scale(0.98); }
+}
+@keyframes intro-main-in {
+  from { opacity: 0; translate: 0 16px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes intro-badge-float {
+  from { transform: translateY(0) rotate(-4deg); }
+  to { transform: translateY(-6px) rotate(-2deg); }
+}
+@keyframes intro-tip-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   2. View Transition 3D — áp dụng cho mọi trang
+   ------------------------------------------------------------------------ */
+@media (prefers-reduced-motion: no-preference) {
+  /* Ghi đè nhẹ các animation mặc định của style.css: thêm chiều 3D. */
+  @supports (animation-timeline: view()) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation-name: jv3d-page-out, jv3d-page-in;
+      animation-duration: 420ms, 480ms;
+      animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1), cubic-bezier(0.2, 0, 0, 1);
+      animation-fill-mode: both;
+    }
+  }
+
+  /* Trang cũ: trượt nhẹ lên và mờ dần + co về trục Z (rách như "brick" rời). */
+  @keyframes jv3d-page-out {
+    0% {
+      opacity: 1;
+      transform: perspective(1400px) translate3d(0, 0, 0) rotateX(0deg);
+      filter: blur(0);
+    }
+    100% {
+      opacity: 0;
+      transform: perspective(1400px) translate3d(0, -3%, -120px) rotateX(4deg);
+      filter: blur(3px);
+    }
+  }
+
+  /* Trang mới: trượt lên từ dưới, xoay nhẹ quanh trục X — cảm giác "block mới
+     đặt xuống sân". */
+  @keyframes jv3d-page-in {
+    0% {
+      opacity: 0;
+      transform: perspective(1400px) translate3d(0, 6%, -180px) rotateX(-6deg);
+      filter: blur(4px);
+    }
+    70% { filter: blur(0); }
+    100% {
+      opacity: 1;
+      transform: perspective(1400px) translate3d(0, 0, 0) rotateX(0deg);
+      filter: blur(0);
+    }
+  }
+
+  /* Nút quay lui: chiều ngược lại. */
+  :active-view-transition-type(back) {
+    &::view-transition-old(root) {
+      animation-name: jv3d-page-in;
+    }
+    &::view-transition-new(root) {
+      animation-name: jv3d-page-out;
+    }
+  }
+
+  /* Tiêu đề h1 morph giữa các trang: thêm bóng 3D nhẹ + không nháy. */
+  ::view-transition-old(page-title) {
+    animation-duration: 300ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
+  }
+  ::view-transition-new(page-title) {
+    animation-duration: 380ms;
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+
+  /* Header cố định: giữ nguyên, không nhấp nháy khi chuyển. */
+  .site-header { view-transition-name: site-header; }
+  .site-footer { view-transition-name: site-footer; }
+  ::view-transition-old(site-header),
+  ::view-transition-new(site-header),
+  ::view-transition-old(site-footer),
+  ::view-transition-new(site-footer) {
+    animation: none;
+  }
+
+  /* Shared-element "bay ảnh rương": từ thẻ catalogue sang ảnh lớn đầu trang
+     case — vật thể được nhấc và phóng to trong không gian 3D. */
+  ::view-transition-group(card-image) {
+    animation-duration: 460ms;
+    animation-timing-function: cubic-bezier(0.5, 0, 0.2, 1);
+    z-index: 10;
+  }
+  ::view-transition-old(card-image) {
+    animation: none;
+    opacity: 0;
+  }
+  ::view-transition-new(card-image) {
+    animation: jv3d-card-land 460ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+    transform-origin: 50% 60%;
+  }
+  @keyframes jv3d-card-land {
+    0% {
+      transform: perspective(1200px) rotateY(-8deg) rotateX(6deg) scale(1.02);
+      filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.5)) brightness(1.06);
+    }
+    55% {
+      transform: perspective(1200px) rotateY(3deg) rotateX(-2deg) scale(0.98);
+    }
+    100% {
+      transform: perspective(1200px) none;
+      filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.35));
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   3. Hiệu ứng 3D hover/click — dùng chung
+   ------------------------------------------------------------------------ */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  /* Nút primary: nhấc lên 3D + xoay nhẹ như đang cầm lên. */
+  .cf-btn-primary,
+  .cf-btn {
+    transform-style: preserve-3d;
+    transform: perspective(600px) translateZ(0);
+    transition:
+      transform 0.16s cubic-bezier(0.2, 0, 0, 1.4),
+      box-shadow 0.16s ease,
+      filter 0.16s ease;
+  }
+  .cf-btn-primary:hover:not(:disabled),
+  .cf-btn:hover:not(:disabled) {
+    transform: perspective(600px) translate3d(0, -3px, 0) rotateX(-4deg);
+  }
+  .cf-btn-primary:active:not(:disabled),
+  .cf-btn:active:not(:disabled) {
+    transform: perspective(600px) translate3d(0, 1px, -4px) rotateX(3deg);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   4. Mobile
+   ------------------------------------------------------------------------ */
+@media (max-width: 620px) {
+  .intro-panel { padding: 24px 18px 22px; }
+  .intro-badge { inline-size: 68px; block-size: 68px; font-size: 27px; }
+  .intro-progress { inline-size: 86%; }
+  .intro-tip { font-size: 12px; }
+}
+
+/* ---------------------------------------------------------------------------
+   5. Reduced motion: tắt toàn bộ, overlay ẩn
+   ------------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .intro { display: none !important; }
+  main.intro-entered { animation: none; }
+  .intro-badge { animation: none; }
+}

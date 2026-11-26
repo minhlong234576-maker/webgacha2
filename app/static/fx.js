@@ -133,6 +133,17 @@ function mountPageTransitions() {
         h1.style.viewTransitionName = "";
       });
     }
+
+    // Shared element: khi tới trang chi tiết rương (`/case/<id>`) từ bảng
+    // catalogue, ảnh rương "bay" từ thẻ sang đầu trang case — cảm giác
+    // vật thể thật được nhấc lên từ kệ.
+    if (state.dir !== "back" && CSS.supports("view-transition-name: card-image")) {
+      const m = /\/case\/([^/?#]+)/.exec(location.pathname);
+      if (m) {
+        const headImg = document.querySelector(`.case-head-art img[data-case-id="${m[1]}"]`);
+        if (headImg) headImg.style.viewTransitionName = "card-image";
+      }
+    }
   });
 }
 
