@@ -1,13 +1,27 @@
 from __future__ import annotations
 
 import json
+import os
 import random
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from .config import ROOT, STATIC_DIR, dry_run, nexo_withdraw_enabled
 
-GACHA_FILE = ROOT / "gacha.json"
+# Thu muc chua `gacha.json`. File cu the co the tro bang bien moi truong
+# `GACHA_FILE` (server test dung ban sao tam) — doc DONG sau moi lan goi
+# de luon khop voi `catalog_admin`, tranh viec doc sai file khi env bi doi.
+GACHA_DIR = ROOT
+GACHA_NAME = "gacha.json"
+
+
+def gacha_file() -> Path:
+    """Duong dan file danh muc hien tai."""
+    override = os.getenv("GACHA_FILE")
+    return Path(override) if override else (GACHA_DIR / GACHA_NAME)
+
+
 IMAGE_EXTS = (".png", ".webp", ".jpg", ".jpeg", ".svg")
 NEXO_ID_RE = re.compile(r"^[a-z0-9_:-]{1,64}$")
 
@@ -91,7 +105,11 @@ class Case:
 
 
 def load_config() -> dict:
-    return json.loads(GACHA_FILE.read_text(encoding="utf-8"))
+    path = gacha_file()
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {"cases": []}
 
 
 def _parse_item(raw: dict) -> Item:

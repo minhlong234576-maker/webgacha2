@@ -21,6 +21,14 @@ sys.path.insert(0, str(ROOT))
 TMP = tempfile.mkdtemp(prefix="jvconcurrent_")
 shutil.copy(ROOT / "data" / "gacha.db", os.path.join(TMP, "gacha.db"))
 
+# Danh muc mau cho test — KHONG doc `gacha.json` that (admin co the xoa het
+# san pham / ca ruong, neu vay test se khong co gi de mo ruong).
+sys.path.insert(0, str(ROOT / "tests"))
+import fixture_catalog  # noqa: E402
+
+fixture_catalog.use_fixture(Path(TMP))
+
+
 from app import game, store  # noqa: E402
 
 store.DB_PATH = Path(TMP) / "gacha.db"

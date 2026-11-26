@@ -1091,9 +1091,40 @@ th { color: hsl(var(--text-muted)); font-size: 12px; font-weight: 600; letter-sp
 /* ---------------------------------------------------------------------------
    Admin — quan tri san pham
    --------------------------------------------------------------------------- */
+.tabs { display: flex; gap: 6px; margin: 16px 0 4px; border-bottom: 1px solid var(--line); }
+.tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .15s ease, border-color .15s ease;
+}
+.tab:hover { color: var(--text); }
+.tab:focus-visible { outline: 2px solid hsl(var(--accent)); outline-offset: -2px; border-radius: 6px 6px 0 0; }
+.tab.is-active { color: hsl(var(--accent)); border-bottom-color: hsl(var(--accent)); }
 .table-scroll { overflow-x: auto; }
+/* Trang trong — danh muc rong (chua co ruong / san pham). */
+.empty-state {
+  margin: 16px 0;
+  padding: 28px 22px;
+  text-align: center;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  background: hsl(var(--surface-raised) / 0.5);
+}
+.empty-state h3 { margin: 0 0 8px; font-size: 1.05rem; }
+.empty-state p { margin: 0 auto; max-width: 46ch; }
+.empty-state a { color: hsl(var(--accent)); font-weight: 600; }
 #product-table th:last-child,
-#product-table td:last-child { text-align: right; }
+#product-table td:last-child,
+#case-table th:last-child,
+#case-table td:last-child { text-align: right; }
 .thumb {
   width: 40px;
   height: 40px;

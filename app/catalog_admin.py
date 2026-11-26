@@ -28,6 +28,10 @@ from .config import ROOT, STATIC_DIR, dry_run
 
 # Path cua file gacha.json. Cho phep tro sang file tam trong test de khong
 # cham du lieu that cua production.
+#
+# `GACHA_FILE` la bien module nen test co the gan lai truc tiep
+# (`catalog_admin.GACHA_FILE = ...`). Neu khong gan, ham `gacha_path()` doc
+# bien moi truong `GACHA_FILE` DONG — luon khop voi `app.gacha.gacha_file()`.
 GACHA_FILE = Path(os.getenv("GACHA_FILE") or (ROOT / "gacha.json"))
 
 ITEMS_DIR = STATIC_DIR / "items"
@@ -36,6 +40,9 @@ CASES_DIR = STATIC_DIR / "cases"
 # Id sản phẩm: chữ thường/số/gạch dưới/gạch ngang. Dùng chung cho
 # `nexo_id` nên chặn thêm ký tự lạ.
 ITEM_ID_RE = re.compile(r"^[a-z0-9_-]{1,64}$")
+# Id rương: giống id sản phẩm nhưng KHÔNG cho phép gạch dưới — id rương
+# xuất hiện trong URL (`/case/<id>`) và tên file ảnh, nên giữ bộ ký tự
+# chặt hơn một chút.
 CASE_ID_RE = re.compile(r"^[a-z0-9-]{1,64}$")
 
 RARITIES = (
@@ -165,6 +172,8 @@ def list_cases() -> list[dict[str, Any]]:
                 "name": str(case.get("name") or ""),
                 "description": str(case.get("description") or ""),
                 "pull_cost": int(case.get("pull_cost") or 0),
+                "nexo_id": str(case.get("nexo_id") or ""),
+                "image": str(case.get("image") or ""),
                 "item_count": len(items),
                 "total_weight": sum(
                     max(0.0, float(i.get("weight") or 0))
@@ -275,6 +284,66 @@ def _validate_case_weights(case: dict[str, Any]) -> None:
         )
 
 
+def validate_case(raw: dict[str, Any], *, existing: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Chuan hoa + kiem tra mot ruong. Tra ve ruong da chuan hoa.
+
+    `existing` la ruong goc (dung khi sua) — truong khong doi giu nguyen.
+    """
+    if not isinstance(raw, dict):
+        raise CatalogError("Rương phải là object.")
+
+    case_id = _clean_text(
+        raw.get("id") or (existing or {}).get("id"), "Id rương", max_len=64
+    ).lower()
+    if not CASE_ID_RE.fullmatch(case_id):
+        raise CatalogError(
+            "Id rương chỉ gồm chữ thường, số, gạch dưới và gạch ngang (tối đa 64 ký tự)."
+        )
+
+    name = _clean_text(raw.get("name") or (existing or {}).get("name"), "Tên rương", max_len=120)
+
+    description = str(
+        raw.get("description")
+        if raw.get("description") is not None
+        else (existing or {}).get("description", "")
+    ).strip()[:400]
+
+    try:
+        pull_cost = int(
+            raw.get("pull_cost")
+            if raw.get("pull_cost") not in (None, "")
+            else (existing or {}).get("pull_cost", 0)
+        )
+    except (TypeError, ValueError):
+        raise CatalogError("Giá quay phải là số nguyên.") from None
+    if pull_cost < 0:
+        raise CatalogError("Giá quay không được âm.")
+
+    out: dict[str, Any] = {
+        "id": case_id,
+        "name": name,
+        "description": description,
+        "pull_cost": pull_cost,
+    }
+
+    # `nexo_id` cua ruong: dung de gan anh tu texture NexoMC tren server.
+    nexo_id = str(raw.get("nexo_id") or (existing or {}).get("nexo_id") or "").strip()
+    if nexo_id and not re.fullmatch(r"^[A-Za-z0-9_:-]{1,64}$", nexo_id):
+        raise CatalogError("nexo_id chỉ gồm chữ, số, gạch dưới, gạch ngang và dấu hai chấm.")
+    if nexo_id:
+        out["nexo_id"] = nexo_id
+
+    # Anh cua ruong.
+    image = str(raw.get("image") or (existing or {}).get("image") or "").strip()
+    if image:
+        if image.startswith("/static/") or image.startswith("/pika/tex/"):
+            out["image"] = image
+        else:
+            raise CatalogError("Ảnh phải là đường dẫn nội bộ (dạng /static/...).")
+
+    return out
+
+
 # ---------------------------------------------------------------------------
 #  Ghi
 # ---------------------------------------------------------------------------
@@ -358,20 +427,56 @@ def update_case(case_id: str, raw: dict[str, Any]) -> dict[str, Any]:
         case = _find_case(data, case_id)
         if not case:
             raise CatalogError(f"Không tìm thấy rương '{case_id}'.")
-        if "name" in raw:
-            case["name"] = _clean_text(raw.get("name"), "Tên rương", max_len=120)
-        if "description" in raw:
-            case["description"] = str(raw.get("description") or "").strip()[:400]
-        if "pull_cost" in raw:
-            try:
-                cost = int(raw.get("pull_cost"))
-            except (TypeError, ValueError):
-                raise CatalogError("Giá quay phải là số nguyên.") from None
-            if cost < 0:
-                raise CatalogError("Giá quay không được âm.")
-            case["pull_cost"] = cost
+        merged = validate_case(raw, existing=case)
+        # Id ruong khong doi (route/item dang tro toi id cu).
+        merged["id"] = case_id
+        # Giu nguyen danh sach item cua ruong.
+        merged["items"] = case.get("items", []) or []
+        case.clear()
+        case.update(merged)
         _atomic_write(data)
         return case
+
+
+def create_case(raw: dict[str, Any]) -> dict[str, Any]:
+    """Tao ruong moi (chua co item — admin them san pham sau)."""
+    new_case = validate_case(raw)
+    with _write_lock:
+        _guard_write()
+        data = load_raw()
+        if _find_case(data, new_case["id"]):
+            raise CatalogError(f"Id rương '{new_case['id']}' đã tồn tại.")
+        new_case["items"] = []
+        data.setdefault("cases", []).append(new_case)
+        _atomic_write(data)
+    return new_case
+
+
+def delete_case(case_id: str) -> dict[str, Any]:
+    """Xoa ruong khoi danh muc (kem toan bo san pham ben trong).
+
+    Anh cua cac san pham thuoc ruong cung bi xoa de khong con file rong.
+    """
+    with _write_lock:
+        _guard_write()
+        data = load_raw()
+        case = _find_case(data, case_id)
+        if not case:
+            raise CatalogError(f"Không tìm thấy rương '{case_id}'.")
+        removed_ids: list[str] = []
+        for item in case.get("items", []) or []:
+            if isinstance(item, dict) and item.get("id"):
+                removed_ids.append(str(item["id"]))
+        data["cases"] = [
+            c for c in (data.get("cases", []) or [])
+            if not (isinstance(c, dict) and str(c.get("id")) == case_id)
+        ]
+        _atomic_write(data)
+    # Xoa anh cua tung san pham + anh ruong (ngoai file gacha.json).
+    for item_id in removed_ids:
+        delete_item_image(item_id)
+    delete_case_image(case_id)
+    return {"id": case_id, "removed_items": removed_ids}
 
 
 # ---------------------------------------------------------------------------
@@ -440,6 +545,49 @@ def delete_item_image(item_id: str) -> None:
     if not ITEM_ID_RE.fullmatch(item_id):
         raise CatalogError("Id sản phẩm không hợp lệ.")
     for path in ITEMS_DIR.glob(f"{item_id}.*"):
+        if path.is_file() and path.suffix.lower() in IMAGE_EXTS:
+            try:
+                path.unlink()
+            except OSError:
+                pass
+
+
+def save_case_image(case_id: str, filename: str, content: bytes) -> str:
+    """Luu anh ruong vao static/cases. Tra ve duong dan web.
+
+    Ten file luon sinh tu `case_id` + extension -> chong path traversal.
+    """
+    if not CASE_ID_RE.fullmatch(case_id):
+        raise CatalogError("Id rương không hợp lệ.")
+    if not content:
+        raise CatalogError("File ảnh rỗng.")
+    if len(content) > MAX_IMAGE_BYTES:
+        raise CatalogError(
+            f"Ảnh vượt quá {MAX_IMAGE_BYTES // (1024 * 1024)} MB."
+        )
+    if not _looks_like_image(content):
+        raise CatalogError("File không phải ảnh hợp lệ (PNG/JPG/WebP/SVG).")
+
+    name = _safe_image_name(case_id, filename)
+    CASES_DIR.mkdir(parents=True, exist_ok=True)
+    target = CASES_DIR / name
+    for old in CASES_DIR.glob(f"{case_id}.*"):
+        if old.name != name and old.is_file():
+            try:
+                old.unlink()
+            except OSError:
+                pass
+    tmp = target.with_suffix(target.suffix + ".tmp")
+    tmp.write_bytes(content)
+    os.replace(tmp, target)
+    return f"/static/cases/{name}"
+
+
+def delete_case_image(case_id: str) -> None:
+    """Xoa file anh cua ruong (neu co)."""
+    if not CASE_ID_RE.fullmatch(case_id):
+        raise CatalogError("Id rương không hợp lệ.")
+    for path in CASES_DIR.glob(f"{case_id}.*"):
         if path.is_file() and path.suffix.lower() in IMAGE_EXTS:
             try:
                 path.unlink()

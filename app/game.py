@@ -86,6 +86,10 @@ def open_case_batch(player: str, slug: str, count: int = 1, is_bot: bool = False
     case = get_case(slug)
     if not case:
         raise GameError("Không có rương này.", 404)
+    # Rương rỗng: không có gì để trúng -> bao loi TRUOC khi tru tien.
+    # (Admin co the xoa het san pham cua mot ruong.)
+    if not case.items:
+        raise GameError("Rương này đang trống, chưa có sản phẩm nào.", 400)
     total_cost = case.pull_cost * count
     if store.get_balance(player) < total_cost:
         raise GameError(f"Không đủ Coin. Cần {total_cost:,} Coin.")

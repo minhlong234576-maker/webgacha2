@@ -91,6 +91,15 @@
     </a>
     {% endfor %}
   </div>
+  {% if not cases %}
+  <div class="empty-state">
+    <h3>Chưa có rương nào</h3>
+    <p class="meta">
+      Danh mục hiện đang trống. Quản trị viên cần tạo rương và thêm sản phẩm
+      ở trang <a href="/admin/products">Quản lý sản phẩm</a> trước khi quay được.
+    </p>
+  </div>
+  {% endif %}
 </section>
 
 <script>

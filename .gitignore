@@ -24,6 +24,7 @@ tmp/
 gacha.json.bak
 gacha.json.tmp
 gacha.json.broken
+gacha.json.pre-delete-180.bak
 
 # Repo tham chieu / san pham khac (khong phai source cua project nay)
 caseforge-main/

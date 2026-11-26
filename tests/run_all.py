@@ -16,10 +16,18 @@ from pathlib import Path
 HERE = Path(__file__).parent
 ROOT = HERE.parent
 
+sys.path.insert(0, str(HERE))
+import fixture_catalog  # noqa: E402
+
 # DB test dung chung cho server + test client (UI test them mon cho
 # QA_Tester_01 truoc khi chay -> can cung mot file DB).
 TEST_DIR = Path(tempfile.mkdtemp(prefix="jvtestdb_"))
 TEST_DB = TEST_DIR / "gacha.db"
+
+# Danh muc mau dung chung cho cac suite chay DOC LAP (khong co server test).
+# `gacha.json` that co the rong khi admin xoa het san pham / ca ruong — test
+# khong duoc phu thuoc vao du lieu production.
+SHARED_FIXTURE = fixture_catalog.write_fixture(TEST_DIR / "gacha.json")
 
 # (ten, file, can server chay khong, port can dung)
 SUITES = [
@@ -97,11 +105,13 @@ def start_servers(ports: set[int]) -> tuple[list[subprocess.Popen], dict[int, Pa
         env["GACHA_DB_PATH"] = str(TEST_DB)
         env["GACHA_DRY_RUN"] = dry_run
         # `gacha.json` la danh sach san pham THAT cua production. Server test
-        # KHONG bao gio ghi vao file do — tro moi server toi mot ban sao tam.
-        # Neu khong, route admin san pham se xoa item that khi test chay.
+        # KHONG bao gio ghi vao file do — tro moi server toi mot ban sao tam
+        # voi DANH MUC MAU (tests/fixture_catalog.py). Dung danh muc mau thay
+        # vi ban sao cua file that: admin co the xoa het san pham / ca ruong,
+        # nen file that co the rong va test se khong co gi de mo ruong.
         cfg_tmp = Path(tempfile.mkdtemp(prefix=f"jvcfg{port}_"))
         cfg_file = cfg_tmp / "gacha.json"
-        shutil.copy(ROOT / "gacha.json", cfg_file)
+        fixture_catalog.write_fixture(cfg_file)
         env["GACHA_FILE"] = str(cfg_file)
         cfg_files[port] = cfg_file
         out = open(ROOT / f"srv{port}.out", "w", encoding="utf-8")
@@ -183,7 +193,12 @@ def main():
                 env={**os.environ, "GACHA_DB_PATH": str(TEST_DB),
                      # Truong `GACHA_FILE` -> ban sao tam cua server test de
                      # suite nay khong bao gio cham `gacha.json` that.
-                     "GACHA_FILE": str(cfg_files.get(port, "")) or ""},
+                     #
+                     # Suite chay DOC LAP (khong co server) van can danh muc
+                     # mau de mo ruong / nang cap / battle — tro chung mot
+                     # file fixture. Khong truyen chuoi rong: `GACHA_FILE=""`
+                     # se bien thanh `Path("")` va lam test doc sai file.
+                     "GACHA_FILE": str(cfg_files.get(port) or SHARED_FIXTURE)},
             )
             dt = time.perf_counter() - t0
             out = proc.stdout or ""

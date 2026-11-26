@@ -37,12 +37,18 @@ if "GACHA_DB_PATH" not in os.environ:
     shutil.copy(ROOT / "data" / "gacha.db", tmp_dir / "gacha.db")
 
 # `gacha.json` cung vay danh sach san pham. Server test KHONG bao gio ghi vao
-# file that — dung ban sao tam trong thu muc tam. Cac route admin san pham
-# (`/admin/products`) se ghi vao ban sao nay.
+# file that — dung DANH MUC MAU (tests/fixture_catalog.py) trong thu muc tam.
+# Cac route admin san pham (`/admin/products`) se ghi vao ban sao nay.
+#
+# Dung mau thay vi ban sao cua file that: admin co the xoa het san pham / ca
+# ruong, nen file that co the rong va test se khong co gi de mo ruong.
 if "GACHA_FILE" not in os.environ:
     _cfg_tmp = Path(tempfile.mkdtemp(prefix="jvcfg_"))
     os.environ["GACHA_FILE"] = str(_cfg_tmp / "gacha.json")
-    shutil.copy(ROOT / "gacha.json", os.environ["GACHA_FILE"])
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import fixture_catalog
+
+    fixture_catalog.write_fixture(Path(os.environ["GACHA_FILE"]))
     # Ghi duong dan ra file de test process tu tim thay (khong do duong dan
     # qua bien moi truong).
     (_cfg_tmp / "gacha_file_path.txt").write_text(

@@ -257,19 +257,32 @@ async def main():
             r.text,
         )
         ids = [int(a) for a, _ in stakes]
-        stake_value = int(stakes[0][1]) if stakes else 0
         check("trang /upgrade co mon de cuoc", len(stakes) > 0,
               f"n={len(stakes)}")
-        targets = await c.get("/api/upgrade/targets",
-                              params={"value": stake_value})
-        tl = targets.json().get("targets", []) if targets.status_code == 200 else []
+
+        # Chon mot mon cuoc co muc dich hop le. KHONG dung `stakes[0]` — gia tri
+        # cua mon dau tien la ngau nhien (mo ruong random), va mon dat nhat
+        # khong co muc dich nao dat yeu cau ("dich phai dat hon >= 5%").
+        # Test phai phu thuoc vao MOT mon cuoc hop le, khong phu thuoc random.
+        stake_value = 0
+        stake_id = 0
+        tl: list[dict] = []
+        for raw_id, raw_value in stakes:
+            value = int(raw_value)
+            resp = await c.get("/api/upgrade/targets", params={"value": value})
+            found = resp.json().get("targets", []) if resp.status_code == 200 else []
+            if found:
+                stake_value = value
+                stake_id = int(raw_id)
+                tl = found
+                break
         check("GET /api/upgrade/targets co muc dich", len(tl) > 0,
               f"value={stake_value} n={len(tl)}")
 
-        if ids and tl:
+        if stake_id and tl:
             t = tl[0]
             r = await c.post("/api/upgrade", json={
-                "inventory_id": ids[0],
+                "inventory_id": stake_id,
                 "target_id": t["id"],
                 "target_coin": t["coin"],
             }, headers={"X-CSRF": "test-csrf"})

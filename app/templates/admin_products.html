@@ -3,9 +3,9 @@
 {% block content %}
 <section class="admin-card">
   <p class="eyebrow"><i></i> Quản trị · Sản phẩm</p>
-  <h1>Sản phẩm &amp; ảnh</h1>
+  <h1>Sản phẩm, rương &amp; ảnh</h1>
   <p class="lead">
-    Thêm, sửa, xoá món đồ trong các rương và tự upload ảnh cho từng món.
+    Thêm, sửa, xoá rương và món đồ, tự upload ảnh cho từng món.
     Thay đổi lưu thẳng vào <code>gacha.json</code> (có file backup tự động).
   </p>
 
@@ -13,6 +13,15 @@
   <div class="alert">Không đọc được <code>gacha.json</code>: {{ catalog_error }}</div>
   {% endif %}
 
+  <div class="tabs" role="tablist" aria-label="Khu vực quản trị">
+    <button class="tab is-active" type="button" role="tab" id="tab-items"
+            aria-selected="true" aria-controls="panel-items">Sản phẩm</button>
+    <button class="tab" type="button" role="tab" id="tab-cases"
+            aria-selected="false" aria-controls="panel-cases">Rương</button>
+  </div>
+
+  <!-- ======= Panel: sản phẩm ======= -->
+  <div id="panel-items" role="tabpanel" aria-labelledby="tab-items">
   <div class="toolbar">
     <label for="filter-case" class="sr-only">Lọc theo rương</label>
     <select id="filter-case">
@@ -45,6 +54,33 @@
   </div>
   <p class="meta" id="empty-hint" hidden>Không có sản phẩm nào khớp bộ lọc.</p>
   <p class="alert warn" id="empty-case-warn" hidden></p>
+  </div>
+
+  <!-- ======= Panel: rương ======= -->
+  <div id="panel-cases" role="tabpanel" aria-labelledby="tab-cases" hidden>
+    <div class="toolbar">
+      <input id="filter-case-text" type="search" placeholder="Tìm rương theo tên hoặc id..." aria-label="Tìm rương">
+      <span id="case-count-label" class="meta"></span>
+      <button class="cf-btn-primary" type="button" id="btn-new-case">+ Thêm rương</button>
+    </div>
+
+    <div class="table-scroll">
+      <table id="case-table">
+        <thead>
+          <tr>
+            <th style="width:56px">Ảnh</th>
+            <th>Tên</th>
+            <th>Id</th>
+            <th style="text-align:right">Sản phẩm</th>
+            <th style="text-align:right">Giá quay</th>
+            <th style="text-align:right">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="case-rows"></tbody>
+      </table>
+    </div>
+    <p class="meta" id="empty-case-hint" hidden>Không có rương nào khớp bộ lọc.</p>
+  </div>
 </section>
 
 <!-- ======= Modal: thêm / sửa sản phẩm ======= -->
@@ -81,11 +117,14 @@
           <span class="meta">Chữ thường, số, gạch dưới, gạch ngang.</span>
         </label>
         <label>Rương
-          <select id="f-case" required>
+          <select id="f-case" required {% if not cases %}disabled{% endif %}>
             {% for c in cases %}
             <option value="{{ c.id }}">{{ c.name }}</option>
             {% endfor %}
           </select>
+          {% if not cases %}
+          <span class="meta">Chưa có rương nào — hãy tạo rương ở tab “Rương” trước.</span>
+          {% endif %}
         </label>
         <label>Rarity
           <select id="f-rarity">
@@ -115,6 +154,60 @@
       <footer class="modal-foot">
         <button type="button" class="btn-ghost" id="btn-cancel">Huỷ</button>
         <button type="submit" class="cf-btn-primary" id="btn-save">Lưu sản phẩm</button>
+      </footer>
+    </form>
+  </div>
+</div>
+
+<!-- ======= Modal: thêm / sửa rương ======= -->
+<div class="modal-backdrop" id="case-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="case-modal-title">
+    <header class="modal-head">
+      <h2 id="case-modal-title">Thêm rương</h2>
+      <button type="button" class="modal-close" id="btn-case-close" aria-label="Đóng">✕</button>
+    </header>
+
+    <form id="case-form" class="modal-body">
+      <input type="hidden" name="orig_id" id="cf-orig-id">
+
+      <div class="modal-media">
+        <div class="preview-frame">
+          <img id="cf-preview" src="/static/cases/_placeholder.svg" alt="Ảnh xem trước">
+        </div>
+        <div class="media-actions">
+          <label class="upload-btn" for="cf-file">Chọn ảnh…</label>
+          <input id="cf-file" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+          <p class="meta">PNG / JPG / WebP / SVG · tối đa 5 MB. Tên file được sinh tự động từ id rương.</p>
+          <p class="meta" id="cf-file-name"></p>
+          <button type="button" class="btn-ghost-danger" id="btn-case-clear-image">Xoá ảnh đã lưu</button>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <label>Tên rương
+          <input id="cf-name" type="text" required maxlength="120" placeholder="Ví dụ: Rương Bạc">
+        </label>
+        <label>Id rương
+          <input id="cf-id" type="text" required maxlength="64" placeholder="vd: jelly-bac" spellcheck="false" autocapitalize="none">
+          <span class="meta">Chữ thường, số và gạch ngang (vd: jelly-bac).</span>
+        </label>
+        <label>Giá quay (Coin)
+          <input id="cf-cost" type="number" step="1" min="0" required value="1000">
+        </label>
+        <label>Nexo id (rương trong game)
+          <input id="cf-nexo" type="text" maxlength="64" placeholder="vd: jelly_bac" spellcheck="false" autocapitalize="none">
+          <span class="meta">Dùng để lấy ảnh từ texture NexoMC trên server.</span>
+        </label>
+        <label class="span-2">Mô tả
+          <textarea id="cf-desc" rows="3" maxlength="400" placeholder="Giới thiệu ngắn gọn cho rương…"></textarea>
+        </label>
+      </div>
+
+      <p class="form-error" id="case-form-error" hidden></p>
+
+      <footer class="modal-foot">
+        <button type="button" class="btn-ghost" id="btn-case-cancel">Huỷ</button>
+        <button type="submit" class="cf-btn-primary" id="btn-case-save">Lưu rương</button>
       </footer>
     </form>
   </div>
@@ -440,7 +533,10 @@ async function reload() {
     const data = await res.json();
     ALL_ITEMS.length = 0;
     ALL_ITEMS.push(...data.items);
+    ALL_CASES.length = 0;
+    ALL_CASES.push(...data.cases);
     render();
+    renderCases();
   } catch (e) {
     console.error(e);
   }
@@ -485,6 +581,315 @@ document.getElementById("btn-clear-image").addEventListener("click", async () =>
   }
 });
 
+
+// ---------------------------------------------------------------------------
+//  Quản lý rương
+// ---------------------------------------------------------------------------
+const CASE_API = "/api/admin/cases";
+
+const caseEls = {
+  rows: document.getElementById("case-rows"),
+  empty: document.getElementById("empty-case-hint"),
+  count: document.getElementById("case-count-label"),
+  filter: document.getElementById("filter-case-text"),
+  modal: document.getElementById("case-modal"),
+  form: document.getElementById("case-form"),
+  err: document.getElementById("case-form-error"),
+  preview: document.getElementById("cf-preview"),
+  file: document.getElementById("cf-file"),
+  fileName: document.getElementById("cf-file-name"),
+};
+
+let editingCase = null;      // null = tạo mới, "id" = sửa
+let pendingCaseFile = null;  // File ảnh mới chọn, chưa upload
+
+function caseImageUrl(c) {
+  const explicit = String(c.image || "").trim();
+  if (explicit.startsWith("/static/") || explicit.startsWith("/pika/tex/")) {
+    return explicit;
+  }
+  if (c.nexo_id) {
+    const encoded = btoa(String(c.nexo_id))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    return `/pika/tex/${encoded}`;
+  }
+  return "/static/cases/_placeholder.svg";
+}
+
+function filteredCases() {
+  const q = (caseEls.filter.value || "").trim().toLowerCase();
+  return ALL_CASES.filter(c => {
+    if (!q) return true;
+    return (c.name || "").toLowerCase().includes(q)
+        || (c.id || "").toLowerCase().includes(q);
+  });
+}
+
+function renderCases() {
+  const rows = filteredCases();
+  caseEls.rows.replaceChildren();
+
+  for (const c of rows) {
+    const tr = document.createElement("tr");
+    tr.dataset.caseId = c.id;
+
+    const tdImg = document.createElement("td");
+    const img = document.createElement("img");
+    img.className = "thumb";
+    img.src = caseImageUrl(c);
+    img.alt = c.name || c.id;
+    img.loading = "lazy";
+    img.width = 40;
+    img.height = 40;
+    tdImg.append(img);
+
+    const tdName = document.createElement("td");
+    const strong = document.createElement("strong");
+    strong.textContent = c.name || c.id;
+    tdName.append(strong);
+    if (c.description) {
+      const small = document.createElement("div");
+      small.className = "meta";
+      small.textContent = c.description;
+      tdName.append(small);
+    }
+    if (c.nexo_id) {
+      const small = document.createElement("div");
+      small.className = "meta";
+      small.textContent = "nexo: " + c.nexo_id;
+      tdName.append(small);
+    }
+
+    const tdId = document.createElement("td");
+    const code = document.createElement("code");
+    code.textContent = c.id;
+    tdId.append(code);
+
+    const tdCount = document.createElement("td");
+    tdCount.style.textAlign = "right";
+    const count = Number(c.item_count || 0);
+    tdCount.textContent = String(count);
+    if (count === 0) {
+      const warn = document.createElement("div");
+      warn.className = "meta";
+      warn.textContent = "rỗng";
+      tdCount.append(warn);
+    }
+
+    const tdCost = document.createElement("td");
+    tdCost.style.textAlign = "right";
+    tdCost.textContent = fmtCoin(c.pull_cost);
+
+    const tdAct = document.createElement("td");
+    tdAct.style.textAlign = "right";
+
+    const btnEdit = document.createElement("button");
+    btnEdit.type = "button";
+    btnEdit.className = "btn-ghost";
+    btnEdit.textContent = "Sửa";
+    btnEdit.addEventListener("click", () => openCaseEdit(c));
+
+    const btnDel = document.createElement("button");
+    btnDel.type = "button";
+    btnDel.className = "btn-ghost-danger";
+    btnDel.textContent = "Xoá";
+    btnDel.addEventListener("click", () => removeCase(c));
+
+    tdAct.append(btnEdit, btnDel);
+    tr.append(tdImg, tdName, tdId, tdCount, tdCost, tdAct);
+    caseEls.rows.append(tr);
+  }
+
+  caseEls.empty.hidden = rows.length > 0;
+  caseEls.count.textContent = `${rows.length} / ${ALL_CASES.length} rương`;
+}
+
+function openCaseModal(title) {
+  caseEls.modal.hidden = false;
+  document.getElementById("case-modal-title").textContent = title;
+  caseEls.err.hidden = true;
+  caseEls.err.textContent = "";
+  document.body.classList.add("modal-open");
+}
+
+function closeCaseModal() {
+  caseEls.modal.hidden = true;
+  document.body.classList.remove("modal-open");
+  editingCase = null;
+  pendingCaseFile = null;
+  caseEls.file.value = "";
+  caseEls.fileName.textContent = "";
+}
+
+function openCaseNew() {
+  editingCase = null;
+  pendingCaseFile = null;
+  caseEls.form.reset();
+  document.getElementById("cf-orig-id").value = "";
+  document.getElementById("cf-id").value = "";
+  document.getElementById("cf-cost").value = "1000";
+  caseEls.file.value = "";
+  caseEls.fileName.textContent = "";
+  caseEls.preview.src = "/static/cases/_placeholder.svg";
+  openCaseModal("Thêm rương");
+  document.getElementById("cf-name").focus();
+}
+
+function openCaseEdit(c) {
+  editingCase = c.id;
+  pendingCaseFile = null;
+  document.getElementById("cf-orig-id").value = c.id;
+  document.getElementById("cf-id").value = c.id || "";
+  document.getElementById("cf-name").value = c.name || "";
+  document.getElementById("cf-desc").value = c.description || "";
+  document.getElementById("cf-cost").value = c.pull_cost ?? 0;
+  document.getElementById("cf-nexo").value = c.nexo_id || "";
+  caseEls.file.value = "";
+  caseEls.fileName.textContent = "";
+  caseEls.preview.src = caseImageUrl(c);
+  openCaseModal("Sửa rương");
+  document.getElementById("cf-name").focus();
+}
+
+function showCaseError(msg) {
+  caseEls.err.textContent = msg;
+  caseEls.err.hidden = false;
+}
+
+async function saveCase(e) {
+  e.preventDefault();
+  const btn = document.getElementById("btn-case-save");
+  btn.disabled = true;
+  try {
+    const payload = {
+      id: document.getElementById("cf-id").value.trim().toLowerCase(),
+      name: document.getElementById("cf-name").value.trim(),
+      description: document.getElementById("cf-desc").value.trim(),
+      pull_cost: Number(document.getElementById("cf-cost").value),
+      nexo_id: document.getElementById("cf-nexo").value.trim(),
+    };
+
+    const origId = document.getElementById("cf-orig-id").value;
+    const url = origId
+      ? `${CASE_API}/${encodeURIComponent(origId)}`
+      : CASE_API;
+    const method = origId ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method: method,
+      headers: { "Content-Type": "application/json", "X-CSRF": CSRF },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showCaseError(data.detail || "Không lưu được rương.");
+      return;
+    }
+
+    // Upload ảnh (nếu có chọn file mới).
+    if (pendingCaseFile) {
+      const fd = new FormData();
+      fd.append("file", pendingCaseFile);
+      const up = await fetch(
+        `${CASE_API}/${encodeURIComponent(payload.id)}/image`,
+        { method: "POST", headers: { "X-CSRF": CSRF }, body: fd }
+      );
+      const upData = await up.json().catch(() => ({}));
+      if (!up.ok) {
+        showCaseError("Đã lưu rương nhưng upload ảnh thất bại: " + (upData.detail || ""));
+        await reload();
+        return;
+      }
+    }
+
+    await reload();
+    closeCaseModal();
+  } catch (err) {
+    showCaseError("Lỗi mạng: " + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function removeCase(c) {
+  const count = Number(c.item_count || 0);
+  const msg = count > 0
+    ? `Xoá rương "${c.name}" (${c.id})?\n\n` +
+      `Rương này còn ${count} sản phẩm — TẤT CẢ sẽ bị xoá cùng rương. ` +
+      `Người chơi sẽ không quay được rương này nữa.`
+    : `Xoá rương "${c.name}" (${c.id})?`;
+  if (!confirm(msg)) {
+    return;
+  }
+  try {
+    const res = await fetch(
+      `${CASE_API}/${encodeURIComponent(c.id)}`,
+      { method: "DELETE", headers: { "X-CSRF": CSRF } }
+    );
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert(data.detail || "Không xoá được rương.");
+      return;
+    }
+    await reload();
+  } catch (err) {
+    alert("Lỗi mạng: " + err.message);
+  }
+}
+
+// --- Tab chuyển panel -------------------------------------------------------
+function switchTab(which) {
+  const isItems = which === "items";
+  document.getElementById("tab-items").classList.toggle("is-active", isItems);
+  document.getElementById("tab-items").setAttribute("aria-selected", String(isItems));
+  document.getElementById("tab-cases").classList.toggle("is-active", !isItems);
+  document.getElementById("tab-cases").setAttribute("aria-selected", String(!isItems));
+  document.getElementById("panel-items").hidden = !isItems;
+  document.getElementById("panel-cases").hidden = isItems;
+  if (!isItems) renderCases();
+}
+
+// --- Sự kiện: quản lý rương ------------------------------------------------
+document.getElementById("tab-items").addEventListener("click", () => switchTab("items"));
+document.getElementById("tab-cases").addEventListener("click", () => switchTab("cases"));
+document.getElementById("btn-new-case").addEventListener("click", openCaseNew);
+document.getElementById("btn-case-close").addEventListener("click", closeCaseModal);
+document.getElementById("btn-case-cancel").addEventListener("click", closeCaseModal);
+caseEls.modal.addEventListener("click", (e) => { if (e.target === caseEls.modal) closeCaseModal(); });
+caseEls.form.addEventListener("submit", saveCase);
+caseEls.filter.addEventListener("input", renderCases);
+
+caseEls.file.addEventListener("change", () => {
+  const f = caseEls.file.files[0];
+  pendingCaseFile = f || null;
+  caseEls.fileName.textContent = f ? `${f.name} · ${(f.size / 1024).toFixed(0)} KB` : "";
+  if (f) caseEls.preview.src = URL.createObjectURL(f);
+});
+
+document.getElementById("btn-case-clear-image").addEventListener("click", async () => {
+  const caseId = editingCase || document.getElementById("cf-id").value.trim();
+  if (!caseId) {
+    caseEls.preview.src = "/static/cases/_placeholder.svg";
+    caseEls.fileName.textContent = "";
+    pendingCaseFile = null;
+    return;
+  }
+  try {
+    const res = await fetch(
+      `${CASE_API}/${encodeURIComponent(caseId)}/image/delete`,
+      { method: "POST", headers: { "X-CSRF": CSRF } }
+    );
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { alert(data.detail || "Không xoá được ảnh."); return; }
+    caseEls.preview.src = "/static/cases/_placeholder.svg";
+    caseEls.fileName.textContent = "";
+    await reload();
+  } catch (err) {
+    alert("Lỗi mạng: " + err.message);
+  }
+});
+
 render();
+renderCases();
 </script>
 {% endblock %}

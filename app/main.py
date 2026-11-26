@@ -51,6 +51,11 @@ _bonus_locks: dict[str, asyncio.Lock] = {}
 VN_TZ = timezone(timedelta(hours=7))
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+# Timeout cho viec resolve texture NexoMC (giay). Khi server Minecraft khong
+# phan hoi, viec quet resource pack se treo -> chan trai anh cho nguoi choi.
+PIKA_TEX_TIMEOUT = 6.0
+
 KIND_LABELS = {
     "seed": "Nạp ví",
     "open": "Mở rương",
@@ -1434,6 +1439,10 @@ async def pika_texture(encoded: str):
     `encoded` la `nexo_id` duoc base64url hoa (khong co padding). Server tu
     trai ten voi duong dan that cua texture, nen web khong can biet cau truc
     thu muc `assets/` cua resource pack.
+
+    Neu texture khong ton tai tren server -> tra ve anh placeholder thay vi
+    404. Ly do: trinh duyet se bao loi "Failed to load resource" trong console
+    khi anh khong tai duoc, va do la loi JS console (bi test chan).
     """
     from base64 import urlsafe_b64decode
 
@@ -1446,26 +1455,56 @@ async def pika_texture(encoded: str):
         return JSONResponse({"detail": "Mã texture không hợp lệ."}, status_code=400)
 
     try:
-        path = await pika_textures.resolve_nexo_id(nexo_id)
+        # Timeout ngan: khi server Minecraft khong phan hoi, `resolve_nexo_id`
+        # se treo rat lau -> chan trai anh cho nguoi choi. Sau timeout tra ve
+        # placeholder thay vi doi request.
+        path = await asyncio.wait_for(
+            pika_textures.resolve_nexo_id(nexo_id), timeout=PIKA_TEX_TIMEOUT
+        )
+    except asyncio.TimeoutError:
+        log.warning("timeout khi resolve texture %s", nexo_id)
+        path = None
     except Exception:
         log.warning("khong resolve duoc texture %s", nexo_id, exc_info=True)
         path = None
     if not path:
         # Fallback: thu doi duong dan theo thu muc pack.
-        return JSONResponse({"detail": "Không tìm thấy texture."}, status_code=404)
+        return _placeholder_texture()
     try:
-        result = await pika.read_binary(path)
+        result = await asyncio.wait_for(
+            pika.read_binary(path), timeout=PIKA_TEX_TIMEOUT
+        )
+    except asyncio.TimeoutError:
+        log.warning("timeout khi tai texture %s", path)
+        return _placeholder_texture()
     except HTTPException:
         raise
     except Exception:
         log.warning("khong tai duoc texture %s", path, exc_info=True)
-        return JSONResponse({"detail": "Không tải được texture."}, status_code=502)
+        return _placeholder_texture()
     if not result:
-        return JSONResponse({"detail": "Không tìm thấy texture."}, status_code=404)
+        return _placeholder_texture()
     content, content_type = result
     return Response(
         content=content,
         media_type=content_type or "image/png",
+        headers={"Cache-Control": "public, max-age=300"},
+    )
+
+
+def _placeholder_texture() -> Response:
+    """Anh placeholder khi texture tren server khong ton tai."""
+    path = STATIC_DIR / "items" / "_placeholder.svg"
+    try:
+        content = path.read_bytes()
+    except OSError:
+        content = (
+            b'<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">'
+            b'<rect width="64" height="64" fill="#2a2f3a"/></svg>'
+        )
+    return Response(
+        content=content,
+        media_type="image/svg+xml",
         headers={"Cache-Control": "public, max-age=300"},
     )
 
@@ -1483,7 +1522,10 @@ async def admin_products_page(request: Request):
         items = catalog_admin.list_items()
     except catalog_admin.CatalogError as exc:
         cases, items = [], []
+        catalog_error = str(exc)
         log.warning("khong doc duoc catalogue: %s", exc)
+    else:
+        catalog_error = ""
     for row in items:
         row["image_url"] = _item_image_url(row)
         row["coin_fmt"] = format_coin(row.get("coin"))
@@ -1495,7 +1537,7 @@ async def admin_products_page(request: Request):
         cases=cases,
         items=items,
         rarities=catalog_admin.RARITIES,
-        catalog_error=str(exc) if not cases else "",
+        catalog_error=catalog_error,
     )
 
 
@@ -1602,6 +1644,91 @@ async def api_admin_case_update(request: Request, case_id: str):
     except Exception:
         log.exception("sua ruong that bai")
         return JSONResponse({"detail": "Lỗi hệ thống, vui lòng thử lại."}, status_code=500)
+
+
+@app.post("/api/admin/cases")
+async def api_admin_case_create(request: Request):
+    """Tao ruong moi."""
+    err = require_admin_api(request)
+    if err:
+        return err
+    try:
+        body = await read_json_dict(request)
+        new_case = catalog_admin.create_case(body)
+        return {"ok": True, "case": new_case}
+    except catalog_admin.CatalogError as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=400)
+    except Exception:
+        log.exception("tao ruong that bai")
+        return JSONResponse({"detail": "Lỗi hệ thống, vui lòng thự lại."}, status_code=500)
+
+
+@app.delete("/api/admin/cases/{case_id}")
+async def api_admin_case_delete(request: Request, case_id: str):
+    """Xoa ruong (kem toan bo san pham ben trong)."""
+    err = require_admin_api(request)
+    if err:
+        return err
+    try:
+        result = catalog_admin.delete_case(case_id)
+        return {"ok": True, **result}
+    except catalog_admin.CatalogError as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=400)
+    except Exception:
+        log.exception("xoa ruong that bai")
+        return JSONResponse({"detail": "Lỗi hệ thống, vui lòng thự lại."}, status_code=500)
+
+
+@app.post("/api/admin/cases/{case_id}/image")
+async def api_admin_case_image(request: Request, case_id: str):
+    """Upload anh cho ruong (multipart/form-data)."""
+    err = require_admin_api(request)
+    if err:
+        return err
+    try:
+        form = await request.form()
+        upload = form.get("file")
+        if upload is None or not hasattr(upload, "read"):
+            raise catalog_admin.CatalogError("Chưa chọn file ảnh.")
+        content = await upload.read()
+        path = catalog_admin.save_case_image(
+            case_id, getattr(upload, "filename", "") or "", content
+        )
+        # Luu duong dan moi vao ruong neu ruong ton tai.
+        try:
+            case = catalog_admin._find_case(catalog_admin.load_raw(), case_id)
+            if case:
+                catalog_admin.update_case(case_id, {**case, "image": path})
+        except catalog_admin.CatalogError:
+            pass
+        return {"ok": True, "image": path, "image_url": path}
+    except catalog_admin.CatalogError as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=400)
+    except Exception:
+        log.exception("upload anh ruong that bai")
+        return JSONResponse({"detail": "Lỗi hệ thống, vui lòng thự lại."}, status_code=500)
+
+
+@app.post("/api/admin/cases/{case_id}/image/delete")
+async def api_admin_case_image_delete(request: Request, case_id: str):
+    """Xoa file anh cua ruong."""
+    err = require_admin_api(request)
+    if err:
+        return err
+    try:
+        catalog_admin.delete_case_image(case_id)
+        try:
+            case = catalog_admin._find_case(catalog_admin.load_raw(), case_id)
+            if case:
+                catalog_admin.update_case(case_id, {**case, "image": ""})
+        except catalog_admin.CatalogError:
+            pass
+        return {"ok": True}
+    except catalog_admin.CatalogError as exc:
+        return JSONResponse({"detail": str(exc)}, status_code=400)
+    except Exception:
+        log.exception("xoa anh ruong that bai")
+        return JSONResponse({"detail": "Lỗi hệ thống, vui lòng thự lại."}, status_code=500)
 
 
 @app.post("/api/admin/products/{case_id}/{item_id}/image")

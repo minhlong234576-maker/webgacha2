@@ -61,8 +61,13 @@ if _server_gacha and _server_gacha.exists():
     TMP = _server_gacha.parent
     os.environ["GACHA_FILE"] = str(_server_gacha)
 else:
+    # Chay doc lap: tu tao danh muc MAU (khong phu thuoc `gacha.json` that —
+    # admin co the xoa het san pham, nen file that co the rong).
     TMP = Path(tempfile.mkdtemp(prefix="jvadmin_"))
-    shutil.copy(ROOT / "gacha.json", TMP / "gacha.json")
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import fixture_catalog
+
+    fixture_catalog.write_fixture(TMP / "gacha.json")
     os.environ["GACHA_FILE"] = str(TMP / "gacha.json")
 
 os.environ["GACHA_DRY_RUN"] = "true"
@@ -246,26 +251,28 @@ async def main():
 
         print()
         print("=== 11. XOA ITEM CUOI CUNG -> 200 (RUONG RONG) ===")
-        # Tao 1 ruong chi co 1 item roi xoa — rương rỗng là hợp lệ.
-        saved = json.loads((TMP / "gacha.json").read_text(encoding="utf-8"))
-        saved["cases"].append({
-            "id": "zz-solo", "name": "Rương Một Món", "description": "",
-            "pull_cost": 100, "items": [{
-                "id": "solo_item", "name": "Duy Nhat", "rarity": "consumer",
-                "weight": 1, "coin": 10,
-            }],
-        })
-        (TMP / "gacha.json").write_text(
-            json.dumps(saved, ensure_ascii=False, indent=2), encoding="utf-8")
+        # Tao ruong qua API (khong sua file truc tiep — server dang ghi vao
+        # file nay nen sua tay se bi ghi de).
+        r = await c.post("/api/admin/cases", json={
+            "id": "zz-solo", "name": "Rương Một Món", "pull_cost": 100,
+        }, headers={"X-CSRF": "test-csrf"})
+        check("tao ruong 1 mon -> 200", r.status_code == 200,
+              f"{r.status_code} {r.text[:140]}")
+        r = await c.post("/api/admin/products", json={
+            "case_id": "zz-solo", "id": "solo_item", "name": "Duy Nhat",
+            "rarity": "consumer", "weight": 1, "coin": 10,
+        }, headers={"X-CSRF": "test-csrf"})
+        check("them 1 mon vao ruong -> 200", r.status_code == 200,
+              f"{r.status_code} {r.text[:140]}")
         r = await c.delete("/api/admin/products/zz-solo/solo_item",
                            headers={"X-CSRF": "test-csrf"})
         check("DELETE item cuoi -> 200 (cho phep ruong rong)",
               r.status_code == 200, f"{r.status_code} {r.text[:140]}")
-        saved2 = json.loads((TMP / "gacha.json").read_text(encoding="utf-8"))
-        solo = next((x for x in saved2["cases"] if x["id"] == "zz-solo"), None)
-        check("ruong da rong (items = [])",
-              solo is not None and solo["items"] == [],
-              str(solo["items"]) if solo else "khong tim thay ruong")
+        r = await c.get("/api/admin/products")
+        solo = next((x for x in r.json()["cases"] if x["id"] == "zz-solo"), None)
+        check("ruong da rong (item_count = 0)",
+              solo is not None and solo["item_count"] == 0,
+              str(solo) if solo else "khong tim thay ruong")
 
         print()
         print("=== 12. SUA RUONG ===")
@@ -355,8 +362,126 @@ async def main():
               r.status_code == 303, str(r.status_code))
 
     # ------------------------------------------- Lưới an toàn ghi file thật
+    # ------------------------------------------- Quan tri ruong
     print()
-    print("=== 20. DRY-RUN KHONG DUOC GHI VAO gacha.json THAT ===")
+    print("=== 20. TAO RUONG MOI ===")
+    async with httpx.AsyncClient(base_url=BASE, timeout=30) as c:
+        c.cookies.set("jv_session", make_cookie(ADMIN), domain="127.0.0.1")
+        r = await c.post("/api/admin/cases", json={
+            "id": "zz-case-new", "name": "Rương Mới", "description": "Mô tả",
+            "pull_cost": 2500, "nexo_id": "jelly_new",
+        }, headers={"X-CSRF": "test-csrf"})
+        check("POST tao ruong -> 200", r.status_code == 200,
+              f"{r.status_code} {r.text[:150]}")
+        r = await c.get("/api/admin/products")
+        ids = [x["id"] for x in r.json()["cases"]]
+        check("ruong moi xuat hien trong danh sach", "zz-case-new" in ids, str(ids))
+        new_case = next((x for x in r.json()["cases"] if x["id"] == "zz-case-new"), None)
+        check("ruong moi co item_count = 0", new_case and new_case["item_count"] == 0,
+              str(new_case))
+        check("ruong moi co pull_cost dung",
+              new_case and new_case["pull_cost"] == 2500, str(new_case))
+        check("ruong moi co nexo_id",
+              new_case and new_case["nexo_id"] == "jelly_new", str(new_case))
+
+        print()
+        print("=== 21. TRUNG ID RUONG -> 400 ===")
+        r = await c.post("/api/admin/cases", json={
+            "id": "zz-case-new", "name": "Trùng", "pull_cost": 100,
+        }, headers={"X-CSRF": "test-csrf"})
+        check("POST trung id ruong -> 400", r.status_code == 400, str(r.status_code))
+        check("thong bao 'da ton tai'",
+              "tồn tại" in r.text.lower() or "ton tai" in r.text.lower(),
+              r.text[:140])
+
+        print()
+        print("=== 22. VALIDATE RUONG ===")
+        r = await c.post("/api/admin/cases", json={
+            "id": "Bad ID!", "name": "X", "pull_cost": 100,
+        }, headers={"X-CSRF": "test-csrf"})
+        check("POST id ruong sai -> 400", r.status_code == 400, str(r.status_code))
+        r = await c.post("/api/admin/cases", json={
+            "id": "zz-ok", "name": "X", "pull_cost": -5,
+        }, headers={"X-CSRF": "test-csrf"})
+        check("POST gia quay am -> 400", r.status_code == 400, str(r.status_code))
+        r = await c.post("/api/admin/cases", json={
+            "id": "zz-ok", "name": "", "pull_cost": 100,
+        }, headers={"X-CSRF": "test-csrf"})
+        check("POST ten rong -> 400", r.status_code == 400, str(r.status_code))
+        r = await c.post("/api/admin/cases", json={
+            "id": "zz_case_underscore", "name": "X", "pull_cost": 100,
+        }, headers={"X-CSRF": "test-csrf"})
+        check("POST id ruong co gach duoi -> 400", r.status_code == 400,
+              str(r.status_code))
+
+        print()
+        print("=== 23. CSRF BAT BUOC KHI TAO RUONG ===")
+        r = await c.post("/api/admin/cases", json={
+            "id": "zz-nocsrf", "name": "Khong CSRF", "pull_cost": 100,
+        })
+        check("POST tao ruong thieu CSRF -> 403", r.status_code == 403,
+              str(r.status_code))
+
+        print()
+        print("=== 24. SUA RUONG ===")
+        r = await c.put("/api/admin/cases/zz-case-new", json={
+            "name": "Rương Đã Sửa", "description": "Mô tả mới", "pull_cost": 999,
+        }, headers={"X-CSRF": "test-csrf"})
+        check("PUT sua ruong -> 200", r.status_code == 200,
+              f"{r.status_code} {r.text[:150]}")
+        r = await c.get("/api/admin/products")
+        c2 = next((x for x in r.json()["cases"] if x["id"] == "zz-case-new"), None)
+        check("ten ruong da doi", c2 and c2["name"] == "Rương Đã Sửa", str(c2))
+        check("gia quay da doi", c2 and c2["pull_cost"] == 999, str(c2))
+
+        print()
+        print("=== 25. THEM ITEM VAO RUONG MOI ===")
+        r = await c.post("/api/admin/products", json={
+            "case_id": "zz-case-new", "id": "zz_new_item", "name": "Món Mới",
+            "rarity": "milspec", "weight": 2, "coin": 500,
+        }, headers={"X-CSRF": "test-csrf"})
+        check("POST them item vao ruong moi -> 200", r.status_code == 200,
+              f"{r.status_code} {r.text[:150]}")
+        r = await c.get("/api/admin/products")
+        c2 = next((x for x in r.json()["cases"] if x["id"] == "zz-case-new"), None)
+        check("ruong moi co 1 item", c2 and c2["item_count"] == 1, str(c2))
+
+        print()
+        print("=== 26. XOA RUONG (KEM SAN PHAM) ===")
+        r = await c.delete("/api/admin/cases/zz-case-new",
+                           headers={"X-CSRF": "test-csrf"})
+        check("DELETE ruong -> 200", r.status_code == 200,
+              f"{r.status_code} {r.text[:150]}")
+        r = await c.get("/api/admin/products")
+        ids = [x["id"] for x in r.json()["cases"]]
+        check("ruong da bien mat", "zz-case-new" not in ids, str(ids))
+        item_ids = [x["id"] for x in r.json()["items"]]
+        check("san pham trong ruong cung bi xoa", "zz_new_item" not in item_ids,
+              str(item_ids[:10]))
+
+        print()
+        print("=== 27. XOA RUONG KHONG TON TAI -> 400 ===")
+        r = await c.delete("/api/admin/cases/zz-no-such-case",
+                           headers={"X-CSRF": "test-csrf"})
+        check("DELETE ruong khong ton tai -> 400", r.status_code == 400,
+              str(r.status_code))
+
+        print()
+        print("=== 28. UPLOAD ANH RUONG ===")
+        r = await c.post("/api/admin/cases/jelly-starter/image",
+                         files={"file": ("anh.png", PNG_1PX, "image/png")},
+                         headers={"X-CSRF": "test-csrf"})
+        check("POST upload anh ruong -> 200", r.status_code == 200,
+              f"{r.status_code} {r.text[:150]}")
+        path = r.json().get("image", "")
+        check("duong dan anh ruong dung",
+              path == "/static/cases/jelly-starter.png", path)
+        r = await c.post("/api/admin/cases/jelly-starter/image/delete",
+                         headers={"X-CSRF": "test-csrf"})
+        check("POST xoa anh ruong -> 200", r.status_code == 200, str(r.status_code))
+
+    print()
+    print("=== 29. DRY-RUN KHONG DUOC GHI VAO gacha.json THAT ===")
     # `catalog_admin` tro toi file tam -> ghi thoai. Nhung khi tro ve file
     # THAT cua production + GACHA_DRY_RUN=true -> phai bi chan.
     real_file = ROOT / "gacha.json"
