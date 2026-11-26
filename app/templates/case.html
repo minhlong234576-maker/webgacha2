@@ -7,22 +7,16 @@
 <div class="banner">Chế độ tiền thật — Coin in-game sẽ bị trừ ngay khi mở rương.</div>
 {% endif %}
 
-<section class="case-head">
-  <div class="case-head-art">
-    <img src="{{ case.image }}" alt="{{ case.name }}" data-case-id="{{ case.id }}">
-  </div>
-  <div class="case-head-copy">
-    <p class="eyebrow"><i></i> {{ case.loot|length }} món · roll trên server</p>
+<div class="case-head">
+  <img src="{{ case.image }}" alt="{{ case.name }}" style="max-width: 150px; height: auto;">
+  <div>
     <h1>{{ case.name }}</h1>
     <p class="lead">{{ case.description }}</p>
-    <div class="case-head-meta">
-      <span class="price-chip">{{ case.cost_fmt }} Coin <small>/ lượt</small></span>
-      {% if dry_run %}<span class="cf-chip">Chế độ thiết kế</span>{% else %}<span class="cf-chip">Tiền thật · in-game</span>{% endif %}
-    </div>
+    <p class="price" style="color:hsl(var(--accent-text, var(--accent)));font-weight:700;margin:0">{{ case.cost_fmt }} Coin / lượt</p>
   </div>
-</section>
+</div>
 
-<section class="opener js-stage">
+<section class="opener">
   <!-- SINGLE REEL (HORIZONTAL) -->
   <div id="single-reel-wrap" class="reel-wrap">
     <div id="reel" class="reel">
@@ -47,7 +41,7 @@
     <button type="button" class="preset-btn" data-count="5">×5</button>
   </div>
 
-  <p id="hint" class="meta case-hint">Chọn số lượng rương và bấm Mở — dải dừng đúng món server roll, đồ vào túi.</p>
+  <p id="hint" class="meta" style="text-align:center;margin:14px 0 0">Chọn số lượng rương và bấm Mở — dải dừng đúng món server roll, đồ vào túi.</p>
 
   <!-- DROP RESULTS -->
   <div id="result" class="result-banner" hidden></div>
@@ -64,15 +58,12 @@
 <h2>Bên trong rương</h2>
 <div class="contents">
   {% for item in case.loot %}
-  <article class="item-card loot-card" style="--rarity: {{ item.color }}; --rarity-glow: {{ item.color }}2e">
-    <div class="loot-art">
+  <article class="item-card" style="box-shadow: inset 0 -2px 0 0 {{ item.color }}">
+    <div style="background:radial-gradient(ellipse 70% 60% at 50% 100%, {{ item.color }}22, transparent);padding:8px 0">
       <img src="{{ item.image }}" alt="{{ item.name }}" loading="lazy">
     </div>
-    <div class="name" title="{{ item.name }}">{{ item.name }}</div>
-    <div class="loot-meta">
-      <span class="loot-chance">{{ item.weight }}%</span>
-      <span class="loot-coin">{{ item.coin_fmt }} Coin</span>
-    </div>
+    <div class="name">{{ item.name }}</div>
+    <div class="chance">{{ item.weight }}% · {{ item.coin_fmt }} Coin</div>
   </article>
   {% endfor %}
 </div>
@@ -80,7 +71,6 @@
 {% if player %}
 <script type="module">
   import { spinReel } from "/static/roulette.js";
-  import { celebrate } from "/static/fx.js";
 
   const btn = document.getElementById("open-btn");
   const result = document.getElementById("result");
@@ -95,17 +85,8 @@
   let selectedCount = 1;
   let isSpinning = false;
 
-  function esc(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#39;");
-  }
-
   function renderMultiSlots(count) {
-    multiWrap.replaceChildren();
+    multiWrap.innerHTML = "";
     for (let i = 0; i < count; i++) {
       const col = document.createElement("div");
       col.className = "multi-reel-col";
@@ -238,31 +219,29 @@
     const profitSign = profit >= 0 ? "+" : "";
 
     let html = `
-      <div class="result-summary">
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:18px;margin-bottom:14px;font-size:14px">
         <span>Chi: <strong>${spent.toLocaleString("vi-VN")} Coin</strong></span>
-        <span>Nhận: <strong class="text-accent">${totalWon.toLocaleString("vi-VN")} Coin</strong></span>
-        <span>Chênh lệch: <strong class="${profitClass}">${profitSign}${profit.toLocaleString("vi-VN")} Coin</strong></span>
+        <span>Nhận: <strong style="color:hsl(var(--accent-text, var(--accent)))">${totalWon.toLocaleString("vi-VN")} Coin</strong></span>
+        <span>Chênh lệch: <strong style="color:${profit >= 0 ? 'hsl(var(--positive))' : 'hsl(var(--negative))'}">${profitSign}${profit.toLocaleString("vi-VN")} Coin</strong></span>
       </div>
       <div class="drop-results-grid">
     `;
 
     openings.forEach((op, i) => {
-      const color = esc(op.winner.color || "#b0c3d9");
-      const name = esc(op.winner.name);
-      const image = esc(op.winner.image || "/static/items/_placeholder.svg");
+      const color = op.winner.color || "#b0c3d9";
       html += `
-        <div class="drop-result-card" id="drop-card-${Number(op.inventory_id)}" style="border-top-color:${color}">
-          <img src="${image}" alt="${name}">
-          <div class="name" title="${name}">${name}</div>
+        <div class="drop-result-card" id="drop-card-${op.inventory_id}" style="border-top-color:${color}">
+          <img src="${op.winner.image || '/static/items/_placeholder.svg'}" alt="${op.winner.name}">
+          <div class="name" title="${op.winner.name}">${op.winner.name}</div>
           <div class="price">${(op.winner.coin || 0).toLocaleString("vi-VN")} Coin</div>
-          <button class="sell-single-btn" data-id="${Number(op.inventory_id)}" type="button">Bán</button>
+          <button class="sell-single-btn" data-id="${op.inventory_id}" type="button">Bán</button>
         </div>
       `;
     });
 
     html += `
       </div>
-      <div class="actions result-actions">
+      <div class="actions" style="margin-top:14px">
         <button id="sell-all-won" class="cf-btn-primary" type="button">Bán tất cả (${openings.length} món) · ${totalWon.toLocaleString("vi-VN")} Coin</button>
         <a class="cf-btn-ghost" href="/inventory">Xem túi đồ</a>
       </div>
@@ -270,20 +249,6 @@
 
     result.hidden = false;
     result.innerHTML = html;
-    result.classList.remove("fx-result-enter");
-    void result.offsetWidth;
-    result.classList.add("fx-result-enter");
-    // Ăn mừng khi ván này lãi thực sự (nhận > chi); nhiều món thắng thì mạnh hơn.
-    // Bọc try/catch: animation là phần trang trí, lỗi ở đây KHÔNG được chặn
-    // việc đăng ký handler bán hàng phía dưới (nút "Bán" / "Bán tất cả").
-    if (profit > 0) {
-      const wins = openings.filter((o) => (o.winner.coin || 0) > 0).length || 1;
-      try {
-        celebrate({ wins, tone: openings.length > 1 ? "rose" : "gold", big: profit >= spent });
-      } catch (err) {
-        console.warn("Khong bat duoc hieu ung an mung:", err);
-      }
-    }
     hint.textContent = "Các món đã vào túi đồ. Bạn có thể bán ngay lấy Coin hoặc giữ lại.";
 
     // Single sell handler

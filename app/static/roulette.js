@@ -1,5 +1,3 @@
-import { celebrate, stagePerspective } from "/static/fx.js";
-
 const H_TILE = 148;
 const V_TILE = 116;
 const GAP = 8;
@@ -61,7 +59,6 @@ export function spinReel({ pool, winner, onFinish, viewport, strip, orientation 
   viewportEl.style.boxShadow = "";
   viewportEl.classList.remove("fx-win");
   if (!horizontal) viewportEl.style.height = "320px";
-  if (index === 0) stagePerspective({ intense: !horizontal });
 
   const jitter = (Math.random() - 0.5) * (tile * 0.22);
   const size = horizontal ? viewportEl.clientWidth : viewportEl.clientHeight;
@@ -89,8 +86,6 @@ export function spinReel({ pool, winner, onFinish, viewport, strip, orientation 
     viewportEl.style.borderColor = winner.color;
     viewportEl.style.boxShadow = `0 0 26px -6px ${winner.color}`;
     viewportEl.classList.add("fx-win");
-    // Chỉ lượt quay đầu tiên (hoặc reel đơn) mới bắn confetti để không rối mắt.
-    if (index === 0) celebrate({ wins: 1, tone: "gold", big: !horizontal });
     onFinish?.(winner);
   }, duration);
 }
