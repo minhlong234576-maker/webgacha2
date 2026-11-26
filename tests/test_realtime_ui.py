@@ -7,9 +7,11 @@ from dotenv import load_dotenv
 
 load_dotenv(ROOT / ".env")
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tests"))
 
 from playwright.async_api import async_playwright
 from app.pika import economy_balance, send_command
+from balance_restore import restore_balance
 
 BASE = 'http://127.0.0.1:8099'
 ME = 'Trez1724'
@@ -62,18 +64,31 @@ async def main():
         after = (await chip.inner_text()).strip()
         print(f'  chip sau:     {after!r}')
         check('chip tự cập nhật khi Coin server đổi', after != before, f'{before} -> {after}')
+
+        # Chip poll `/api/balance` moi 10s -> co the hien gia TRUNG GIAN
+        # (vd 255) khi server da tang len 7000. Cho chip hoi dap den khi khop
+        # voi so du server truoc khi ket luan (tranh FAIL lung tung).
+        srv_now = await economy_balance(ME)
+        for _ in range(12):
+            after = (await chip.inner_text()).strip()
+            digits = ''.join(ch for ch in after if ch.isdigit())
+            if digits == f'{int(round(srv_now))}':
+                break
+            await asyncio.sleep(1.5)
+            srv_now = await economy_balance(ME)
         check('chip khớp số dư server',
               ''.join(ch for ch in after if ch.isdigit()) ==
-              f'{int(round(await economy_balance(ME)))}',
-              f'{after} vs {await economy_balance(ME)}')
+              f'{int(round(srv_now))}',
+              f'{after} vs {srv_now}')
 
         await page.screenshot(path=str(ROOT / "tests" / "_realtime.png"))
 
-        # Dọn dẹp
-        delta = int(round(await economy_balance(ME) - srv_before))
-        if delta > 0:
-            await send_command(f'eco take {ME} {delta}')
-            await asyncio.sleep(2)
+        # Dọn dẹp — vong lap cho den khi so du server khop muc tieu (mot lenh
+        # `eco take` co the khong chay xong -> nguoi choi THAT mat tien).
+        final_srv = await restore_balance(ME, srv_before)
+        check('số dư server trả về đúng gốc',
+              abs(final_srv - round(srv_before)) <= 1,
+              f'{final_srv} vs {srv_before}')
 
         check('không có lỗi JS console', not errors, str(errors[:3]))
         await browser.close()
@@ -86,3 +101,4 @@ async def main():
 
 
 asyncio.run(main())
+sys.exit(1 if FAILS else 0)

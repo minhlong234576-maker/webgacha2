@@ -5,12 +5,14 @@ ROOT = Path(__file__).resolve().parent.parent
 import asyncio, os, sys, httpx, itsdangerous, json, base64
 os.environ['GACHA_DRY_RUN'] = 'false'
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tests"))
 
 from dotenv import load_dotenv
 load_dotenv(ROOT / ".env")
 
 from app import bank
 from app.pika import economy_balance, send_command
+from balance_restore import restore_balance
 
 BASE = 'http://127.0.0.1:8099'
 ME = 'Trez1724'
@@ -86,16 +88,18 @@ async def main():
 
     print()
     print('=== dọn dẹp: trả lại số dư ban đầu ===')
-    delta = int(round(after_srv - before_srv))
-    if delta > 0:
-        await send_command(f'eco take {ME} {delta}')
-        await asyncio.sleep(2.0)
+    # Dùng `restore_balance` — vong lap cho den khi so du server KHOIP server
+    # that (mot lenh `eco take` co the khong chay xong -> nguoi choi mat tien).
+    final_srv = await restore_balance(ME, before_srv, after_srv)
     await asyncio.sleep(bank.SYNC_MAX_AGE + 1.5)
     final = await api_balance_fast()
     print(f'  API: {final["balance_fmt"]}')
     check('đã trả lại số dư ban đầu',
           abs(final['balance'] - before_api['balance']) < 1,
           f'{final["balance"]} vs {before_api["balance"]}')
+    check('số dư server trả về đúng gốc',
+          abs(final_srv - round(before_srv)) <= 1,
+          f'{final_srv} vs {before_srv}')
 
     print()
     if FAILS:
@@ -105,3 +109,4 @@ async def main():
 
 
 asyncio.run(main())
+sys.exit(1 if FAILS else 0)

@@ -75,3 +75,4 @@ async def main():
 
 
 asyncio.run(main())
+sys.exit(1 if FAILS else 0)

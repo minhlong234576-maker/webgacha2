@@ -6,6 +6,7 @@ cham vao du lieu that) truoc khi chay tung suite.
 Usage: python tests/run_all.py
 """
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -214,9 +215,16 @@ def main():
                         print("  ERR " + line)
 
             n_pass = out.count("  PASS ") + out.count("PASS ")
-            n_fail = out.count("  FAIL ") + out.count("FAIL:")
+            # Dong FAIL that: "  FAIL <ten>" hoac "FAIL: [...]".
+            # KHONG dem "=== KET QUA: N PASS, 0 FAIL ===" (co chu FAIL nhung
+            # la dong tom tat, khong phai assert that bai).
+            n_fail = len(re.findall(r"^\s*FAIL\b", out, re.M)) + len(
+                re.findall(r"^FAIL:", out, re.M)
+            )
             total_pass += n_pass
-            ok = proc.returncode == 0
+            # Suite co the in "FAIL" nhung van exit 0 (do loi cua test) -> phai
+            # fail theo ca hai dieu kien: return code != 0 HOAC co dong FAIL.
+            ok = proc.returncode == 0 and n_fail == 0
             results.append((name, "PASS" if ok else "FAIL", dt))
             print(f"  --> {'PASS' if ok else 'FAIL'}  ({dt:.1f}s, {n_pass} assertions)")
     finally:

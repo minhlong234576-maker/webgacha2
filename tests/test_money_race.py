@@ -16,6 +16,7 @@ import sys
 
 os.environ["GACHA_DRY_RUN"] = "false"
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tests"))
 
 from dotenv import load_dotenv  # noqa: E402
 
@@ -23,6 +24,7 @@ load_dotenv(ROOT / ".env")
 
 from app.errors import MoneyError  # noqa: E402
 from app.pika import eco_give, eco_take, economy_balance  # noqa: E402
+from balance_restore import restore_balance  # noqa: E402
 
 ME = "Trez1724"
 FAILS = []
@@ -74,15 +76,14 @@ async def main():
               all(f == "MoneyError" for f in failed) if failed else True,
               str(failed))
     finally:
-        # Tra lai so du ban dau
-        now = await economy_balance(ME)
-        delta = int(round(now - before))
-        if delta > 0:
-            await eco_take(ME, delta)
-            await asyncio.sleep(1.5)
+        # Tra lai so du ban dau — vong lap cho den khi khop (mot lenh
+        # `eco take` co the khong chay xong -> nguoi choi THAT mat tien).
+        final = await restore_balance(ME, before)
+        check("so du tra ve dung goc",
+              abs(final - round(before)) <= 1,
+              f"{final} vs {before}")
         print()
-        print(f"  so du sau khi don dep: {await economy_balance(ME):,.0f} "
-              f"(ban dau {before:,.0f})")
+        print(f"  so du sau khi don dep: {final:,.0f} (ban dau {before:,.0f})")
 
     print()
     if FAILS:

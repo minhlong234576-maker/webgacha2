@@ -468,17 +468,22 @@ async def main():
 
         print()
         print("=== 28. UPLOAD ANH RUONG ===")
-        r = await c.post("/api/admin/cases/jelly-starter/image",
+        # Dung id rieng cho test (`zz-case-img`) — KHONG dung `jelly-starter`,
+        # vi id do trung voi file anh that trong `app/static/cases/`. Upload +
+        # xoa anh se xoa file that cua repo (test phai khong cham du lieu that).
+        r = await c.post("/api/admin/cases/zz-case-img/image",
                          files={"file": ("anh.png", PNG_1PX, "image/png")},
                          headers={"X-CSRF": "test-csrf"})
         check("POST upload anh ruong -> 200", r.status_code == 200,
               f"{r.status_code} {r.text[:150]}")
         path = r.json().get("image", "")
         check("duong dan anh ruong dung",
-              path == "/static/cases/jelly-starter.png", path)
-        r = await c.post("/api/admin/cases/jelly-starter/image/delete",
+              path == "/static/cases/zz-case-img.png", path)
+        r = await c.post("/api/admin/cases/zz-case-img/image/delete",
                          headers={"X-CSRF": "test-csrf"})
         check("POST xoa anh ruong -> 200", r.status_code == 200, str(r.status_code))
+        check("file anh ruong test da xoa",
+              not (catalog_admin.CASES_DIR / "zz-case-img.png").exists())
 
     print()
     print("=== 29. DRY-RUN KHONG DUOC GHI VAO gacha.json THAT ===")

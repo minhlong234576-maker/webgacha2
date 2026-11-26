@@ -113,3 +113,4 @@ async def main():
 
 asyncio.run(main())
 shutil.rmtree(TMP, ignore_errors=True)
+sys.exit(1 if FAILS else 0)
