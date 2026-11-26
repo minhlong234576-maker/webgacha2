@@ -42,6 +42,11 @@ SIDE_META = {
         "name": "Ngôi Làng",
         "multiplier": 2,
         "color": "#10b981",
+        # `text_color` la mau CHU tren nen bang `--surface-raised`.
+        # `color` (Tailwind 500) chi dat 2.3:1 tren nen sang -> chu "2x"
+        # khong doc duoc. Gia tri nay toi hon, dat WCAG AA (>= 4.5:1).
+        "text_color": "#047857",
+        "text_color_dark": "#34d399",
         "bg": "rgba(16, 185, 129, 0.15)",
         "icon": "/static/items/coin_village.svg",
     },
@@ -50,6 +55,8 @@ SIDE_META = {
         "name": "Pillager",
         "multiplier": 2,
         "color": "#ef4444",
+        "text_color": "#b91c1c",
+        "text_color_dark": "#f87171",
         "bg": "rgba(239, 68, 68, 0.15)",
         "icon": "/static/items/coin_pillager.svg",
     },
@@ -58,6 +65,8 @@ SIDE_META = {
         "name": "Steve Đặc Biệt",
         "multiplier": 14,
         "color": "#06b6d4",
+        "text_color": "#0e7490",
+        "text_color_dark": "#22d3ee",
         "bg": "rgba(6, 182, 212, 0.2)",
         "icon": "/static/items/coin_steve.svg",
     },
@@ -133,6 +142,8 @@ class RouletteManager:
                 "slot": slot_idx,
                 "side": slot_info["side"],
                 "color": slot_info["color"],
+                "text_color": slot_info["text_color"],
+                "text_color_dark": slot_info["text_color_dark"],
                 "icon": slot_info["icon"],
                 "multiplier": slot_info["multiplier"],
             })
@@ -182,6 +193,8 @@ class RouletteManager:
                         "slot": self.winning_slot,
                         "side": self.winning_side,
                         "color": win_info["color"],
+                        "text_color": win_info["text_color"],
+                        "text_color_dark": win_info["text_color_dark"],
                         "icon": win_info["icon"],
                         "multiplier": win_info["multiplier"],
                     })

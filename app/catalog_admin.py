@@ -57,6 +57,15 @@ RARITIES = (
 
 IMAGE_EXTS = (".png", ".webp", ".jpg", ".jpeg", ".svg")
 
+_SAFE_IMAGE_URL_RE = re.compile(r"^/(static|pika/tex)/[A-Za-z0-9_./-]+$")
+_SVG_FORBIDDEN_RE = re.compile(
+    rb"(?i)(<\s*script\b|\bon[a-z]+\s*=|javascript\s*:|vbscript\s*:|<\s*foreignobject\b|<\s*iframe\b|<\s*object\b|<\s*embed\b|data\s*:\s*text/html)"
+)
+
+
+def _is_safe_image_url(url: str) -> bool:
+    return bool(_SAFE_IMAGE_URL_RE.fullmatch(url)) and ".." not in url
+
 # Kich thuoc toi da cho 1 file anh (5 MB).
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
@@ -264,11 +273,9 @@ def validate_item(raw: dict[str, Any], *, existing: dict[str, Any] | None = None
     image = str(raw.get("image") or (existing or {}).get("image") or "").strip()
     if image:
         # Chi chap nhan duong dan tuong doi trong static hoac duong dan /
-        # pika/tex/... (proxy noi bo). Chan duong dan absolute/URL ngoai.
-        if image.startswith("/static/") or image.startswith("/pika/tex/"):
+        # pika/tex/... (proxy noi bo). Chan duong dan absolute/URL ngoai/traversal.
+        if _is_safe_image_url(image):
             out["image"] = image
-        elif image == "":
-            out.pop("image", None)
         else:
             raise CatalogError("Ảnh phải là đường dẫn nội bộ (dạng /static/...).")
     return out
@@ -336,7 +343,7 @@ def validate_case(raw: dict[str, Any], *, existing: dict[str, Any] | None = None
     # Anh cua ruong.
     image = str(raw.get("image") or (existing or {}).get("image") or "").strip()
     if image:
-        if image.startswith("/static/") or image.startswith("/pika/tex/"):
+        if _is_safe_image_url(image):
             out["image"] = image
         else:
             raise CatalogError("Ảnh phải là đường dẫn nội bộ (dạng /static/...).")
@@ -527,10 +534,10 @@ def save_item_image(item_id: str, filename: str, content: bytes) -> str:
 
 
 def _looks_like_image(content: bytes) -> bool:
-    """Kiem tra magic bytes cua anh. SVG la text nen check rieng."""
+    """Kiem tra magic bytes cua anh. SVG la text nen check them payload doc hai."""
     head = content[:512].lstrip()
     if head.startswith(b"<svg") or (head.startswith(b"<?xml") and b"<svg" in content[:2048]):
-        return True
+        return not bool(_SVG_FORBIDDEN_RE.search(content))
     if content.startswith(b"\x89PNG\r\n\x1a\n"):
         return True
     if content.startswith(b"\xff\xd8\xff"):

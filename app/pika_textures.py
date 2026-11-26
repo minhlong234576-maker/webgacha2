@@ -70,7 +70,7 @@ def _texture_to_path(texture: str) -> str:
     `assets/<namespace>/textures/<duong_dan>.png`.
     """
     raw = texture.strip()
-    if not raw:
+    if not raw or "\\" in raw or "\x00" in raw or ".." in raw:
         return ""
     # Bo duoi .png neu co (mot so ban khai bao san duoi .png).
     if raw.lower().endswith(".png"):
@@ -84,6 +84,16 @@ def _texture_to_path(texture: str) -> str:
         head, tail = raw.split("/", 1)
         if head and not head.lower().endswith(".png"):
             namespace, body = head, tail
+    if (
+        not namespace
+        or not body
+        or body.startswith("/")
+        or ".." in namespace
+        or ".." in body.split("/")
+        or not re.fullmatch(r"^[a-z0-9_.-]+$", namespace.lower())
+        or not re.fullmatch(r"^[a-z0-9_./-]+$", body.lower())
+    ):
+        return ""
     return f"{PACK_ROOT}/assets/{namespace}/textures/{body}.png"
 
 

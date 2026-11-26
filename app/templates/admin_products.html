@@ -149,7 +149,7 @@
         </label>
       </div>
 
-      <p class="form-error" id="form-error" hidden></p>
+      <p class="form-error" id="form-error" role="alert" hidden></p>
 
       <footer class="modal-foot">
         <button type="button" class="btn-ghost" id="btn-cancel">Huỷ</button>
@@ -203,7 +203,7 @@
         </label>
       </div>
 
-      <p class="form-error" id="case-form-error" hidden></p>
+      <p class="form-error" id="case-form-error" role="alert" hidden></p>
 
       <footer class="modal-foot">
         <button type="button" class="btn-ghost" id="btn-case-cancel">Huỷ</button>
@@ -213,7 +213,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 const CSRF = document.querySelector('meta[name="csrf"]')?.content || "";
 const API = "/api/admin/products";
 

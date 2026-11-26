@@ -117,8 +117,10 @@
 }
 .badge-rolling {
   background: hsl(var(--accent) / 0.18);
-  color: hsl(var(--info));
+  /* Nen nhat -> can chu TOI dat WCAG AA; nen toi -> neon sang. */
+  color: hsl(var(--accent-text));
 }
+html.dark .badge-rolling { color: hsl(var(--accent)); }
 .badge-settled {
   background: hsl(var(--warning) / 0.18);
   color: hsl(var(--warning));
@@ -261,6 +263,15 @@ html.dark .timer-countdown { color: hsl(var(--accent)); }
   margin-top: 4px;
   font-family: var(--font-mono);
 }
+/* Mau CHU cua so "2x" / "14x".
+ *
+ * Khong hardcode trong HTML (chi 1 mau cho ca 2 theme): mau inline cua
+ * `slot.color` la Tailwind-500 -> chi 2.3:1 tren nen sang, 2.6:1 tren nen
+ * toi. Dung token theo `data-side` de CSS chon dung bien cho theme hien tai.
+ */
+.roulette-card .card-mult[data-side="village"] { color: var(--bet-village-text); }
+.roulette-card .card-mult[data-side="pillager"] { color: var(--bet-pillager-text); }
+.roulette-card .card-mult[data-side="steve"] { color: var(--bet-steve-text); }
 .roulette-card.winner-highlight {
   border-color: hsl(var(--mc-gold)) !important;
   border-bottom-color: hsl(var(--mc-gold)) !important;
@@ -335,6 +346,11 @@ html.dark .timer-countdown { color: hsl(var(--accent)); }
   flex: 1;
   min-width: 180px;
   box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.14);
+}
+.bet-input-wrap:focus-within {
+  border-color: hsl(var(--accent));
+  outline: 3px solid hsl(var(--accent));
+  outline-offset: 2px;
 }
 .input-icon { font-size: 17px; margin-right: 8px; }
 .bet-input-wrap input {
@@ -469,7 +485,11 @@ html.dark .btn-village { color: hsl(var(--positive)); }
   border-color: hsl(var(--negative));
   color: hsl(var(--negative));
 }
-html.dark .btn-pillager { color: hsl(var(--negative)); }
+/* Nen toi: `--negative` dat 4.04:1 -> chu "PILLAGER" / "ĂN 2X" (nho) khong
+ * dat AA. Neon sang hon giup doc duoc. */
+html.dark .btn-pillager { color: hsl(4 82% 66%); }
+html.dark .btn-village { color: hsl(152 62% 52%); }
+html.dark .btn-steve { color: hsl(187 82% 62%); }
 .btn-pillager:hover:not(:disabled) {
   background: hsl(var(--negative));
   color: hsl(var(--text-invert));

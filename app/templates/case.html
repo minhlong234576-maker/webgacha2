@@ -69,8 +69,20 @@
 </div>
 
 {% if player %}
-<script type="module">
+<script type="module" nonce="{{ csp_nonce }}">
   import { spinReel } from "/static/roulette.js";
+  import { celebrate } from "/static/fx.js";
+
+  // Escape chuoi dong truoc khi noi vao innerHTML (CONSTRAINTS.md §2).
+  // Ten mon / ten nguoi choi den tu server -> khong duoc tin tuyet doi.
+  function esc(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
 
   const btn = document.getElementById("open-btn");
   const result = document.getElementById("result");
@@ -86,18 +98,26 @@
   let isSpinning = false;
 
   function renderMultiSlots(count) {
-    multiWrap.innerHTML = "";
+    // `replaceChildren()` + DOM API thay vi `innerHTML` (CONSTRAINTS.md §2):
+    // khong phai parse lai chuoi HTML, va khong co rui ro XSS.
+    multiWrap.replaceChildren();
     for (let i = 0; i < count; i++) {
       const col = document.createElement("div");
       col.className = "multi-reel-col";
-      col.innerHTML = `
-        <div id="multi-reel-${i}" class="reel vertical">
-          <div class="reel-marker-h"></div>
-          <div class="reel-fade-t"></div>
-          <div class="reel-fade-b"></div>
-          <div id="multi-strip-${i}" class="reel-strip vertical"></div>
-        </div>
-      `;
+      const reel = document.createElement("div");
+      reel.id = `multi-reel-${i}`;
+      reel.className = "reel vertical";
+      const marker = document.createElement("div");
+      marker.className = "reel-marker-h";
+      const fadeT = document.createElement("div");
+      fadeT.className = "reel-fade-t";
+      const fadeB = document.createElement("div");
+      fadeB.className = "reel-fade-b";
+      const strip = document.createElement("div");
+      strip.id = `multi-strip-${i}`;
+      strip.className = "reel-strip vertical";
+      reel.append(marker, fadeT, fadeB, strip);
+      col.append(reel);
       multiWrap.appendChild(col);
     }
   }
@@ -212,6 +232,21 @@
     btn.disabled = false;
     presetBtns.forEach(b => b.disabled = false);
 
+    // An nhung (confetti) khi mo rương.
+    // QUAN TRONG: boc try/catch — `celebrate` la module tuong (opt-in), neu no
+    // nem loi (vi du trinh duyet khong ho tro canvas) thi handler "Bán" /
+    // "Bán tất cả" phia duoi se KHONG duoc dang ky -> chuc nang chet.
+    try {
+      const totalValue = openings.reduce((acc, o) => acc + (o.winner.coin || 0), 0);
+      celebrate({
+        wins: openings.length,
+        tone: totalValue >= 1000000 ? "gold" : "mint",
+        big: openings.length > 1 || totalValue >= 1000000,
+      });
+    } catch (err) {
+      /* hieu ung that la khong quan trong — KHONG du lam chuc nang ban bi chet */
+    }
+
     const spent = data.total_cost || (baseCost * openings.length);
     const totalWon = openings.reduce((acc, o) => acc + (o.winner.coin || 0), 0);
     const profit = totalWon - spent;
@@ -228,13 +263,17 @@
     `;
 
     openings.forEach((op, i) => {
-      const color = op.winner.color || "#b0c3d9";
+      // Escape moi gia tri den tu server truoc khi noi vao HTML.
+      const color = esc(op.winner.color || "#b0c3d9");
+      const name = esc(op.winner.name);
+      const image = esc(op.winner.image || "/static/items/_placeholder.svg");
+      const invId = Number(op.inventory_id) || 0;
       html += `
-        <div class="drop-result-card" id="drop-card-${op.inventory_id}" style="border-top-color:${color}">
-          <img src="${op.winner.image || '/static/items/_placeholder.svg'}" alt="${op.winner.name}">
-          <div class="name" title="${op.winner.name}">${op.winner.name}</div>
+        <div class="drop-result-card" id="drop-card-${invId}" style="border-top-color:${color}">
+          <img src="${image}" alt="${name}">
+          <div class="name" title="${name}">${name}</div>
           <div class="price">${(op.winner.coin || 0).toLocaleString("vi-VN")} Coin</div>
-          <button class="sell-single-btn" data-id="${op.inventory_id}" type="button">Bán</button>
+          <button class="sell-single-btn" data-id="${invId}" type="button">Bán</button>
         </div>
       `;
     });

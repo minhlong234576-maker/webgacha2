@@ -20,13 +20,26 @@
   --font-body: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
   --font-mono: "Chivo Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Bang mau Minecraft (light = "daylight") */
-  --mc-diamond:  187 76% 59%;
-  --mc-gold:     43 89% 62%;
-  --mc-emerald:  100 47% 45%;
-  --mc-redstone: 4 62% 53%;
-  --mc-nether:   282 68% 63%;
-  --mc-lapis:    218 74% 51%;
+  /* Bang mau Minecraft (light = "daylight")
+   *
+   * LUU Y TUONG PHAN: cac mau nay duoc dung lam MAU CHU tren nen sang
+   * (`--surface-raised` ~ 97% lightness). Voi gia tri ban dau, `gold` 62%
+   * chi dat 1.6:1 va `diamond` 59% dat 2.1:1 -> chu "khong doc duoc".
+   * Cac gia tri moi dam hon de dat WCAG AA (>= 4.5:1) cho chu nho.
+   */
+  --mc-diamond:  192 92% 28%;
+  --mc-gold:     36 88% 32%;
+  --mc-emerald:  142 62% 27%;
+  --mc-redstone: 358 70% 38%;
+  --mc-nether:   282 62% 38%;
+  --mc-lapis:    218 74% 38%;
+  --brand-grad-a: 192 92% 28%;
+  --brand-grad-b: 224 72% 34%;
+  /* Mau CHU cua so nhan "2x" / "14x" tren bang roulette (nen bang).
+   * Gia tri toi hon de dat WCAG AA tren nen sang. */
+  --bet-village-text:  142 62% 26%;
+  --bet-pillager-text: 358 70% 38%;
+  --bet-steve-text:    192 92% 28%;
 
   --surface-base:    30 20% 93%;
   --surface-raised:  38 33% 97%;
@@ -38,18 +51,28 @@
   --border-strong: 28 16% 58%;
 
   --text-primary: 222 34% 14%;
-  --text-muted:   220 11% 40%;
-  --text-faint:   220 9% 55%;
-  --text-invert:  38 40% 97%;
+  --text-muted:   220 11% 34%;
+  /* WCAG AA cho chu nho (>= 4.5:1) tren nen sang. 46% chi dat 4.15:1
+   * tren `--surface-overlay` -> chu "ai do · bot" o dai drop mo. */
+  --text-faint:   220 11% 40%;
+  /* Mau chu dat tren nen `--accent` (cyan) hoac nen sang -> phai TOI de
+   * dat WCAG AA. Ban dat "ivory" (97%) -> chi 2.1:1 tren cyan: chu
+   * trong nut "Vao ruong" / badge "JV" bi "chhoi". */
+  --text-invert:  222 34% 12%;
 
   --accent:        187 76% 47%;
   --accent-strong: 192 78% 40%;
-  --accent-text:   192 80% 30%;
+  /* `--accent-text` la mau CHU (link, <code>) tren nen sang -> can toi
+   * hon de dat 4.5:1 tren `--surface-overlay`. 30% chi dat 4.09:1. */
+  --accent-text:   192 88% 22%;
 
-  --positive: 100 45% 33%;
-  --negative: 4 66% 43%;
-  --warning:  38 88% 38%;
-  --info:     218 70% 42%;
+  /* Cac mau trang thai tren nen sang: gia tri cu chi dat 4.0-4.5:1.
+   * Chong toi hon mot chut de luon dat WCAG AA (>= 4.5:1) cho chu nho
+   * (nhan "2x", "PILLAGER", "Crazy"). */
+  --positive: 142 62% 26%;
+  --negative: 358 70% 38%;
+  --warning:  36 88% 30%;
+  --info:     218 74% 34%;
 
   /* Goc vuong nhu Minecraft */
   --radius:    0px;
@@ -79,17 +102,40 @@ html.dark {
   --border-strong: 240 8% 42%;
 
   --text-primary: 40 18% 94%;
-  --text-muted:   220 9% 70%;
-  --text-faint:   220 8% 52%;
+  --text-muted:   220 9% 74%;
+  /* `--text-faint` phai dat duoc WCAG AA tren nen toi (>= 4.5:1 cho chu
+   * nho). Tren nen `--surface-raised` (17% lightness) mau 52% chi dat
+   * 3.74:1 -> chu "ai do · bot" o dai drop gay mo/khong doc duoc.
+   * 64% dat ~5.6:1 -> vua ton nhe, vua doc duoc. */
+  --text-faint:   220 8% 64%;
 
   --accent:        187 70% 52%;
   --accent-strong: 190 74% 44%;
   --accent-text:   187 76% 62%;
 
+  /* Neon cua Minecraft tren nen toi — giu nguyen do sang de "phat sang".
+   * Chi dung cho CHU tren nen toi; tren nen sang phai dung `--mc-*` (ben tren). */
+  --mc-diamond:  187 76% 59%;
+  --mc-gold:     43 89% 62%;
+  --mc-emerald:  100 47% 52%;
+  --mc-redstone: 4 70% 62%;
+  --mc-nether:   282 68% 66%;
+  --mc-lapis:    218 74% 62%;
+  /* Gradient chu brand tren nen toi: can 2 mau neon tuong phan cao. */
+  --brand-grad-a: 187 76% 59%;
+  --brand-grad-b: 218 74% 68%;
+  /* Neon tren nen toi -> sang, "phat sang" nhu Minecraft. */
+  --bet-village-text:  152 62% 52%;
+  --bet-pillager-text: 4 82% 66%;
+  --bet-steve-text:    187 82% 62%;
+
   --positive: 100 48% 50%;
   --negative: 4 68% 60%;
   --warning:  38 80% 58%;
   --info:     218 72% 62%;
+
+  /* Nen accent van la cyan -> chu tren nen do phai TOI de doc duoc. */
+  --text-invert:  222 34% 10%;
 
   --bevel-light: hsl(0 0% 100% / 0.12);
   --bevel-dark:  hsl(240 30% 3% / 0.58);
@@ -102,6 +148,9 @@ html.dark {
 /* ---------------------------------------------------------------------------
    2. NEN + CHU
    ------------------------------------------------------------------------ */
+html {
+  scroll-padding-block-start: 76px;
+}
 body {
   background-image:
     linear-gradient(hsl(var(--text-primary) / 0.04) 1px, transparent 1px),
@@ -368,28 +417,53 @@ input[type="checkbox"], input[type="radio"] {
   letter-spacing: 0.01em;
   text-shadow: 2px 2px 0 hsl(var(--accent) / 0.32);
 }
+/* Gradient chu "Vale" cua brand.
+ *
+ * `--accent` (cyan) tren nen sang chi dat 1.9:1 -> chu "Vale" gan nhu
+ * khong doc duoc. Dung `--brand-grad-a/b` (dark neon o dark mode, mau toi
+ * dat WCAG AA o light mode) de gradient van dep nhung LUON doc duoc.
+ */
 .brand span {
-  color: hsl(var(--accent));
-  -webkit-text-fill-color: hsl(var(--accent));
+  color: hsl(var(--brand-grad-a));
+  -webkit-text-fill-color: hsl(var(--brand-grad-a));
   background: none;
 }
 /* Chi phan chu "Vale" moi doi mau — phan "Jelly" giu mau chu chinh. */
 .brand > span > span {
-  color: hsl(var(--accent));
-  -webkit-text-fill-color: hsl(var(--accent));
+  color: hsl(var(--brand-grad-a));
+  -webkit-text-fill-color: hsl(var(--brand-grad-a));
 }
 .brand-mark {
   -webkit-text-fill-color: hsl(var(--text-invert)) !important;
   color: hsl(var(--text-invert));
 }
+/* --- NAV ---
+ *
+ * `.nav-link` la menu chinh trong header. Kich thuoc toi thieu de bam
+ * chuan (>= 40px chieu cao), hover co vien "block" Minecraft de ro ranh
+ * giap, trang thai `.on` ton tai ro rang.
+ */
 .nav-link {
   border-radius: 0;
-  padding: 8px 12px;
+  padding: 10px 12px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
   font-weight: 700;
+  border: 2px solid transparent;
+  box-shadow: inset 2px 2px 0 transparent, inset -2px -2px 0 transparent;
+  transition: background-color 0.12s linear, border-color 0.12s linear, color 0.12s linear;
+}
+.nav-link:hover {
+  background: hsl(var(--surface-overlay));
+  border-color: hsl(var(--border-strong));
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark);
+  color: hsl(var(--text-primary));
 }
 .nav-link.on {
   background: hsl(var(--surface-sunken));
   color: hsl(var(--text-primary));
+  border-color: hsl(var(--border-strong));
   box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.15);
 }
 .nav-link.on::after {
@@ -398,6 +472,19 @@ input[type="checkbox"], input[type="radio"] {
   bottom: 0;
   height: 3px;
   background: hsl(var(--accent));
+}
+/* Menu "khoa" (chua dang nhap): van phai doc duoc, chi mo nhat hon. */
+.nav-link.is-locked {
+  color: hsl(var(--text-muted));
+  opacity: 0.72;
+}
+.nav-link.is-locked:hover {
+  opacity: 1;
+}
+/* Focus ro rang cho ban phim (khong dung chuot). */
+.site-header .nav-link:focus-visible {
+  outline: 3px solid hsl(var(--accent));
+  outline-offset: -3px;
 }
 .held-badge {
   background: hsl(var(--accent));
@@ -434,7 +521,17 @@ input[type="checkbox"], input[type="radio"] {
   font-family: var(--font-display);
   font-weight: 800;
 }
-.signout { font-weight: 700; }
+.signout {
+  font-weight: 700;
+  border-radius: var(--radius);
+}
+.chat-fab {
+  border-radius: var(--radius);
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    4px 4px 0 var(--bevel-dark);
+}
 .live-strip {
   border-bottom: 3px solid hsl(var(--border-subtle));
   min-height: 78px;
@@ -854,6 +951,9 @@ thead th {
   box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark), var(--card-shadow);
 }
 .gauge-wrap { display: grid; justify-items: center; gap: 12px; }
+/* So phan tram cua gauge: emerald-400 hardcode chi 1.8:1 tren nen sang.
+ * Dung token `--positive` de tu doi sang theo theme. */
+.gauge-pct { color: hsl(var(--positive)); }
 .upgrade-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .upgrade-lists section {
   background: hsl(var(--surface-raised));
@@ -1275,7 +1375,9 @@ thead th {
   padding: 10px 18px;
   background: hsl(var(--accent));
   border: 2px solid hsl(var(--accent-strong));
-  color: hsl(var(--text-invert));
+  /* Nen la cyan `--accent` -> chu phai TOI de doc duoc. Dung `!important`
+   * de thang cac rule mau chu mac dinh cua `<a>` (accent-text). */
+  color: hsl(var(--text-invert)) !important;
   font-family: var(--font-display);
   font-size: 13px;
   text-decoration: none;
@@ -1355,7 +1457,8 @@ thead th {
 .lines-head .meta { font-variant-numeric: tabular-nums; }
 .line-add-btn {
   margin-left: auto;
-  padding: 4px 10px;
+  padding: 6px 12px;
+  min-height: 40px;
   font-size: 12px;
 }
 
@@ -1368,6 +1471,7 @@ thead th {
 }
 .line-del {
   padding: 6px 12px;
+  min-height: 40px;
   font-size: 12px;
 }
 .cfg-grid { margin-top: 12px; }
@@ -1378,6 +1482,10 @@ thead th {
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
+}
+.battle-actions .cf-btn-primary,
+.battle-actions .cf-btn-ghost {
+  min-height: 44px;
 }
 .battle-actions-row { margin-top: 14px; }
 .battle-create-panel .battle-actions {
@@ -1577,4 +1685,24 @@ thead th {
   .bonus-wheel-wrap { width: 240px; }
   .wheel { width: 240px; height: 240px; }
   .result-summary { gap: 10px; font-size: 13px; }
+}
+@media (max-width: 700px), (pointer: coarse) {
+  .theme-btn,
+  .signout {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .line-add-btn,
+  .line-del {
+    min-height: 44px;
+  }
+  input[type="text"],
+  input[type="password"],
+  input[type="search"],
+  input[type="number"],
+  input[type="email"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }

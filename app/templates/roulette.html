@@ -145,7 +145,7 @@
   </section>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
   const CSRF_TOKEN = document.querySelector('meta[name="csrf"]')?.content || "";
   const CURRENT_PLAYER = {{ (player | tojson) if player else "null" }};
   let INITIAL_STATE = {{ state_json | safe }};
@@ -172,12 +172,19 @@
 
   // 1. Tạo HTML cho 1 ô thẻ của dải roulette
   function createSlotTileHtml(slot, index) {
+    const side = escapeHtml(slot.side);
+    const color = escapeHtml(slot.color || "#b0c3d9");
+    const icon = escapeHtml(slot.icon);
+    const name = escapeHtml(slot.name);
+    const slotNum = Number(slot.slot) || 0;
+    const idxNum = Number(index) || 0;
+    const mult = Number(slot.multiplier) || 0;
     return `
-      <div class="roulette-card side-${slot.side}" data-slot="${slot.slot}" data-index="${index}" style="border-bottom-color: ${slot.color}">
+      <div class="roulette-card side-${side}" data-slot="${slotNum}" data-index="${idxNum}" style="border-bottom-color: ${color}">
         <div class="card-icon">
-          <img src="${slot.icon}" alt="${slot.name}" draggable="false">
+          <img src="${icon}" alt="${name}" draggable="false">
         </div>
-        <span class="card-mult" style="color: ${slot.color}">${slot.multiplier}x</span>
+        <span class="card-mult" data-side="${side}">${mult}x</span>
       </div>
     `;
   }
@@ -308,15 +315,26 @@
   function renderHistory(history) {
     const histEl = document.getElementById("history-strip");
     if (!histEl || !history) return;
-    histEl.innerHTML = history.slice(-15).map(h => `
-      <div class="hist-badge hist-${h.side}" title="Vòng #${h.round_id}: ${h.multiplier}x (${h.side})">
-        <img src="${h.icon}" alt="${h.side}">
+    histEl.innerHTML = history.slice(-15).map(h => {
+      const side = escapeHtml(h.side);
+      const icon = escapeHtml(h.icon);
+      const mult = escapeHtml(h.multiplier);
+      const rid = escapeHtml(h.round_id);
+      return `
+      <div class="hist-badge hist-${side}" title="Vòng #${rid}: ${mult}x (${side})">
+        <img src="${icon}" alt="${side}">
       </div>
-    `).join("");
+    `;
+    }).join("");
   }
 
   function escapeHtml(str) {
-    return String(str || "").replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return String(str ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   // 6. Nhận trạng thái mới từ máy chủ (Server Polling)

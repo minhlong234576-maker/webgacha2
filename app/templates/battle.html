@@ -68,9 +68,18 @@
   </div>
 </div>
 
-<script type="module">
+<script type="module" nonce="{{ csp_nonce }}">
   import { spinReel } from "/static/roulette.js";
   import { celebrate } from "/static/fx.js";
+
+  function esc(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
 
   const csrf = document.querySelector("meta[name=csrf]")?.content;
   const battleId = {{ battle.id }};
@@ -109,7 +118,7 @@
 
   function linesHtml() {
     if (!state.lines || !state.lines.length) return "";
-    return state.lines.map((l) => `<span class="line-tag">${l.name} × ${l.count}</span>`).join(" ");
+    return state.lines.map((l) => `<span class="line-tag">${esc(l.name)} × ${Number(l.count) || 0}</span>`).join(" ");
   }
 
   function renderLobbyOrResult() {
@@ -130,11 +139,11 @@
       const drops = revealedFor(p.player);
       const total = drops.reduce((n, d) => n + Number(d.value || 0), 0);
       const kickBtn = (state.status === "WAITING" && isHost && p.is_bot && p.player !== state.host)
-        ? `<button class="cf-btn-ghost kick-btn" data-kick="${p.player}" type="button">Đá</button>` : "";
-      html += `<article class="seat${win}" data-player="${p.player}">
+        ? `<button class="cf-btn-ghost kick-btn" data-kick="${esc(p.player)}" type="button">Đá</button>` : "";
+      html += `<article class="seat${win}" data-player="${esc(p.player)}">
         <header class="seat-head">
-          <span class="avatar">${initials(p.player)}</span>
-          <strong>${p.player === me ? "Bạn" : p.player}</strong>
+          <span class="avatar">${esc(initials(p.player))}</span>
+          <strong>${p.player === me ? "Bạn" : esc(p.player)}</strong>
           ${p.is_bot ? " <span class='bot-tag'>bot</span>" : ""}
           ${kickBtn}
           <span class="price seat-price">${total.toLocaleString("vi-VN")} Coin</span>
@@ -164,7 +173,7 @@
       return `<p class="meta seat-empty">${state.status === "WAITING" ? "Đang chờ..." : "—"}</p>`;
     }
     return `<div class="seat-drops">${drops.map((d) =>
-      `<div class="mini-drop" style="border-bottom-color:${d.color}" title="${d.case_name || ""}"><img src="${d.image}" alt=""><span>${d.value_fmt || d.value}</span></div>`
+      `<div class="mini-drop" style="border-bottom-color:${esc(d.color || "#b0c3d9")}" title="${esc(d.case_name || "")}"><img src="${esc(d.image || "")}" alt=""><span>${esc(d.value_fmt || d.value)}</span></div>`
     ).join("")}</div>`;
   }
 
@@ -428,22 +437,65 @@
   }
 
   // --- Editor playlist rương (chuẩn web gốc) ---
+  let rowSeq = 0;
   function lineRow(box, cid, cnt) {
+    rowSeq += 1;
+    const seq = rowSeq;
     const div = document.createElement("div");
     div.className = "create-grid line-row";
-    div.innerHTML = `
-      <label>Rương
-        <select class="line-case">
-          ${CASES.map((c) => `<option value="${c.id}" ${c.id === cid ? "selected" : ""}>${c.name} · ${c.cost_fmt}</option>`).join("")}
-        </select>
-      </label>
-      <label>Số vòng
-        <select class="line-count">${Array.from({length: 10}, (_, i) => `<option value="${i+1}" ${i+1 === cnt ? "selected" : ""}>${i+1}</option>`).join("")}</select>
-      </label>
-      <label class="line-del-wrap">
-        <button class="line-del cf-btn-ghost" type="button">Xóa</button>
-      </label>`;
-    div.querySelector(".line-del").addEventListener("click", () => {
+
+    const caseLabel = document.createElement("label");
+    caseLabel.htmlFor = `cfg-case-${seq}`;
+    caseLabel.textContent = "Rương";
+    const caseSelect = document.createElement("select");
+    caseSelect.className = "line-case";
+    caseSelect.id = `cfg-case-${seq}`;
+    caseSelect.name = "case_id";
+    if (!CASES.length) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "Chưa có rương khả dụng";
+      opt.disabled = true;
+      opt.selected = true;
+      caseSelect.append(opt);
+      caseSelect.disabled = true;
+    } else {
+      CASES.forEach((c) => {
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = `${c.name} · ${c.cost_fmt}`;
+        if (c.id === cid) opt.selected = true;
+        caseSelect.append(opt);
+      });
+    }
+    caseLabel.append(caseSelect);
+
+    const countLabel = document.createElement("label");
+    countLabel.htmlFor = `cfg-count-${seq}`;
+    countLabel.textContent = "Số vòng";
+    const countSelect = document.createElement("select");
+    countSelect.className = "line-count";
+    countSelect.id = `cfg-count-${seq}`;
+    countSelect.name = "count";
+    for (let i = 1; i <= 10; i += 1) {
+      const opt = document.createElement("option");
+      opt.value = String(i);
+      opt.textContent = String(i);
+      if (i === cnt) opt.selected = true;
+      countSelect.append(opt);
+    }
+    countLabel.append(countSelect);
+
+    const delWrap = document.createElement("div");
+    delWrap.className = "line-del-wrap";
+    const delBtn = document.createElement("button");
+    delBtn.className = "line-del cf-btn-ghost";
+    delBtn.type = "button";
+    delBtn.textContent = "Xóa";
+    delWrap.append(delBtn);
+
+    div.append(caseLabel, countLabel, delWrap);
+    delBtn.addEventListener("click", () => {
       if (box.children.length <= 1) return;
       div.remove();
     });

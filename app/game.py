@@ -128,17 +128,31 @@ def open_case(player: str, slug: str, is_bot: bool = False) -> OpenResult:
     )
 
 
+def _dedupe_pks(item_pks: list[int]) -> list[int]:
+    """Loại bỏ ID trùng lặp và giá trị không hợp lệ, giữ nguyên thứ tự."""
+    out: list[int] = []
+    seen: set[int] = set()
+    for raw in item_pks:
+        pk = int(raw)
+        if pk <= 0 or pk in seen:
+            continue
+        seen.add(pk)
+        out.append(pk)
+    return out
+
+
 def sell_preview(player: str, item_pks: list[int]) -> int:
     """Tính tổng giá trị sẽ bán, KHÔNG thay đổi gì.
 
     Dùng để cộng Coin in-game TRƯỚC khi đánh dấu đồ là đã bán — nếu cộng
     tiền thật thất bại thì đồ vẫn còn trong túi, người chơi không mất gì.
     """
-    if not item_pks:
+    unique = _dedupe_pks(item_pks)
+    if not unique:
         raise GameError("Chưa chọn món nào.")
-    items = store.get_inventory_items(item_pks)
+    items = store.get_inventory_items(unique)
     total = 0
-    for pk in item_pks:
+    for pk in unique:
         row = items.get(pk)
         if not row or row["player"] != player:
             raise GameError("Không phải đồ của bạn.")
@@ -149,23 +163,17 @@ def sell_preview(player: str, item_pks: list[int]) -> int:
 
 
 def sell_items(player: str, item_pks: list[int]) -> dict:
-    if not item_pks:
+    unique = _dedupe_pks(item_pks)
+    if not unique:
         raise GameError("Chưa chọn món nào.")
-    items = store.get_inventory_items(item_pks)
-    total = 0
-    sold = []
-    for pk in item_pks:
-        row = items.get(pk)
-        if not row or row["player"] != player:
-            raise GameError("Không phải đồ của bạn.")
-        if row["status"] != "held":
-            raise GameError(f"{row['name']} không còn trong túi.")
-        total += int(row["value"])
-        sold.append(row)
-    store.set_inventory_status(item_pks, "sold")
-    store.credit(player, total, "sell", f"{len(item_pks)} món")
+    try:
+        sold = store.claim_inventory_status(player, unique, "sold")
+    except ValueError as exc:
+        raise GameError(str(exc), 409) from exc
+    total = sum(int(row["value"]) for row in sold)
+    store.credit(player, total, "sell", f"{len(sold)} món")
     return {
-        "sold": len(item_pks),
+        "sold": len(sold),
         "amount": total,
         "balance": store.get_balance(player),
         "items": sold,
@@ -611,20 +619,29 @@ def update_battle_setup(
         if diff > 0 and store.get_balance(row["player"]) < diff:
             raise GameError(f"{row['player']} không đủ Coin để đổi sang rương này.")
         diffs[row["player"]] = diff
+    # Tru tien chenh lech TRƯỚC khi cap nhat DB (chong race condition doi cau
+    # hinh mien phi). Neu mot buoc loi thi hoan lai cac khoan da tru.
+    debited: list[tuple[str, int]] = []
+    for player_name, diff in diffs.items():
+        if diff > 0:
+            try:
+                store.debit(player_name, diff, "battle_pay", f"đổi rương phòng #{battle_id}")
+                debited.append((player_name, diff))
+            except ValueError as exc:
+                for prev_player, prev_diff in debited:
+                    store.credit(prev_player, prev_diff, "refund", f"hoàn đổi rương phòng #{battle_id}")
+                raise GameError(f"{player_name} không đủ Coin để đổi sang rương này.", 402) from exc
     try:
         store.update_battle_config(
             battle_id, host, norm[0]["case_id"], total_rounds, slots, mode, new_paid,
             json.dumps(norm, ensure_ascii=False), new_paid,
         )
     except ValueError as exc:
+        for prev_player, prev_diff in debited:
+            store.credit(prev_player, prev_diff, "refund", f"hoàn đổi rương phòng #{battle_id}")
         raise GameError(str(exc)) from exc
     for player_name, diff in diffs.items():
-        if diff > 0:
-            try:
-                store.debit(player_name, diff, "battle_pay", f"đổi rương phòng #{battle_id}")
-            except ValueError:
-                pass
-        elif diff < 0:
+        if diff < 0:
             store.credit(player_name, -diff, "refund", f"đổi rương phòng #{battle_id}")
     return store.get_battle(battle_id) or {}
 

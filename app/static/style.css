@@ -110,6 +110,21 @@ h1, h2, h3, .brand, .big-number, .hero-stat strong, .amount {
   font-variation-settings: "opsz" 32;
 }
 a { color: hsl(var(--accent-text, var(--accent))); text-decoration: none; }
+/* Link tren nen TOI (`.empty-state` dung `--surface-sunken`) -> mau chu mac
+ * dinh cua `<a>` (`--accent-text`) co the qua 4.5:1. Dung `--accent-text`
+ * rieng cho nen toi. */
+.empty-state a,
+.cf-panel a,
+.empty-state p a,
+.cf-panel p a {
+  color: hsl(var(--accent-text));
+}
+html.dark .empty-state a,
+html.dark .cf-panel a,
+html.dark .empty-state p a,
+html.dark .cf-panel p a {
+  color: hsl(var(--accent));
+}
 a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 code { color: hsl(var(--accent-text, var(--accent))); font-family: var(--font-mono); font-size: 0.9em; }
 button, select, input { font-family: inherit; }
@@ -190,14 +205,43 @@ button, select, input { font-family: inherit; }
 .live-best .name, .live-card .name { font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .live-best .who, .live-card .who { font-size: 11px; color: hsl(var(--text-faint)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .live-best .price, .live-card .price { font-size: 12px; font-weight: 700; font-style: normal; color: hsl(var(--accent-text, var(--accent))); display: block; }
+/* DAI DROP — DUNG `position: absolute` + `transform` THAY VI FLEX.
+ *
+ * Ly do: khi co luot mo moi, the moi chui vao DAU danh sach. Neu the duoc
+ * xep bang `flex`, cac the sau bi DAY SANG PHAI -> trinh duyet bao "layout
+ * shift" -> man hinh rung (CLS). Chi khi dung `transform` (translateX) thi
+ * vi tri thay doi ma KHONG doi layout -> khong con layout shift, va con
+ * chuyen dong "truot" rat mat.
+ *
+ * `--live-card-w` / `--live-gap` de JS tinh dung pixel offset cho tung the.
+ */
+.live-strip {
+  --live-card-w: 156px;
+  --live-gap: 8px;
+}
 .live-row {
-  display: flex;
+  position: relative;
   min-width: 0;
   flex: 1;
-  gap: 8px;
   overflow: hidden;
+  height: 60px;
 }
-.live-row > [role="listitem"] { display: contents; }
+.live-row > [role="listitem"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--live-card-w);
+  transform: translateX(var(--x, 0px));
+  transition: transform 0.34s var(--ease-out);
+}
+.live-row > [role="listitem"] > .live-card {
+  width: 100%;
+}
+/* The moi: xuat hien tu ben phai roi "truot" vao vi tri cuoi.
+ * Chi dung `opacity` + `transform` -> khong anh huong layout. */
+.live-row > [role="listitem"].is-entering {
+  opacity: 0;
+}
 .live-card {
   display: flex;
   align-items: center;
@@ -213,10 +257,17 @@ button, select, input { font-family: inherit; }
 }
 .live-card > div { min-width: 0; flex: 1; }
 .live-card img { height: 42px; width: 42px; object-fit: contain; flex-shrink: 0; }
-.live-card.is-new { animation: live-in 420ms var(--ease-out) both; }
-@keyframes live-in {
-  from { opacity: 0; transform: translateX(-14px) scale(0.96); }
-  to { opacity: 1; transform: none; }
+/* Thẻ mới chỉ "mờ dần" — KHÔNG translate/scale.
+ *
+ * `translateX` + `scale` tren `.live-card` (flex row ngang) lam cac the sau
+ * bi day lui theo moi lan poll -> toan bo dai duoi chuyen -> CLS (layout
+ * shift) = man hinh rung. Chi doi `opacity` khong lam doi kich thuoc nen
+ * khong anh huong layout.
+ */
+.live-card.is-new { animation: live-fade 420ms var(--ease-out) both; }
+@keyframes live-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 @keyframes live-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
@@ -249,7 +300,10 @@ button, select, input { font-family: inherit; }
 }
 .brand:hover { text-decoration: none; }
 .brand span {
-  background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-strong)));
+  /* Gradient cyan cua `--accent` tren nen sang chi dat 1.9:1 -> chu
+   * "Vale" gan nhu khong doc duoc. Dung `--mc-diamond` (dung cho CHU
+   * tren nen sang) de gradient van dep nhung duoc 5.4:1. */
+  background: linear-gradient(135deg, hsl(var(--brand-grad-a)), hsl(var(--brand-grad-b)));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -321,6 +375,19 @@ button, select, input { font-family: inherit; }
 .coin-chip:hover { text-decoration: none; border-color: hsl(var(--accent) / 0.6); box-shadow: 0 0 0 3px hsl(var(--accent) / 0.12); }
 .coin-chip .coin-glyph { padding-left: 12px; font-size: 14px; opacity: 0.9; }
 .coin-chip span:not(.coin-glyph) { padding: 6px 10px 6px 6px; white-space: nowrap; }
+
+/* Số dư Coin đổi liên tục khi realtime -> nếu chiều rộng bám theo nội dung
+ * thì header "nhảy" mỗi lần số đổi chữ số (layout shift thấy rõ).
+ * Khoá chiều rộng tối thiểu theo số chữ số + `tabular-nums` (mọi số cùng
+ * bề rộng) -> chip giữ nguyên kích thước, chỉ con số thay đổi. */
+#coin-balance {
+  display: inline-block;
+  min-width: 8ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+/* Khi số lớn hơn 8 chữ số, cho phép tự mở rộng thay vì chồng chữ. */
+#coin-balance:where(:not([data-wide])) { overflow-wrap: anywhere; }
 .coin-chip .plus {
   padding: 6px 12px;
   border-left: 1px solid hsl(var(--border-subtle));
@@ -432,13 +499,16 @@ button, select, input { font-family: inherit; }
   background-image: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-strong)));
   border: 0;
   border-radius: calc(var(--radius) * 0.7);
-  color: #ffffff;
-  font-weight: 650;
+  /* Nen nut la cyan (`--accent`) — chu trang chi dat 2.2:1 (WCAG AA can
+   * 4.5:1 cho chu nho). Dung `--text-invert` (tu toi o light mode) de
+   * chu luon doc duoc tren nen nut. */
+  color: hsl(var(--text-invert));
+  font-weight: 700;
   font-size: 14px;
   letter-spacing: -0.005em;
   cursor: pointer;
   box-shadow: 0 1px 0 hsl(0 0% 100% / 0.25) inset, 0 4px 14px -4px hsl(var(--accent-strong) / calc(0.6 * var(--glow-strength)));
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+  text-shadow: none;
   padding: 11px 20px;
   display: inline-flex;
   align-items: center;
@@ -765,6 +835,15 @@ html.dark .hero-stat strong { color: hsl(var(--accent)); }
 .stats-bar span { color: hsl(var(--text-muted)); font-size: 10.5px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; display: block; }
 .stats-bar strong { font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
+/* Số người online realtime đổi chữ số (9 -> 10) -> bề ngang bám nội dung
+ * thì ô trong lưới bị dịch -> layout shift (màn hình rung).
+ * Khoá bề rộng tối thiểu cho ô số online. */
+.stats-bar strong[data-online-count] {
+  display: inline-block;
+  min-width: 2ch;
+  text-align: left;
+}
+
 /* Pet pixel — con slime 8x8 vẽ tay, đứng ở ô cuối của thanh thống kê.
  * Sprite là SVG path thuần pixel (không ảnh ngoài) nên nhìn sắc như Minecraft.
  * Chuyển động: trôi ngang + nhảy nhẹ + nháy mắt. Tất cả tôn trọng
@@ -845,6 +924,13 @@ html.dark .hero-stat strong { color: hsl(var(--accent)); }
 .promo-card .kicker { font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: hsl(var(--text-muted)); }
 .promo-card strong { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; color: hsl(var(--text-primary)); }
 .promo-card span { color: hsl(var(--text-muted)); font-size: 13px; }
+/* `.promo-cta` la nut phu trong `.promo-card`: nen cyan (`--accent`) nen
+ * chu mac dinh cua `span` (`--text-muted`) bi "chhoi" -> chi 1.07:1.
+ * Ep chu TOI de doc duoc tren nen nut. */
+.promo-card .promo-cta {
+  color: hsl(var(--text-invert));
+  font-weight: 700;
+}
 
 .case-grid {
   display: grid;
@@ -1244,7 +1330,7 @@ input, select {
 }
 input:hover, select:hover { border-color: hsl(var(--text-faint)); }
 input:focus-visible, select:focus-visible {
-  outline: none;
+  outline: 2px solid transparent;
   border-color: hsl(var(--accent-strong));
   box-shadow: 0 0 0 4px hsl(var(--accent) / 0.2);
 }
@@ -1961,7 +2047,7 @@ html.fx-glow-up::after {
   .page { padding-top: 18px; }
   .grid.stats, .stats-bar, .promo-row { grid-template-columns: 1fr 1fr; }
   .live-best { display: none; }
-  .live-strip { min-height: 72px; padding: 8px 12px; }
+  .live-strip { min-height: 72px; padding: 8px 12px; --live-card-w: 140px; }
   .live-card { width: 140px; }
   .hide-sm { display: none; }
   .page.narrow { padding-top: 4vh; }

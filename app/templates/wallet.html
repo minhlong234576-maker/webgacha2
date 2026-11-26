@@ -29,7 +29,7 @@
 </section>
 {% endblock %}
 {% block extra_scripts %}
-<script>
+<script nonce="{{ csp_nonce }}">
   /* Số dư trang ví cập nhật realtime cùng chip trên header. */
   document.addEventListener("jv:balance", (e) => {
     const fmt = e.detail && e.detail.balance_fmt;

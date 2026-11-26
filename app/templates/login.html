@@ -15,10 +15,10 @@
   {% if not pika_ready %}
     <div class="alert">Chưa gắn PikaMC. Vào <a href="/setup">cài đặt</a>.</div>
   {% endif %}
-  {% if error == "sai" %}<div class="alert">Tên hoặc mật khẩu không đúng.</div>{% endif %}
-  {% if error == "rate" %}<div class="alert">Thử quá nhiều lần.</div>{% endif %}
-  {% if error == "phien" %}<div class="alert">Phiên hết hạn.</div>{% endif %}
-  {% if error == "pika" %}<div class="alert">Không đọc được dữ liệu PikaMC.</div>{% endif %}
+  {% if error == "sai" %}<div class="alert" role="alert">Tên hoặc mật khẩu không đúng.</div>{% endif %}
+  {% if error == "rate" %}<div class="alert" role="alert">Thử quá nhiều lần.</div>{% endif %}
+  {% if error == "phien" %}<div class="alert" role="alert">Phiên hết hạn.</div>{% endif %}
+  {% if error == "pika" %}<div class="alert" role="alert">Không đọc được dữ liệu PikaMC.</div>{% endif %}
   <form method="post" action="/login" class="login-form">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <input type="hidden" name="next" value="{{ next_url }}">

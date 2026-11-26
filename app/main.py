@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import hmac
 import json
 import logging
+import re
+import secrets
 import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
@@ -49,6 +52,7 @@ from .security import (
 
 log = logging.getLogger("jellyvale.web")
 _bonus_locks: dict[str, asyncio.Lock] = {}
+_inventory_locks: dict[str, asyncio.Lock] = {}
 
 # --- Gioi han cau hoi chatbot ------------------------------------------------
 # Endpoint /api/chat cong khai. Khi bat Claude API, moi cau hoi la mot request
@@ -206,11 +210,27 @@ async def require_login_for_api(request: Request, call_next):
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
+    nonce = secrets.token_urlsafe(16)
+    request.state.csp_nonce = nonce
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    response.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'self'; "
+        f"script-src 'self' 'nonce-{nonce}'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data:; "
+        "media-src 'self'; "
+        "connect-src 'self'; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'; "
+        "frame-ancestors 'none'",
+    )
     return response
 
 
@@ -339,6 +359,7 @@ def render(request: Request, name: str, **context) -> HTMLResponse:
     token = request.session.get("csrf") or new_csrf_token()
     request.session["csrf"] = token
     context.setdefault("csrf", token)
+    context.setdefault("csp_nonce", getattr(request.state, "csp_nonce", ""))
     context.setdefault("player", None)
     # Trang landing riêng CSS riêng -> khong nap thua vao moi trang.
     context.setdefault("landing", name == "landing.html")
@@ -529,7 +550,11 @@ async def player_ctx(request: Request):
 
 
 def require_csrf(request: Request) -> bool:
-    return request.headers.get("x-csrf") == request.session.get("csrf")
+    sent = request.headers.get("x-csrf")
+    expected = request.session.get("csrf")
+    if not isinstance(sent, str) or not isinstance(expected, str) or not sent or not expected:
+        return False
+    return hmac.compare_digest(sent, expected)
 
 
 def api_auth(request: Request, *, csrf: bool = False) -> str | JSONResponse:
@@ -602,6 +627,7 @@ async def login_submit(
     request.session.clear()
     request.session["user"] = row.get("realname") or row.get("username")
     request.session["login_name"] = row.get("username")
+    request.session["csrf"] = new_csrf_token()
     # Dang nhap thanh cong -> xoa gioi han so lan that bai cua IP nay.
     clear_failed_logins(ip)
     return RedirectResponse(safe_next(next), status_code=303)
@@ -754,33 +780,35 @@ async def inventory_sell(request: Request):
     user = api_auth(request, csrf=True)
     if isinstance(user, JSONResponse):
         return user
-    try:
-        body = await read_json_dict(request)
-        raw_ids = body.get("ids") or []
-        if not isinstance(raw_ids, list):
-            raise game.GameError("Danh sách món không hợp lệ.", 400)
-        ids = [parse_int(x, field="ID món") for x in raw_ids]
-        # Tiền thật: cộng Coin in-game TRƯỚC, xong mới đánh dấu đồ đã bán.
-        # Nếu cộng tiền thất bại thì đồ vẫn còn trong túi — người chơi không mất gì.
-        amount = game.sell_preview(user, ids)
-        if not is_dry_run():
-            try:
-                await bank.give(user, amount)
-            except MoneyError as exc:
-                return JSONResponse({"detail": str(exc)}, status_code=503)
-            except HTTPException as exc:
-                return JSONResponse({"detail": str(exc.detail)}, status_code=503)
-        result = game.sell_items(user, ids)
-        if not is_dry_run():
-            await bank.sync(user)
-            result["balance"] = store.get_balance(user)
-        return {
-            **result,
-            "amount_fmt": format_coin(result["amount"]),
-            "balance_fmt": format_coin(result["balance"]),
-        }
-    except game.GameError as exc:
-        return json_error(exc)
+    lock = _inventory_locks.setdefault(user, asyncio.Lock())
+    async with lock:
+        try:
+            body = await read_json_dict(request)
+            raw_ids = body.get("ids") or []
+            if not isinstance(raw_ids, list):
+                raise game.GameError("Danh sách món không hợp lệ.", 400)
+            ids = [parse_int(x, field="ID món") for x in raw_ids]
+            # Tiền thật: cộng Coin in-game TRƯỚC, xong mới đánh dấu đồ đã bán.
+            # Nếu cộng tiền thất bại thì đồ vẫn còn trong túi — người chơi không mất gì.
+            amount = game.sell_preview(user, ids)
+            if not is_dry_run():
+                try:
+                    await bank.give(user, amount)
+                except MoneyError as exc:
+                    return JSONResponse({"detail": str(exc)}, status_code=503)
+                except HTTPException as exc:
+                    return JSONResponse({"detail": str(exc.detail)}, status_code=503)
+            result = game.sell_items(user, ids)
+            if not is_dry_run():
+                await bank.sync(user)
+                result["balance"] = store.get_balance(user)
+            return {
+                **result,
+                "amount_fmt": format_coin(result["amount"]),
+                "balance_fmt": format_coin(result["balance"]),
+            }
+        except game.GameError as exc:
+            return json_error(exc)
 
 
 @app.post("/api/inventory/sell-all")
@@ -788,30 +816,32 @@ async def inventory_sell_all(request: Request):
     user = api_auth(request, csrf=True)
     if isinstance(user, JSONResponse):
         return user
-    try:
-        held = store.list_inventory(user, "held")
-        ids = [row["id"] for row in held]
-        amount = game.sell_preview(user, ids)
-        if not is_dry_run() and amount > 0:
-            try:
-                await bank.give(user, amount)
-            except (MoneyError, HTTPException):
-                raise
-        result = game.sell_items(user, ids)
-        if not is_dry_run():
-            await bank.sync(user)
-            result["balance"] = store.get_balance(user)
-        return {
-            **result,
-            "amount_fmt": format_coin(result["amount"]),
-            "balance_fmt": format_coin(result["balance"]),
-        }
-    except game.GameError as exc:
-        return json_error(exc)
-    except MoneyError as exc:
-        return JSONResponse({"detail": str(exc)}, status_code=503)
-    except HTTPException as exc:
-        return JSONResponse({"detail": str(exc.detail)}, status_code=503)
+    lock = _inventory_locks.setdefault(user, asyncio.Lock())
+    async with lock:
+        try:
+            held = store.list_inventory(user, "held")
+            ids = [row["id"] for row in held]
+            amount = game.sell_preview(user, ids)
+            if not is_dry_run() and amount > 0:
+                try:
+                    await bank.give(user, amount)
+                except (MoneyError, HTTPException):
+                    raise
+            result = game.sell_items(user, ids)
+            if not is_dry_run():
+                await bank.sync(user)
+                result["balance"] = store.get_balance(user)
+            return {
+                **result,
+                "amount_fmt": format_coin(result["amount"]),
+                "balance_fmt": format_coin(result["balance"]),
+            }
+        except game.GameError as exc:
+            return json_error(exc)
+        except MoneyError as exc:
+            return JSONResponse({"detail": str(exc)}, status_code=503)
+        except HTTPException as exc:
+            return JSONResponse({"detail": str(exc.detail)}, status_code=503)
 
 
 @app.post("/api/inventory/withdraw")
@@ -824,31 +854,36 @@ async def inventory_withdraw(request: Request):
         return JSONResponse({"detail": "Tính năng rút đồ Nexo chưa bật."}, status_code=503)
     if is_dry_run():
         return JSONResponse({"detail": "Không thể rút đồ khi đang bật chế độ dry-run."}, status_code=400)
-    try:
-        body = await read_json_dict(request)
-        item_pk = parse_int(body.get("id"), field="ID món")
-        row = store.get_inventory_item(item_pk)
-        if not row or row["player"] != user:
-            raise game.GameError("Không phải đồ của bạn.", 403)
-        if row["status"] != "held":
-            raise game.GameError(f"{row['name']} không còn trong túi.", 400)
-        meta = find_listing(row["item_id"], int(row["value"]))
-        if not meta or not meta.nexo_id:
-            raise game.GameError("Món này chưa gắn nexo_id trong gacha.json.", 400)
-        await nexo_give_item(user, meta.nexo_id, meta.nexo_amount)
-        store.set_inventory_status([item_pk], "withdrawn")
-        return {
-            "withdrawn": True,
-            "id": item_pk,
-            "nexo_id": meta.nexo_id,
-            "amount": meta.nexo_amount,
-        }
-    except game.GameError as exc:
-        return json_error(exc)
-    except MoneyError as exc:
-        return JSONResponse({"detail": str(exc)}, status_code=400)
-    except HTTPException as exc:
-        return JSONResponse({"detail": str(exc.detail)}, status_code=503)
+    lock = _inventory_locks.setdefault(user, asyncio.Lock())
+    async with lock:
+        try:
+            body = await read_json_dict(request)
+            item_pk = parse_int(body.get("id"), field="ID món")
+            row = store.get_inventory_item(item_pk)
+            if not row or row["player"] != user:
+                raise game.GameError("Không phải đồ của bạn.", 403)
+            if row["status"] != "held":
+                raise game.GameError(f"{row['name']} không còn trong túi.", 400)
+            meta = find_listing(row["item_id"], int(row["value"]))
+            if not meta or not meta.nexo_id:
+                raise game.GameError("Món này chưa gắn nexo_id trong gacha.json.", 400)
+            await nexo_give_item(user, meta.nexo_id, meta.nexo_amount)
+            try:
+                store.claim_inventory_status(user, [item_pk], "withdrawn")
+            except ValueError as exc:
+                raise game.GameError(str(exc), 409) from exc
+            return {
+                "withdrawn": True,
+                "id": item_pk,
+                "nexo_id": meta.nexo_id,
+                "amount": meta.nexo_amount,
+            }
+        except game.GameError as exc:
+            return json_error(exc)
+        except MoneyError as exc:
+            return JSONResponse({"detail": str(exc)}, status_code=400)
+        except HTTPException as exc:
+            return JSONResponse({"detail": str(exc.detail)}, status_code=503)
 
 
 @app.get("/upgrade", response_class=HTMLResponse)
@@ -1321,7 +1356,10 @@ async def api_chat(request: Request):
 
     Trả về: `{"reply", "commands": [{name, desc, admin_only}], "source"}`.
     """
-    payload = await read_json_dict(request)
+    try:
+        payload = await read_json_dict(request)
+    except game.GameError:
+        return JSONResponse({"detail": "Dữ liệu gửi lên không hợp lệ."}, status_code=400)
     question = str(payload.get("q") or payload.get("question") or "").strip()
     if not question:
         return JSONResponse({"detail": "Câu hỏi trống."}, status_code=400)
@@ -1548,10 +1586,14 @@ async def pika_texture(encoded: str):
 
     from . import pika_textures
 
+    if len(encoded) > 256:
+        return JSONResponse({"detail": "Mã texture không hợp lệ."}, status_code=400)
     try:
         padding = "=" * (-len(encoded) % 4)
         nexo_id = urlsafe_b64decode(encoded + padding).decode("utf-8")
     except Exception:
+        return JSONResponse({"detail": "Mã texture không hợp lệ."}, status_code=400)
+    if not re.fullmatch(r"^[A-Za-z0-9_:/.-]{1,128}$", nexo_id) or ".." in nexo_id:
         return JSONResponse({"detail": "Mã texture không hợp lệ."}, status_code=400)
 
     try:
@@ -1585,9 +1627,11 @@ async def pika_texture(encoded: str):
     if not result:
         return _placeholder_texture()
     content, content_type = result
+    ct = (content_type or "").split(";")[0].strip().lower()
+    safe_media_type = ct if ct in {"image/png", "image/webp", "image/jpeg"} else "image/png"
     return Response(
         content=content,
-        media_type=content_type or "image/png",
+        media_type=safe_media_type,
         headers={"Cache-Control": "public, max-age=300"},
     )
 
@@ -1888,13 +1932,14 @@ async def api_admin_product_image_delete(request: Request, case_id: str, item_id
 async def setup_page(request: Request):
     token = new_csrf_token()
     request.session["csrf"] = token
+    show_admins = pika_ready() and require_admin(request)
     return render(
         request,
         "setup.html",
         csrf=token,
         pika_ready=pika_ready(),
         servers=None,
-        admins=await admins.admin_list() if pika_ready() else [],
+        admins=await admins.admin_list() if show_admins else [],
         error=None,
     )
 
@@ -1919,6 +1964,18 @@ async def setup_test(request: Request, csrf: str = Form(...)):
             servers=None,
             error="Chưa có PIKA_API_KEY trong file .env",
         )
+    if not require_admin(request):
+        resp = render(
+            request,
+            "setup.html",
+            csrf=token,
+            pika_ready=True,
+            servers=None,
+            admins=[],
+            error="Chỉ quản trị viên mới được test kết nối khi hệ thống đã cấu hình.",
+        )
+        resp.status_code = 403
+        return resp
     try:
         servers = [await get_server(PIKA_SERVER_UUID)] if PIKA_SERVER_UUID else await list_servers()
         return render(

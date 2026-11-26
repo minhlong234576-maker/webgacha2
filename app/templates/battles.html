@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Battle · JellyVale{% endblock %}
+{% block meta_description %}Tham gia Case Battle cùng bot hoặc người chơi khác trên JellyVale — ghép tối đa 6 loại rương và 30 vòng.{% endblock %}
 {% block content %}
 <p class="eyebrow"><i></i> Case battles</p>
 <h1>Battle cùng bot</h1>
@@ -21,13 +22,13 @@
   <div class="lines-block">
     <div class="lines-head">
       <strong>Danh sách rương</strong>
-      <span class="meta" id="lines-info"></span>
+      <span class="meta" id="lines-info" aria-live="polite"></span>
       <button id="line-add" class="cf-btn-ghost line-add-btn" type="button">+ Thêm rương</button>
     </div>
     <div id="lines"></div>
   </div>
   <label class="check"><input id="fill-bots" type="checkbox" checked> Gọi bot ngồi hết ghế (đủ ghế tự quay luôn)</label>
-  <p id="create-hint" class="meta"></p>
+  <p id="create-hint" class="meta" aria-live="polite"></p>
   <div class="actions battle-actions">
     {% if player %}
     <button id="create" class="cf-btn-primary" type="button">Tạo battle</button>
@@ -54,34 +55,78 @@
   {% endfor %}
 </div>
 {% if player %}
-<script>
-  const csrf = document.querySelector("meta[name=csrf]").content;
+<script nonce="{{ csp_nonce }}">
+  const csrf = document.querySelector("meta[name=csrf]")?.content || "";
   const CASES = {{ cases | tojson }};
   const costOf = (id) => (CASES.find((c) => c.id === id)?.pull_cost || 0);
   const linesBox = document.getElementById("lines");
+  let rowSeq = 0;
 
   function lineRow(cid, cnt) {
+    rowSeq += 1;
+    const seq = rowSeq;
     const div = document.createElement("div");
     div.className = "create-grid line-row";
-    div.innerHTML = `
-      <label>Rương
-        <select class="line-case">
-          ${CASES.map((c) => `<option value="${c.id}" ${c.id === cid ? "selected" : ""}>${c.name} · ${c.cost_fmt}</option>`).join("")}
-        </select>
-      </label>
-      <label>Số vòng
-        <select class="line-count">${Array.from({length: 10}, (_, i) => `<option value="${i+1}" ${i+1 === cnt ? "selected" : ""}>${i+1}</option>`).join("")}</select>
-      </label>
-      <label class="line-del-wrap">
-        <button class="cf-btn-ghost line-del" type="button">Xóa</button>
-      </label>`;
-    div.querySelector(".line-del").addEventListener("click", () => {
+
+    const caseLabel = document.createElement("label");
+    caseLabel.htmlFor = `line-case-${seq}`;
+    caseLabel.textContent = "Rương";
+    const caseSelect = document.createElement("select");
+    caseSelect.className = "line-case";
+    caseSelect.id = `line-case-${seq}`;
+    caseSelect.name = "case_id";
+    if (!CASES.length) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "Chưa có rương khả dụng";
+      opt.disabled = true;
+      opt.selected = true;
+      caseSelect.append(opt);
+      caseSelect.disabled = true;
+    } else {
+      CASES.forEach((c) => {
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = `${c.name} · ${c.cost_fmt}`;
+        if (c.id === cid) opt.selected = true;
+        caseSelect.append(opt);
+      });
+    }
+    caseLabel.append(caseSelect);
+
+    const countLabel = document.createElement("label");
+    countLabel.htmlFor = `line-count-${seq}`;
+    countLabel.textContent = "Số vòng";
+    const countSelect = document.createElement("select");
+    countSelect.className = "line-count";
+    countSelect.id = `line-count-${seq}`;
+    countSelect.name = "count";
+    for (let i = 1; i <= 10; i += 1) {
+      const opt = document.createElement("option");
+      opt.value = String(i);
+      opt.textContent = String(i);
+      if (i === cnt) opt.selected = true;
+      countSelect.append(opt);
+    }
+    countLabel.append(countSelect);
+
+    const delWrap = document.createElement("div");
+    delWrap.className = "line-del-wrap";
+    const delBtn = document.createElement("button");
+    delBtn.className = "cf-btn-ghost line-del";
+    delBtn.type = "button";
+    delBtn.textContent = "Xóa";
+    delWrap.append(delBtn);
+
+    div.append(caseLabel, countLabel, delWrap);
+
+    delBtn.addEventListener("click", () => {
       if (linesBox.children.length <= 1) return;
       div.remove();
       paintPrice();
     });
-    div.querySelector(".line-case").addEventListener("change", paintPrice);
-    div.querySelector(".line-count").addEventListener("change", paintPrice);
+    caseSelect.addEventListener("change", paintPrice);
+    countSelect.addEventListener("change", paintPrice);
     return div;
   }
 
@@ -108,11 +153,19 @@
   }
 
   linesBox.appendChild(lineRow(CASES[0]?.id, 2));
-  document.getElementById("line-add")?.addEventListener("click", () => {
-    if (linesBox.children.length >= 6) return;
-    linesBox.appendChild(lineRow(CASES[linesBox.children.length % CASES.length]?.id, 1));
-    paintPrice();
-  });
+  const addBtn = document.getElementById("line-add");
+  const createBtn = document.getElementById("create");
+  if (!CASES.length) {
+    if (addBtn) addBtn.disabled = true;
+    if (createBtn) createBtn.disabled = true;
+    document.getElementById("create-hint").textContent = "Hiện chưa có rương nào được cấu hình để tạo battle.";
+  } else {
+    addBtn?.addEventListener("click", () => {
+      if (linesBox.children.length >= 6) return;
+      linesBox.appendChild(lineRow(CASES[linesBox.children.length % CASES.length]?.id, 1));
+      paintPrice();
+    });
+  }
   paintPrice();
 
   document.getElementById("create")?.addEventListener("click", async () => {

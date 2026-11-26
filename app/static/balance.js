@@ -11,7 +11,18 @@
 
   function paint(balanceFmt) {
     chips().forEach((chip) => {
-      chip.textContent = balanceFmt + " Coin";
+      // Chi ghi khi NOI DUNG khac — ghi lai cung noi dung khong sao, nhung
+      // `textContent` moi la trigger cho MutationObserver cua fx.js, nen
+      // ghi thua se lam vong lap thua va gay rung nhẹ.
+      const next = balanceFmt + " Coin";
+      if (chip.textContent !== next) chip.textContent = next;
+      const link = chip.closest(".coin-chip");
+      if (link) {
+        const label = `Ví Coin: ${next} — nạp thêm`;
+        if (link.getAttribute("aria-label") !== label) {
+          link.setAttribute("aria-label", label);
+        }
+      }
     });
   }
 

@@ -54,3 +54,5 @@ tmp_*.py
 # Log Cloudflare Tunnel
 cloudflared*.log
 cloudflared*.err.log
+tunnel.log
+tunnel.err.log

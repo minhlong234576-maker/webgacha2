@@ -18,7 +18,7 @@
   <a class="cf-btn-primary" href="/login">Đăng nhập để quay</a>
   {% endif %}
 </section>
-<script>
+<script nonce="{{ csp_nonce }}">
   const slices = {{ slices_json | safe }};
   const total = slices.reduce((n, s) => n + s.weight, 0);
   let angle = 0;

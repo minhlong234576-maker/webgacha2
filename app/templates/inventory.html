@@ -11,7 +11,7 @@
   <button id="sell-selected" class="cf-btn-ghost" type="button">Bán món chọn</button>
   <button id="sell-all" class="cf-btn-primary" type="button">Bán hết</button>
 </div>
-<div id="hint" class="meta"></div>
+<div id="hint" class="meta" aria-live="polite"></div>
 <div class="contents" id="bag">
   {% for item in items %}
   <article class="item-card inv-card pick" style="--rarity: {{ item.color }}; box-shadow: inset 0 -2px 0 0 {{ item.color }}">
@@ -43,7 +43,7 @@
   </div>
   {% endfor %}
 </div>
-<script>
+<script nonce="{{ csp_nonce }}">
   const csrf = document.querySelector("meta[name=csrf]").content;
   const hint = document.getElementById("hint");
   const bag = document.getElementById("bag");

@@ -7,17 +7,22 @@
    ========================================================================== */
 
 .landing {
-  --vp-diamond: 187 76% 47%;
-  --vp-gold:    43 89% 58%;
-  --vp-nether:  282 68% 60%;
+  /* Token rieng cho trang landing. Gia tri LIGHT phai dat WCAG AA (>= 4.5:1
+   * cho chu nho) tren nen sang: `gold` 58% chi dat 1.6:1, `diamond` 47%
+   * dat 2.1:1 -> chu "1.000 Coin" / "Vao vong quay" gan nhu khong thay.
+   * Cac gia tri moi toi hon, dung lam MAU CHU tren nen sang.
+   * Ban DARK giu ban neon de "phat sang" tren nen toi. */
+  --vp-diamond: 192 92% 28%;
+  --vp-gold:    36 88% 32%;
+  --vp-nether:  282 62% 38%;
   --vp-ink:     222 34% 14%;
   max-width: none;
   padding-bottom: 0;
 }
 html.dark .landing {
-  --vp-diamond: 187 70% 55%;
+  --vp-diamond: 187 76% 59%;
   --vp-gold:    43 89% 62%;
-  --vp-nether:  282 70% 66%;
+  --vp-nether:  282 68% 66%;
   --vp-ink:     40 18% 94%;
 }
 
@@ -235,6 +240,14 @@ html.dark .landing {
   font-weight: 400;
   font-variant-numeric: tabular-nums;
   color: hsl(var(--vp-ink));
+}
+/* Số online realtime đổi chữ số (9 -> 10) -> nếu bề ngang bám nội dung thì
+ * các ô khác trong lưới bị dịch -> layout shift (màn hình rung).
+ * Khoá bề rộng tối thiểu cho ô số online. */
+.lp-numbers dd[data-online-count] {
+  display: inline-block;
+  min-width: 2ch;
+  text-align: left;
 }
 
 /* ---------- KHỐI NỘI DUNG ---------- */

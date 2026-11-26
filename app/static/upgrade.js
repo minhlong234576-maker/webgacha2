@@ -16,7 +16,7 @@ export function mountGauge(el) {
       <div style="margin-top:6px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:22px solid #fbbf24"></div>
     </div>
     <div id="gauge-label" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-      <span style="font-size:28px;font-weight:700;color:#34d399">0.0%</span>
+      <span class="gauge-pct" style="font-size:28px;font-weight:700">0.0%</span>
       <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:hsl(var(--text-faint))">Tỉ lệ</span>
     </div>
   </div>`;
@@ -31,7 +31,7 @@ export function mountGauge(el) {
       chance = Math.max(0, Math.min(0.85, value));
       const win = chance * CIRC;
       arc.setAttribute("stroke-dasharray", `${win} ${CIRC - win}`);
-      label.innerHTML = `<span style="font-size:28px;font-weight:700;color:#34d399">${(chance * 100).toFixed(1)}%</span>
+      label.innerHTML = `<span class="gauge-pct" style="font-size:28px;font-weight:700">${(chance * 100).toFixed(1)}%</span>
         <span style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:hsl(var(--text-faint))">Tỉ lệ</span>`;
       needle.style.transition = "none";
       needle.style.transform = "rotate(0deg)";

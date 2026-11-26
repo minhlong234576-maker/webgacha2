@@ -6,7 +6,8 @@
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#f7f3ea" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#1a1b22" media="(prefers-color-scheme: dark)">
-  <script>
+  <meta name="description" content="{% block meta_description %}JellyVale Case — Mở rương, Roulette, Battle và Nâng cấp vật phẩm Minecraft.{% endblock %}">
+  <script nonce="{{ csp_nonce }}">
     (function() {
       try {
         const saved = localStorage.getItem("jv_theme");
@@ -27,7 +28,6 @@
   <link rel="stylesheet" href="/static/intro.css">
   <link rel="stylesheet" href="/static/roulette.css">
   <link rel="stylesheet" href="/static/chatbot.css">
-  <link rel="preload" as="video" href="/static/media/loading-intro.mp4" type="video/mp4">
 
   {% if landing %}<link rel="stylesheet" href="/static/landing.css">{% endif %}
   {% if csrf %}<meta name="csrf" content="{{ csrf }}">{% endif %}
@@ -104,12 +104,12 @@
   <script src="/static/balance.js"></script>
   <script src="/static/intro.js"></script>
   <script type="module" src="/static/fx.js"></script>
-  <script type="module">
+  <script type="module" nonce="{{ csp_nonce }}">
     import { initChatbot } from "/static/chatbot.js";
     initChatbot();
   </script>
   {% block extra_scripts %}{% endblock %}
-  <script>
+  <script nonce="{{ csp_nonce }}">
     (function() {
       const toggleBtn = document.getElementById("theme-toggle");
       const meta = document.querySelector('meta[name="color-scheme"]');

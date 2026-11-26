@@ -432,6 +432,47 @@ def set_inventory_status(item_pks: list[int], status: str) -> None:
     run(inner)
 
 
+def claim_inventory_status(
+    player: str, item_pks: list[int], new_status: str
+) -> list[dict[str, Any]]:
+    """Chiếm nguyên tử các món đồ đang `held` sang `new_status` trong một transaction.
+
+    Loại bỏ ID trùng lặp để tránh đếm 2 lần; kiểm tra sở hữu và trạng thái
+    `held` với CAS (`WHERE id = ? AND player = ? AND status = 'held'`), nếu có
+    bất kỳ món nào không hợp lệ thì rollback toàn bộ transaction.
+    """
+    unique = list(dict.fromkeys(int(pk) for pk in item_pks))
+    if not unique:
+        return []
+
+    def inner(con: sqlite3.Connection) -> list[dict[str, Any]]:
+        placeholders = ",".join("?" * len(unique))
+        fetched = {
+            row["id"]: dict(row)
+            for row in con.execute(
+                f"SELECT * FROM inventory WHERE id IN ({placeholders})", unique
+            )
+        }
+        claimed: list[dict[str, Any]] = []
+        for pk in unique:
+            row = fetched.get(pk)
+            if not row or row["player"] != player:
+                raise ValueError("Không phải đồ của bạn.")
+            if row["status"] != "held":
+                raise ValueError(f"{row['name']} không còn trong túi.")
+            cur = con.execute(
+                "UPDATE inventory SET status = ? WHERE id = ? AND player = ? AND status = 'held'",
+                (new_status, pk, player),
+            )
+            if cur.rowcount != 1:
+                raise ValueError(f"{row['name']} không còn trong túi.")
+            row["status"] = new_status
+            claimed.append(row)
+        return claimed
+
+    return run(inner)
+
+
 def commit_upgrade(
     player: str,
     item_pks: list[int],

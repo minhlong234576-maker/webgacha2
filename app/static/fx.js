@@ -187,10 +187,17 @@ function mountBalanceTween() {
     return digits ? Number(digits) : null;
   }
 
+  function paintChip(text) {
+    // Chi gan khi khac — tranh `textContent` ghi thua gay vong lap
+    // MutationObserver + rung header khi so du realtime doi.
+    if (chip.textContent !== text) chip.textContent = text;
+  }
+
   function tweenTo(to, withGlow) {
     cancelAnimationFrame(raf);
+    raf = 0;
     if (reduceMotion || lastValue === null || to === null || to === lastValue) {
-      chip.textContent = formatCoin(to === null ? lastValue : to);
+      paintChip(formatCoin(to === null ? lastValue : to));
       if (withGlow) pulse(withGlow);
       return;
     }
@@ -200,8 +207,14 @@ function mountBalanceTween() {
     const step = (now) => {
       const t = clamp((now - start) / DURATION, 0, 1);
       const eased = 1 - Math.pow(1 - t, 3);
-      chip.textContent = formatCoin(Math.round(from + (to - from) * eased));
-      if (t < 1) raf = requestAnimationFrame(step);
+      paintChip(formatCoin(Math.round(from + (to - from) * eased)));
+      if (t < 1) {
+        raf = requestAnimationFrame(step);
+      } else {
+        // Tween xong -> `raf = 0` de MutationObserver biet khong con
+        // dang chay (va co the dong bo `lastValue` mot lan cho chinh xac).
+        raf = 0;
+      }
     };
     raf = requestAnimationFrame(step);
     if (withGlow) pulse(withGlow);
@@ -227,7 +240,7 @@ function mountBalanceTween() {
     const next = parseCoin(e.detail && e.detail.balance_fmt);
     const prev = lastValue;
     if (next === null) return;
-    chip.textContent = formatCoin(prev === null ? next : next);
+    paintChip(formatCoin(prev === null ? next : next));
     if (prev !== null && next !== prev) {
       const glow = next > prev ? "up" : "down";
       lastValue = prev;
@@ -239,11 +252,16 @@ function mountBalanceTween() {
   });
 
   // Quan sát text từ các nguồn khác (poll balance.js) để không bị "dính" số cũ.
+  //
+  // CHỈ theo dõi khi chip KHONG dang tween: trong lúc tween, chinh `step()`
+  // ghi `textContent` -> observer se thay doi `lastValue` giua chung, lam tween
+  // nhay lung. Sau khi tween xong, dong bo `lastValue` mot lan.
+  const isAnimating = () => raf !== 0 || document.querySelector(".coin-pop-up, .coin-pop-down") !== null;
   const mo = new MutationObserver(() => {
+    if (isAnimating()) return;
     const v = parseCoin(chip.textContent);
-    if (v !== null && !isAnimating()) lastValue = v;
+    if (v !== null) lastValue = v;
   });
-  const isAnimating = () => document.querySelector(".coin-pop-up, .coin-pop-down") !== null;
   mo.observe(chip, { childList: true, characterData: true, subtree: true });
 }
 
