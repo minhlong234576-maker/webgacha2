@@ -50,3 +50,7 @@ srv*.log
 uvicorn*.log
 uvicorn*.err.log
 tmp_*.py
+
+# Log Cloudflare Tunnel
+cloudflared*.log
+cloudflared*.err.log

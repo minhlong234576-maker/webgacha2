@@ -4,6 +4,7 @@ import binascii
 import hashlib
 import hmac
 import json
+import os
 import secrets
 import time
 from base64 import b64decode, b64encode
@@ -19,7 +20,13 @@ from starlette.types import Message, Receive, Scope, Send
 
 # App có nằm sau reverse proxy (Nginx/Cloudflare) mà ta kiểm soát không?
 # Bật chỉ khi CÓ — xem `client_ip` để hiểu vì sao.
-TRUST_PROXY = False
+#
+# Cloudflare Tunnel: mọi request về app đều từ 127.0.0.1, nên nếu TẮT
+# `TRUST_PROXY` thì `client_ip` luôn trả "127.0.0.1" -> gioi han dang nhap
+# (8 lan sai / 10 phut) se khoa chung cho TAT CA nguoi choi dang online.
+# Cloudflare luon them `CF-Connecting-IP` (IP that cua client) va
+# `X-Forwarded-For`, nen doc cac header nay de limit theo IP that.
+TRUST_PROXY = os.getenv("GACHA_TRUST_PROXY", "false").strip().lower() in {"1", "true", "yes"}
 
 _MAX_ATTEMPTS = 8
 _WINDOW_SECONDS = 10 * 60
@@ -122,8 +129,15 @@ def client_ip(request: Request) -> str:
 
     Vì vậy: chỉ dùng `X-Forwarded-For` khi `TRUST_PROXY` bật (deploy sau
     Nginx/Cloudflare của chính bạn). Còn lại dùng IP kết nối thật.
+
+    Với Cloudflare Tunnel: `CF-Connecting-IP` là IP thật của client do
+    Cloudflare ghim vào, đáng tin hơn `X-Forwarded-For` (header này client
+    tự set được nếu request đi qua Cloudflare mà app cũng đọc nó).
     """
     if TRUST_PROXY:
+        cf_ip = request.headers.get("cf-connecting-ip", "").strip()
+        if cf_ip:
+            return cf_ip
         forwarded = request.headers.get("x-forwarded-for")
         if forwarded:
             return forwarded.split(",")[0].strip()
