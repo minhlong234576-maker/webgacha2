@@ -4,9 +4,9 @@
 {% block content %}
 <section class="wallet-card">
   <p class="eyebrow"><i></i> Ví Coin</p>
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-    <span class="avatar" style="width:40px;height:40px;font-size:14px">{{ player[:2]|upper }}</span>
-    <h1 style="margin:0">{{ player }}</h1>
+  <div class="wallet-head">
+    <span class="avatar">{{ player[:2]|upper }}</span>
+    <h1>{{ player }}</h1>
   </div>
   <p class="meta">Online gần nhất: {{ last_seen }}</p>
   <p class="amount" id="wallet-balance">{{ money_fmt }}</p>
@@ -19,7 +19,7 @@
       <tr>
         <td class="meta">{{ row.when }}</td>
         <td>{{ row.kind_label }}</td>
-        <td style="color:hsl(var(--accent));font-weight:600">{{ row.amount_fmt }}</td>
+        <td class="amount wallet-amount">{{ row.amount_fmt }}</td>
       </tr>
       {% else %}
       <tr><td colspan="3">Chưa có giao dịch.</td></tr>

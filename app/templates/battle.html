@@ -1,26 +1,26 @@
 {% extends "base.html" %}
 {% block title %}Battle #{{ battle.id }} · JellyVale{% endblock %}
 {% block content %}
-<div class="toolbar">
+<div class="toolbar battle-toolbar">
   <div>
     <p class="eyebrow"><i></i> Battle #{{ battle.id }}</p>
     <h1 id="battle-title">{{ battle.case_name }}</h1>
     <p class="meta" id="battle-sub">{{ battle.mode_label }} · {{ battle.rounds }} vòng · {{ battle.price_fmt }} Coin / ghế</p>
-    <p class="meta" id="battle-lines" style="margin-top:4px"></p>
+    <p class="meta battle-lines" id="battle-lines"></p>
   </div>
   <div class="grow"></div>
-  <div id="actions" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+  <div id="actions" class="battle-actions"></div>
 </div>
 
 {% if battle.status == "WAITING" and player and player == battle.host %}
-<section class="cf-panel" id="config-panel" style="padding:16px;margin-bottom:16px">
-  <h3 style="margin:0 0 8px">Cấu hình phòng <span class="meta">(chuẩn web gốc: ghép nhiều rương)</span></h3>
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+<section class="cf-panel config-panel" id="config-panel">
+  <h3 class="panel-title">Cấu hình phòng <span class="meta">(chuẩn web gốc: ghép nhiều rương)</span></h3>
+  <div class="lines-head">
     <span class="meta" id="cfg-info"></span>
-    <button id="cfg-add" class="cf-btn-ghost" type="button" style="padding:2px 10px;font-size:12px;margin-left:auto">+ Thêm rương</button>
+    <button id="cfg-add" class="cf-btn-ghost line-add-btn" type="button">+ Thêm rương</button>
   </div>
   <div id="cfg-lines"></div>
-  <div class="create-grid" style="margin-top:8px">
+  <div class="create-grid cfg-grid">
     <label>Ghế
       <select id="cfg-slots">
         <option value="2" {% if battle.slots == 2 %}selected{% endif %}>2</option>
@@ -35,26 +35,26 @@
       </select>
     </label>
   </div>
-  <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
+  <div class="battle-actions battle-actions-row">
     <button id="cfg-apply" class="cf-btn-primary" type="button">Lưu cấu hình</button>
     <span id="cfg-hint" class="meta"></span>
   </div>
 </section>
 {% endif %}
 
-<p id="round-label" class="meta" style="min-height:1.4em"></p>
+<p id="round-label" class="meta round-label"></p>
 <p id="hint" class="meta"></p>
 <div id="arena" class="arena"></div>
-<p id="winner-line" class="amount" style="text-align:center;font-size:28px;display:none"></p>
+<p id="winner-line" class="amount winner-line"></p>
 
-<div id="rematch-panel" class="cf-panel" style="display:none;padding:16px;margin-top:16px">
-  <h3 style="margin:0 0 8px">Đánh tiếp ván mới</h3>
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+<div id="rematch-panel" class="cf-panel rematch-panel">
+  <h3 class="panel-title">Đánh tiếp ván mới</h3>
+  <div class="lines-head">
     <span class="meta" id="rm-info"></span>
-    <button id="rm-add" class="cf-btn-ghost" type="button" style="padding:2px 10px;font-size:12px;margin-left:auto">+ Thêm rương</button>
+    <button id="rm-add" class="cf-btn-ghost line-add-btn" type="button">+ Thêm rương</button>
   </div>
   <div id="rm-lines"></div>
-  <div class="create-grid" style="margin-top:8px">
+  <div class="create-grid cfg-grid">
     <label>Chế độ
       <select id="rm-mode">
         <option value="STANDARD">Standard</option>
@@ -62,7 +62,7 @@
       </select>
     </label>
   </div>
-  <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+  <div class="battle-actions battle-actions-row">
     <button id="rm-go" class="cf-btn-primary" type="button">Tạo ván tiếp theo</button>
     <span id="rm-hint" class="meta"></span>
   </div>
@@ -109,7 +109,7 @@
 
   function linesHtml() {
     if (!state.lines || !state.lines.length) return "";
-    return state.lines.map((l) => `<span style="border:1px solid #2a3350;border-radius:999px;padding:1px 8px;font-size:11px">${l.name} × ${l.count}</span>`).join(" ");
+    return state.lines.map((l) => `<span class="line-tag">${l.name} × ${l.count}</span>`).join(" ");
   }
 
   function renderLobbyOrResult() {
@@ -123,21 +123,21 @@
     for (let i = 0; i < slots; i += 1) {
       const p = players[i];
       if (!p) {
-        html += `<article class="seat"><p class="meta" style="text-align:center;padding:48px 0">Ghế trống</p></article>`;
+        html += `<article class="seat"><p class="meta seat-empty">Ghế trống</p></article>`;
         continue;
       }
       const win = state.winner === p.player && activeRound === 0 && state.status === "FINISHED" ? " win-seat" : "";
       const drops = revealedFor(p.player);
       const total = drops.reduce((n, d) => n + Number(d.value || 0), 0);
       const kickBtn = (state.status === "WAITING" && isHost && p.is_bot && p.player !== state.host)
-        ? `<button class="cf-btn-ghost kick-btn" data-kick="${p.player}" type="button" style="padding:2px 8px;font-size:11px">Đá</button>` : "";
+        ? `<button class="cf-btn-ghost kick-btn" data-kick="${p.player}" type="button">Đá</button>` : "";
       html += `<article class="seat${win}" data-player="${p.player}">
-        <header style="display:flex;align-items:center;gap:8px">
+        <header class="seat-head">
           <span class="avatar">${initials(p.player)}</span>
           <strong>${p.player === me ? "Bạn" : p.player}</strong>
           ${p.is_bot ? " <span class='bot-tag'>bot</span>" : ""}
           ${kickBtn}
-          <span class="price" style="margin-left:auto">${total.toLocaleString("vi-VN")} Coin</span>
+          <span class="price seat-price">${total.toLocaleString("vi-VN")} Coin</span>
         </header>
         <div class="seat-body" data-seat="${i}">
           ${activeRound > 0 ? reelMarkup(i) : dropsHtml(drops)}
@@ -161,7 +161,7 @@
 
   function dropsHtml(drops) {
     if (!drops.length) {
-      return `<p class="meta" style="text-align:center;padding:40px 0">${state.status === "WAITING" ? "Đang chờ..." : "—"}</p>`;
+      return `<p class="meta seat-empty">${state.status === "WAITING" ? "Đang chờ..." : "—"}</p>`;
     }
     return `<div class="seat-drops">${drops.map((d) =>
       `<div class="mini-drop" style="border-bottom-color:${d.color}" title="${d.case_name || ""}"><img src="${d.image}" alt=""><span>${d.value_fmt || d.value}</span></div>`
@@ -430,8 +430,7 @@
   // --- Editor playlist rương (chuẩn web gốc) ---
   function lineRow(box, cid, cnt) {
     const div = document.createElement("div");
-    div.className = "create-grid";
-    div.style.marginBottom = "8px";
+    div.className = "create-grid line-row";
     div.innerHTML = `
       <label>Rương
         <select class="line-case">
@@ -441,8 +440,8 @@
       <label>Số vòng
         <select class="line-count">${Array.from({length: 10}, (_, i) => `<option value="${i+1}" ${i+1 === cnt ? "selected" : ""}>${i+1}</option>`).join("")}</select>
       </label>
-      <label style="justify-content:flex-end;display:flex;align-items:flex-end">
-        <button class="line-del cf-btn-ghost" type="button" style="padding:4px 10px;font-size:12px">Xóa</button>
+      <label class="line-del-wrap">
+        <button class="line-del cf-btn-ghost" type="button">Xóa</button>
       </label>`;
     div.querySelector(".line-del").addEventListener("click", () => {
       if (box.children.length <= 1) return;

@@ -1,0 +1,1580 @@
+/* =============================================================================
+   JELLYVALE — "VOXEL VAULT" THEME
+   -----------------------------------------------------------------------------
+   Lop ghi de tren `style.css` (nap sau, tai trong chuong trinh).
+   Lay cam hung tu GUI Minecraft that:
+     - Panel co vien bevel 3px (sang tren-trai, toi duoi-phai)
+     - Nut 3D: bam xuong 2px, khong bo tron
+     - Nen luoi voxel 32px
+     - Goc vuong, vien 2px, mau theo bang mau Minecraft
+
+   Khong doi class cu — chi dinh nghia lai cach chung + them token moi.
+   Muon doi huong: bo <link> voxel.css khoi base.html.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   1. TOKEN
+   ------------------------------------------------------------------------ */
+:root {
+  --font-display: "Bungee", "Chakra Petch", Impact, sans-serif;
+  --font-body: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Chivo Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Bang mau Minecraft (light = "daylight") */
+  --mc-diamond:  187 76% 59%;
+  --mc-gold:     43 89% 62%;
+  --mc-emerald:  100 47% 45%;
+  --mc-redstone: 4 62% 53%;
+  --mc-nether:   282 68% 63%;
+  --mc-lapis:    218 74% 51%;
+
+  --surface-base:    30 20% 93%;
+  --surface-raised:  38 33% 97%;
+  --surface-overlay: 30 16% 88%;
+  --surface-hover:   30 14% 84%;
+  --surface-sunken:  28 18% 86%;
+
+  --border-subtle: 28 14% 78%;
+  --border-strong: 28 16% 58%;
+
+  --text-primary: 222 34% 14%;
+  --text-muted:   220 11% 40%;
+  --text-faint:   220 9% 55%;
+  --text-invert:  38 40% 97%;
+
+  --accent:        187 76% 47%;
+  --accent-strong: 192 78% 40%;
+  --accent-text:   192 80% 30%;
+
+  --positive: 100 45% 33%;
+  --negative: 4 66% 43%;
+  --warning:  38 88% 38%;
+  --info:     218 70% 42%;
+
+  /* Goc vuong nhu Minecraft */
+  --radius:    0px;
+  --radius-sm: 0px;
+  --bevel: 3px;
+
+  --bevel-light: hsl(0 0% 100% / 0.5);
+  --bevel-dark:  hsl(28 22% 10% / 0.26);
+
+  --card-shadow:
+    0 2px 0 var(--bevel-dark),
+    0 10px 26px -12px hsl(28 30% 10% / 0.4);
+
+  /* Alias giu tuoi (nhieu noi dung cu tro toi) */
+  --border: hsl(var(--border-subtle));
+  --bg-secondary: hsl(var(--surface-overlay));
+}
+
+html.dark {
+  --surface-base:    240 9% 12%;
+  --surface-raised:  240 8% 17%;
+  --surface-overlay: 240 7% 23%;
+  --surface-hover:   240 7% 28%;
+  --surface-sunken:  240 10% 9%;
+
+  --border-subtle: 240 8% 30%;
+  --border-strong: 240 8% 42%;
+
+  --text-primary: 40 18% 94%;
+  --text-muted:   220 9% 70%;
+  --text-faint:   220 8% 52%;
+
+  --accent:        187 70% 52%;
+  --accent-strong: 190 74% 44%;
+  --accent-text:   187 76% 62%;
+
+  --positive: 100 48% 50%;
+  --negative: 4 68% 60%;
+  --warning:  38 80% 58%;
+  --info:     218 72% 62%;
+
+  --bevel-light: hsl(0 0% 100% / 0.12);
+  --bevel-dark:  hsl(240 30% 3% / 0.58);
+
+  --card-shadow:
+    0 2px 0 var(--bevel-dark),
+    0 12px 30px -14px hsl(0 0% 0% / 0.85);
+}
+
+/* ---------------------------------------------------------------------------
+   2. NEN + CHU
+   ------------------------------------------------------------------------ */
+body {
+  background-image:
+    linear-gradient(hsl(var(--text-primary) / 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--text-primary) / 0.04) 1px, transparent 1px),
+    radial-gradient(ellipse 62% 42% at 50% -10%, hsl(var(--accent) / 0.1), transparent 70%);
+  background-size: 32px 32px, 32px 32px, 100% 100%;
+}
+html.dark body {
+  background-image:
+    linear-gradient(hsl(0 0% 100% / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(0 0% 100% / 0.035) 1px, transparent 1px),
+    radial-gradient(ellipse 70% 46% at 50% -10%, hsl(var(--accent) / 0.13), transparent 72%);
+  background-size: 32px 32px, 32px 32px, 100% 100%;
+}
+
+h1, h2, h3, .brand, .big-number, .hero-stat strong, .amount {
+  font-weight: 400;
+  letter-spacing: 0;
+}
+h1 { line-height: 1.1; }
+h2 {
+  font-size: 15px;
+  color: hsl(var(--text-primary));
+  text-transform: none;
+  letter-spacing: 0;
+}
+h2::before {
+  inline-size: 6px;
+  block-size: 18px;
+  border-radius: 0;
+  background: hsl(var(--accent));
+  box-shadow: inset 2px 2px 0 hsl(0 0% 100% / 0.32);
+}
+h3 { letter-spacing: 0; }
+
+code {
+  background: hsl(var(--surface-sunken));
+  border: 1px solid hsl(var(--border-subtle));
+  padding: 1px 5px;
+}
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid hsl(var(--accent));
+  outline-offset: 2px;
+}
+::selection { background: hsl(var(--accent) / 0.35); }
+
+/* Scrollbar: dung chuan + fallback cho WebKit. */
+* {
+  scrollbar-color: hsl(var(--border-strong)) hsl(var(--surface-sunken));
+  scrollbar-width: auto;
+}
+@supports not (scrollbar-color: auto) {
+  *::-webkit-scrollbar { width: 12px; height: 12px; }
+  *::-webkit-scrollbar-track { background: hsl(var(--surface-sunken)); }
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--border-strong));
+    border: 2px solid hsl(var(--surface-sunken));
+  }
+  *::-webkit-scrollbar-thumb:hover { background: hsl(var(--text-faint)); }
+}
+
+/* ---------------------------------------------------------------------------
+   3. PANEL — VIEN BEVEL
+   ------------------------------------------------------------------------ */
+.cf-panel,
+.opener,
+.login-card,
+.wallet-card,
+.admin-card {
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    var(--card-shadow);
+}
+
+/* ---------------------------------------------------------------------------
+   4. NUT — 3D, BAM XUONG
+   ------------------------------------------------------------------------ */
+.cf-btn, .cf-btn-primary, .login-card button, button.primary {
+  background-image: none;
+  background-color: hsl(var(--accent));
+  border: 2px solid hsl(var(--accent-strong));
+  border-radius: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  box-shadow:
+    inset 2px 2px 0 hsl(0 0% 100% / 0.28),
+    inset -2px -2px 0 hsl(0 0% 0% / 0.22),
+    0 3px 0 hsl(var(--accent-strong));
+  transition: filter 0.12s ease, translate 0.08s var(--ease-out), box-shadow 0.08s ease;
+}
+.cf-btn:hover:not(:disabled),
+.cf-btn-primary:hover:not(:disabled),
+.login-card button:hover:not(:disabled),
+button.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+  translate: 0 -1px;
+  scale: 1;
+  box-shadow:
+    inset 2px 2px 0 hsl(0 0% 100% / 0.32),
+    inset -2px -2px 0 hsl(0 0% 0% / 0.22),
+    0 4px 0 hsl(var(--accent-strong));
+}
+.cf-btn:active:not(:disabled),
+.cf-btn-primary:active:not(:disabled),
+.login-card button:active:not(:disabled),
+button.primary:active:not(:disabled) {
+  translate: 0 3px;
+  scale: 1;
+  filter: brightness(0.96);
+  box-shadow:
+    inset 2px 2px 0 hsl(0 0% 0% / 0.16),
+    inset -1px -1px 0 hsl(0 0% 100% / 0.12),
+    0 0 0 hsl(var(--accent-strong));
+}
+.cf-btn:disabled, .cf-btn-primary:disabled {
+  opacity: 0.42;
+  filter: saturate(0.25);
+  translate: 0 0;
+  scale: 1;
+  box-shadow: inset 0 0 0 1px hsl(0 0% 0% / 0.2);
+}
+
+.ghost, .cf-btn-ghost {
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    0 3px 0 hsl(var(--border-strong));
+  transition: filter 0.12s ease, translate 0.08s var(--ease-out), box-shadow 0.08s ease;
+}
+.ghost:hover:not(:disabled), .cf-btn-ghost:hover:not(:disabled) {
+  filter: brightness(1.03);
+  translate: 0 -1px;
+  scale: 1;
+}
+.ghost:active:not(:disabled), .cf-btn-ghost:active:not(:disabled) {
+  translate: 0 3px;
+  scale: 1;
+  box-shadow: inset 0 0 0 1px hsl(0 0% 0% / 0.18);
+}
+.btn-ghost-danger {
+  border-color: hsl(var(--negative));
+  color: hsl(var(--negative));
+  background: hsl(var(--negative) / 0.1);
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    0 3px 0 hsl(var(--negative));
+}
+
+/* ---------------------------------------------------------------------------
+   5. CHIP / BANNER / ALERT
+   ------------------------------------------------------------------------ */
+.cf-chip {
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  font-weight: 700;
+  box-shadow: inset 1px 1px 0 var(--bevel-light);
+}
+.cf-chip.on, .cf-chip[data-active="true"] {
+  background: hsl(var(--accent) / 0.16);
+  border-color: hsl(var(--accent));
+  color: hsl(var(--accent-text));
+}
+
+.banner {
+  border: 2px solid hsl(var(--warning));
+  background: hsl(var(--warning) / 0.12);
+  color: hsl(var(--text-primary));
+  font-weight: 600;
+  box-shadow: inset 2px 2px 0 hsl(0 0% 100% / 0.28);
+}
+.alert {
+  border: 2px solid hsl(var(--negative));
+  box-shadow: inset 2px 2px 0 hsl(0 0% 100% / 0.2);
+}
+.alert-info {
+  border-color: hsl(var(--info));
+  color: hsl(var(--text-primary));
+}
+.warn {
+  border: 2px solid hsl(var(--warning));
+  background: hsl(var(--warning) / 0.12);
+  color: hsl(var(--text-primary));
+}
+
+.eyebrow {
+  border: 2px solid hsl(var(--border-strong));
+  background: hsl(var(--surface-sunken));
+  color: hsl(var(--text-muted));
+  border-radius: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.eyebrow i {
+  inline-size: 7px;
+  block-size: 7px;
+  border-radius: 0;
+  box-shadow: 0 0 0 3px hsl(var(--accent) / 0.2);
+}
+
+/* ---------------------------------------------------------------------------
+   6. FORM — SLOT VUOT SOC
+   ------------------------------------------------------------------------ */
+input[type="text"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+input[type="email"],
+select,
+textarea {
+  background: hsl(var(--surface-sunken));
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.13);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: hsl(var(--accent));
+  box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.13), 0 0 0 2px hsl(var(--accent) / 0.32);
+}
+input::placeholder { color: hsl(var(--text-faint)); opacity: 1; }
+select {
+  appearance: none;
+  padding-inline-end: 30px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, hsl(var(--text-muted)) 50%),
+    linear-gradient(135deg, hsl(var(--text-muted)) 50%, transparent 50%);
+  background-position: right 13px top 50%, right 8px top 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+label { font-weight: 600; font-size: 13px; }
+input[type="checkbox"], input[type="radio"] {
+  inline-size: 20px;
+  block-size: 20px;
+  accent-color: hsl(var(--accent));
+  border-radius: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   7. HEADER
+   ------------------------------------------------------------------------ */
+.site-header {
+  border-bottom: 3px solid hsl(var(--border-strong));
+}
+.header-inner {
+  width: min(1200px, calc(100% - 32px));
+  gap: 16px;
+  padding: 8px 0;
+}
+.brand {
+  font-size: 20px;
+  letter-spacing: 0.01em;
+  text-shadow: 2px 2px 0 hsl(var(--accent) / 0.32);
+}
+.brand span {
+  color: hsl(var(--accent));
+  -webkit-text-fill-color: hsl(var(--accent));
+  background: none;
+}
+/* Chi phan chu "Vale" moi doi mau — phan "Jelly" giu mau chu chinh. */
+.brand > span > span {
+  color: hsl(var(--accent));
+  -webkit-text-fill-color: hsl(var(--accent));
+}
+.brand-mark {
+  -webkit-text-fill-color: hsl(var(--text-invert)) !important;
+  color: hsl(var(--text-invert));
+}
+.nav-link {
+  border-radius: 0;
+  padding: 8px 12px;
+  font-weight: 700;
+}
+.nav-link.on {
+  background: hsl(var(--surface-sunken));
+  color: hsl(var(--text-primary));
+  box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.15);
+}
+.nav-link.on::after {
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  height: 3px;
+  background: hsl(var(--accent));
+}
+.held-badge {
+  background: hsl(var(--accent));
+  color: hsl(var(--text-invert));
+  font-weight: 800;
+}
+.coin-chip {
+  border: 2px solid hsl(var(--border-strong));
+  color: hsl(var(--mc-gold));
+  font-weight: 800;
+  box-shadow: inset 1px 1px 0 var(--bevel-light);
+}
+.coin-chip:hover { border-color: hsl(var(--mc-gold)); }
+.coin-chip .coin-glyph { color: hsl(var(--mc-gold)); }
+.coin-chip .plus {
+  border-left: 2px solid hsl(var(--border-subtle));
+  background: hsl(var(--positive) / 0.18);
+}
+.theme-btn {
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  box-shadow: inset 1px 1px 0 var(--bevel-light);
+}
+.avatar-link {
+  border: 2px solid hsl(var(--border-strong));
+  background: hsl(var(--surface-raised));
+  padding: 3px 11px 3px 3px;
+  box-shadow: inset 1px 1px 0 var(--bevel-light);
+}
+.avatar {
+  border-radius: 0;
+  background: hsl(var(--accent));
+  color: hsl(var(--text-invert));
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+.signout { font-weight: 700; }
+.live-strip {
+  border-bottom: 3px solid hsl(var(--border-subtle));
+  min-height: 78px;
+  max-height: 78px;
+  padding: 8px 16px;
+}
+.live-best {
+  border: 2px solid hsl(var(--rarity, 38 95% 55%) / 0.4);
+  box-shadow: inset 1px 1px 0 var(--bevel-light);
+}
+.live-card {
+  border: 2px solid hsl(var(--border-subtle));
+  border-bottom-width: 4px;
+  border-bottom-color: hsl(var(--rarity, 220 30% 76%));
+}
+
+/* ---------------------------------------------------------------------------
+   8. HERO / STATS / PROMO
+   ------------------------------------------------------------------------ */
+.hero {
+  border: 3px solid hsl(var(--border-strong));
+  border-radius: 0;
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    var(--card-shadow);
+}
+.hero-wash::after {
+  background-image:
+    linear-gradient(hsl(var(--text-primary) / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--text-primary) / 0.05) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+.hero h1 { font-size: clamp(28px, 4.2vw, 44px); }
+.hero-stat {
+  border: 2px solid hsl(var(--border-strong));
+  background: hsl(var(--surface-sunken));
+  box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.15);
+}
+.hero-stat strong {
+  font-size: 24px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  color: hsl(var(--accent-text));
+}
+html.dark .hero-stat strong { color: hsl(var(--accent)); }
+.hero-stat span { font-size: 10px; letter-spacing: 0.12em; font-weight: 700; }
+
+.stats-bar { gap: 8px; }
+.stats-bar div, .promo-card {
+  border: 2px solid hsl(var(--border-strong));
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark);
+}
+.stats-bar span { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; }
+.stats-bar strong { font-family: var(--font-display); font-weight: 400; }
+.promo-card .kicker { font-size: 10px; font-weight: 800; letter-spacing: 0.12em; }
+.promo-card strong { font-weight: 800; }
+
+/* ---------------------------------------------------------------------------
+   9. THE RƯƠNG
+   ------------------------------------------------------------------------ */
+.case-grid { gap: 14px; }
+.case-card {
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark);
+  /* Giu `transform` trong transition — fx.js xoay card theo con tro. */
+  transition: translate 0.16s var(--ease-out), filter 0.16s ease,
+    border-color 0.16s ease, transform 0.2s var(--ease-out);
+}
+.case-card:hover {
+  translate: 0 -3px;
+  filter: brightness(1.03);
+  border-color: hsl(var(--glow, var(--accent)) / 0.85);
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    0 14px 28px -14px hsl(var(--glow, var(--accent)) / 0.55);
+}
+.case-art {
+  border-bottom: 2px solid hsl(var(--border-subtle));
+  background:
+    radial-gradient(ellipse at 50% 60%, hsl(var(--glow, 38 95% 55%) / 0.22), transparent 68%),
+    hsl(var(--surface-sunken));
+}
+.case-art img { filter: drop-shadow(0 6px 10px hsl(0 0% 0% / 0.35)); }
+.case-card .body > div:first-child { font-weight: 800; }
+.case-card .price { color: hsl(var(--mc-gold)); font-weight: 800; }
+
+.empty-state {
+  border: 3px dashed hsl(var(--border-strong));
+  background: hsl(var(--surface-sunken));
+  padding: 40px 24px;
+}
+.empty-state h3 { font-size: 20px; }
+
+/* ---------------------------------------------------------------------------
+   10. VAT PHAM + SLOT
+   ------------------------------------------------------------------------ */
+.contents { gap: 12px; }
+.item-card {
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark);
+}
+.item-card .art, .item-card .loot-art {
+  border: 2px solid hsl(var(--border-subtle));
+  background: hsl(var(--surface-sunken));
+  box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.13);
+}
+.item-card .name { font-weight: 700; }
+.item-card .price { color: hsl(var(--mc-gold)); font-weight: 800; }
+.loot-card .loot-chance { color: hsl(var(--accent-text)); font-weight: 800; }
+.loot-card .loot-coin { color: hsl(var(--mc-gold)); font-weight: 800; }
+
+.slot-card {
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  background: hsl(var(--surface-sunken));
+  box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.17), inset -2px -2px 0 hsl(0 0% 100% / 0.14);
+}
+
+/* ---------------------------------------------------------------------------
+   11. BANG / TABS / MODAL
+   ------------------------------------------------------------------------ */
+table { border-collapse: collapse; }
+th, td { border-bottom: 2px solid hsl(var(--border-subtle)); }
+thead th {
+  background: hsl(var(--surface-sunken));
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+}
+/* Tabs: phim Minecraft — o nut vuot soc, tab dang mo "nhat" len. */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 3px solid hsl(var(--border-strong));
+  margin: 16px 0 4px;
+}
+.tab {
+  appearance: none;
+  background: hsl(var(--surface-overlay));
+  border: 2px solid hsl(var(--border-strong));
+  border-bottom: 0;
+  border-radius: 0;
+  margin-bottom: -3px;
+  padding: 9px 20px;
+  cursor: pointer;
+  color: hsl(var(--text-muted));
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  box-shadow: inset 1px 1px 0 var(--bevel-light);
+  transition: filter 0.12s ease, translate 0.1s var(--ease-out);
+}
+.tab:hover { background: hsl(var(--surface-hover)); color: hsl(var(--text-primary)); filter: brightness(1.04); }
+.tab.is-active {
+  background: hsl(var(--surface-raised));
+  color: hsl(var(--text-primary));
+  border-bottom-color: hsl(var(--surface-raised));
+  position: relative;
+  z-index: 1;
+  box-shadow: inset 2px 2px 0 var(--bevel-light);
+}
+.modal {
+  border: 3px solid hsl(var(--border-strong));
+  border-radius: 0;
+  box-shadow:
+    inset 2px 2px 0 var(--bevel-light),
+    inset -2px -2px 0 var(--bevel-dark),
+    0 24px 60px -18px hsl(0 0% 0% / 0.6);
+}
+.modal::backdrop { background: hsl(240 20% 4% / 0.72); }
+.modal-head {
+  border-bottom: 3px solid hsl(var(--border-strong));
+  background: hsl(var(--surface-sunken));
+}
+.modal-close {
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  font-weight: 800;
+}
+.modal-foot {
+  border-top: 3px solid hsl(var(--border-strong));
+  background: hsl(var(--surface-sunken));
+}
+
+/* ---------------------------------------------------------------------------
+   12. TIEN
+   ------------------------------------------------------------------------ */
+.amount, .big-number { color: hsl(var(--mc-gold)); }
+.price-chip {
+  border: 2px solid hsl(var(--mc-gold) / 0.6);
+  background: hsl(var(--mc-gold) / 0.14);
+  color: hsl(var(--mc-gold));
+  font-weight: 800;
+}
+.rarity-chip { border: 2px solid currentColor; font-weight: 800; }
+
+/* ---------------------------------------------------------------------------
+   13. FOOTER + PAGE
+   ------------------------------------------------------------------------ */
+.page { width: min(1200px, calc(100% - 32px)); }
+.footer-inner { width: min(1200px, calc(100% - 32px)); }
+.site-footer {
+  border-top: 3px solid hsl(var(--border-subtle));
+  background: hsl(var(--surface-sunken));
+}
+.skip-link {
+  border: 2px solid hsl(var(--text-primary));
+  border-radius: 0;
+}
+.toolbar {
+  border: 2px solid hsl(var(--border-strong));
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark);
+}
+
+/* ---------------------------------------------------------------------------
+   14. CASE PAGE — REEL QUAY
+   ------------------------------------------------------------------------ */
+.opener { padding: 20px 22px; }
+
+/* Khung reel: "slot may" cua Minecraft. */
+.reel-wrap {
+  border: 2px solid hsl(var(--border-strong));
+  background: hsl(var(--surface-sunken));
+  box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.18);
+  overflow: hidden;
+}
+.reel {
+  position: relative;
+  overflow: hidden;
+  background: hsl(var(--surface-sunken));
+}
+.reel-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 4px;
+  transform: translateX(-50%);
+  background: hsl(var(--mc-gold));
+  box-shadow: 0 0 16px hsl(var(--mc-gold) / 0.9);
+  z-index: 5;
+  pointer-events: none;
+}
+.reel-marker-h {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  background: hsl(var(--mc-gold));
+  box-shadow: 0 0 16px hsl(var(--mc-gold) / 0.9);
+  z-index: 5;
+  pointer-events: none;
+}
+.reel-arrow-top,
+.reel-arrow-bot {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  pointer-events: none;
+}
+.reel-arrow-top { top: 0; border-top: 9px solid hsl(var(--mc-gold)); }
+.reel-arrow-bot { bottom: 0; border-bottom: 9px solid hsl(var(--mc-gold)); }
+.reel-fade-l, .reel-fade-r,
+.reel-fade-t, .reel-fade-b { position: absolute; z-index: 4; pointer-events: none; }
+.reel-fade-l { left: 0; background: linear-gradient(90deg, hsl(var(--surface-sunken)), transparent); }
+.reel-fade-r { right: 0; background: linear-gradient(270deg, hsl(var(--surface-sunken)), transparent); }
+.reel-fade-t { top: 0; background: linear-gradient(180deg, hsl(var(--surface-sunken)), transparent); }
+.reel-fade-b { bottom: 0; background: linear-gradient(0deg, hsl(var(--surface-sunken)), transparent); }
+
+/* Tile trong reel: o slot vuot soc. */
+.tile {
+  background: hsl(var(--surface-raised));
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark);
+}
+.tile img { height: 78px; width: 100%; object-fit: contain; }
+.tile span { font-size: 11px; color: hsl(var(--text-muted)); }
+
+.multi-reels-row { display: flex; gap: 10px; justify-content: center; }
+.multi-reel-col { flex: 1 1 0; min-width: 0; max-width: 200px; }
+
+/* Preset bar: nhat chon so luong, vuot soc. */
+.preset-bar {
+  display: flex;
+  gap: 0;
+  justify-content: center;
+  margin: 16px 0 0;
+  flex-wrap: wrap;
+}
+.preset-btn {
+  background: hsl(var(--surface-overlay));
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  padding: 7px 18px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  color: hsl(var(--text-primary));
+  box-shadow: inset 1px 1px 0 var(--bevel-light), 0 2px 0 hsl(var(--border-strong));
+  transition: filter 0.12s ease, translate 0.1s var(--ease-out), box-shadow 0.1s ease;
+}
+.preset-btn:hover:not(:disabled) { filter: brightness(1.08); translate: 0 -1px; }
+.preset-btn:active:not(:disabled) { translate: 0 2px; box-shadow: inset 0 0 0 1px hsl(0 0% 0% / 0.2); }
+.preset-btn.active {
+  background: hsl(var(--accent));
+  border-color: hsl(var(--accent-strong));
+  color: hsl(var(--text-invert));
+  box-shadow: inset 2px 2px 0 hsl(0 0% 100% / 0.28), 0 2px 0 hsl(var(--accent-strong));
+}
+.preset-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Ket qua mo ruong. */
+.result-banner {
+  border: 3px solid hsl(var(--border-strong));
+  border-radius: 0;
+  background: hsl(var(--surface-raised));
+  padding: 18px;
+  margin-top: 18px;
+  box-shadow: inset 3px 3px 0 var(--bevel-light), inset -3px -3px 0 var(--bevel-dark), var(--card-shadow);
+}
+.drop-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+.drop-result-card {
+  background: hsl(var(--surface-sunken));
+  border: 2px solid hsl(var(--border-strong));
+  border-top-width: 4px;
+  border-radius: 0;
+  padding: 10px;
+  text-align: center;
+  box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.14);
+}
+.drop-result-card.sold { opacity: 0.45; filter: grayscale(0.6); }
+.drop-result-card img { width: 100%; height: 62px; object-fit: contain; }
+.drop-result-card .name {
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.drop-result-card .price { color: hsl(var(--mc-gold)); font-weight: 800; font-size: 12px; }
+.sell-single-btn {
+  margin-top: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  background: hsl(var(--surface-overlay));
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  color: hsl(var(--text-primary));
+  cursor: pointer;
+  box-shadow: 0 2px 0 hsl(var(--border-strong));
+}
+.sell-single-btn:hover:not(:disabled) { border-color: hsl(var(--accent)); color: hsl(var(--accent-text)); }
+.sell-single-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Case header: anh + thong tin. */
+.case-head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 20px;
+  margin-bottom: 20px;
+  background: hsl(var(--surface-raised));
+  border: 2px solid hsl(var(--border-strong));
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark), var(--card-shadow);
+}
+.case-head-art {
+  width: 128px;
+  height: 128px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: hsl(var(--surface-sunken));
+  border: 2px solid hsl(var(--border-subtle));
+  box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.16);
+}
+.case-head-art img {
+  height: 88px;
+  max-width: 92px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px hsl(0 0% 0% / 0.35));
+}
+.case-head-copy { flex: 1 1 320px; min-width: 0; }
+.case-head-copy h1 { margin: 0 0 4px; }
+.case-head-copy .lead { margin: 0; }
+.case-head-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+
+/* ---------------------------------------------------------------------------
+   15. NANG CAP
+   ------------------------------------------------------------------------ */
+.upgrade-stage {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 20px;
+  margin-bottom: 24px;
+  background: hsl(var(--surface-raised));
+  border: 2px solid hsl(var(--border-strong));
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark), var(--card-shadow);
+}
+.gauge-wrap { display: grid; justify-items: center; gap: 12px; }
+.upgrade-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.upgrade-lists section {
+  background: hsl(var(--surface-raised));
+  border: 2px solid hsl(var(--border-strong));
+  padding: 16px;
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark);
+}
+.upgrade-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+/* Ô tìm đồ cược: rộng cố định cho vừa tên món dài. */
+#stake-search { width: 170px; font-size: 12px; padding: 7px 10px; }
+/* Ô tìm món đích: thu gon -> nở rộng khi focus. */
+#target-search {
+  width: 42px;
+  font-size: 12px;
+  padding: 7px 9px;
+  text-align: center;
+  transition: width 0.2s var(--ease-out), text-align 0.15s ease;
+}
+#target-search.is-expanded { width: 160px; text-align: left; }
+#target-sort { font-size: 12px; padding: 7px 28px 7px 10px; }
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+  max-height: 420px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.item-card.pick { cursor: pointer; }
+.item-card.pick input { position: absolute; top: 8px; left: 8px; }
+.item-card.on,
+.item-card.pick:has(input:checked) {
+  border-color: hsl(var(--accent));
+  box-shadow: inset 2px 2px 0 var(--bevel-light), 0 0 0 2px hsl(var(--accent) / 0.4);
+}
+
+/* ---------------------------------------------------------------------------
+   16. BATTLE
+   ------------------------------------------------------------------------ */
+.battle-list { display: grid; gap: 12px; margin: 12px 0 28px; }.battle-card {
+  background: hsl(var(--surface-raised));
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  padding: 15px;
+  color: inherit;
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark), var(--card-shadow);
+  transition: translate 0.15s var(--ease-out), border-color 0.15s ease;
+}
+.battle-card:hover {
+  translate: 0 -2px;
+  border-color: hsl(var(--border-strong));
+}
+.battle-card-top { display: flex; align-items: center; gap: 8px; font-size: 12px; color: hsl(var(--text-faint)); }
+.mode-pill {
+  border: 2px solid currentColor;
+  padding: 2px 9px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.mode-pill.crazy { border-color: hsl(var(--negative) / 0.6); color: hsl(var(--negative)); }
+.battle-cases { display: flex; align-items: center; gap: 8px; }
+.battle-cases img {
+  height: 36px;
+  width: 48px;
+  object-fit: contain;
+  background: hsl(var(--surface-sunken));
+  border: 2px solid hsl(var(--border-subtle));
+  padding: 3px;
+}
+.seat-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.seat-pill {
+  border: 2px solid hsl(var(--border-subtle));
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  background: hsl(var(--surface-overlay));
+}
+.seat-pill.win { background: hsl(var(--mc-gold) / 0.16); border-color: hsl(var(--mc-gold)); }
+.seat-free {
+  border: 2px dashed hsl(var(--border-strong));
+  padding: 3px 10px;
+  font-size: 12px;
+  color: hsl(var(--text-faint));
+}
+.battle-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+
+.arena {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.seat {
+  background: hsl(var(--surface-raised));
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  padding: 12px;
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark);
+}
+.seat.win-seat { border-color: hsl(var(--mc-gold)); box-shadow: 0 0 24px -4px hsl(var(--mc-gold) / 0.45); }
+.seat-drops {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 6px;
+  margin: 10px 0;
+}
+.mini-drop {
+  background: hsl(var(--surface-sunken));
+  border: 2px solid hsl(var(--border-subtle));
+  padding: 4px;
+}
+.mini-drop img { width: 100%; height: 40px; object-fit: contain; }
+.create-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+
+/* ---------------------------------------------------------------------------
+   17. ADMIN
+   ------------------------------------------------------------------------ */
+.admin-card { padding: 24px; }
+
+/* Bang du lieu: khung GUI, header noi bat. */
+.table-scroll {
+  overflow-x: auto;
+  border: 2px solid hsl(var(--border-strong));
+  background: hsl(var(--surface-raised));
+  overscroll-behavior: contain;
+}
+.table-scroll table { min-width: 720px; }
+.table-scroll tbody tr:hover { background: hsl(var(--surface-overlay) / 0.55); }
+.table-scroll td,
+.table-scroll th { vertical-align: middle; }
+.table-scroll td:last-child { white-space: nowrap; }
+
+/* Thumbnail trong bang: o slot vuot soc. */
+.thumb {
+  display: block;
+  inline-size: 42px;
+  block-size: 42px;
+  object-fit: contain;
+  border: 2px solid hsl(var(--border-subtle));
+  background: hsl(var(--surface-sunken));
+  padding: 2px;
+}
+
+.grid.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.mini {
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  padding: 12px;
+  background: hsl(var(--surface-sunken));
+  box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.13);
+}
+.mini span { color: hsl(var(--text-muted)); font-size: 12px; font-weight: 700; }
+.mini strong { display: block; margin-top: 3px; font-family: var(--font-display); font-weight: 400; }
+.split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.preview-frame {
+  inline-size: 140px;
+  block-size: 140px;
+  display: grid;
+  place-items: center;
+  background: hsl(var(--surface-sunken));
+  border: 2px solid hsl(var(--border-strong));
+  box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.16);
+}
+.preview-frame img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.media-actions { display: grid; gap: 8px; justify-items: start; }
+.upload-btn {
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  background: hsl(var(--surface-overlay));
+  color: hsl(var(--text-primary));
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 0 hsl(var(--border-strong));
+}
+.upload-btn:hover { background: hsl(var(--surface-raised)); }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.form-grid label { display: grid; gap: 5px; font-weight: 600; font-size: 13px; }
+.form-grid .meta { font-weight: 400; }
+
+/* Toolbar cua admin: o loc + nut hanh dong. */
+.admin-card .toolbar { gap: 8px; }
+.admin-card .toolbar select,
+.admin-card .toolbar input[type="search"] { font-size: 13px; padding: 7px 11px; }
+.admin-card .toolbar input[type="search"] { min-width: 200px; flex: 1 1 200px; }
+
+/* Nut phu trong bang: nho, gon. */
+.admin-card .btn-ghost,
+.admin-card .btn-ghost-danger {
+  padding: 5px 11px;
+  font-size: 12px;
+  box-shadow: 0 2px 0 hsl(var(--border-strong));
+}
+.admin-card .btn-ghost-danger { box-shadow: 0 2px 0 hsl(var(--negative)); }
+
+/* ---------------------------------------------------------------------------
+   18. BONUS — VONG QUAY
+   ------------------------------------------------------------------------ */
+.wheel {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  border: 4px solid hsl(var(--border-strong));
+  box-shadow: inset 0 0 0 4px hsl(var(--surface-raised)), 0 12px 30px -12px hsl(0 0% 0% / 0.6);
+}
+.wheel-pointer {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 22px solid hsl(var(--mc-gold));
+  filter: drop-shadow(0 3px 5px hsl(0 0% 0% / 0.4));
+}
+
+/* ---------------------------------------------------------------------------
+   19. MOTION — PHONG CACH VOXEL
+   ------------------------------------------------------------------------ */
+
+/* Rương "bung sáng" khi bấm mở: nảy + halo theo màu rarity. */
+.case-card.is-launching {
+  animation: voxel-launch 0.44s var(--ease-out) both;
+}
+@keyframes voxel-launch {
+  0% { scale: 1; }
+  28% {
+    scale: 0.955;
+    box-shadow:
+      inset 2px 2px 0 var(--bevel-light),
+      0 0 0 4px hsl(var(--glow, var(--accent)) / 0.4);
+  }
+  100% {
+    scale: 1.015;
+    box-shadow:
+      inset 2px 2px 0 var(--bevel-light),
+      0 0 0 12px hsl(var(--glow, var(--accent)) / 0);
+  }
+}
+
+/* Thẻ vật phẩm hiện dần khi vào trang — "mọc lên" như block Minecraft. */
+@keyframes voxel-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.contents > .item-card {
+  animation: voxel-pop 0.34s var(--ease-out) both;
+}
+/* Hoi delay theo thu tu: sibling-index() (hien dai) + fallback nth-child. */
+@supports (animation-delay: calc(sibling-index() * 1ms)) {
+  .contents > .item-card {
+    animation-delay: calc(sibling-index() * 26ms);
+  }
+}
+@supports not (animation-delay: calc(sibling-index() * 1ms)) {
+  .contents > .item-card:nth-child(1) { animation-delay: 0ms; }
+  .contents > .item-card:nth-child(2) { animation-delay: 26ms; }
+  .contents > .item-card:nth-child(3) { animation-delay: 52ms; }
+  .contents > .item-card:nth-child(4) { animation-delay: 78ms; }
+  .contents > .item-card:nth-child(5) { animation-delay: 104ms; }
+  .contents > .item-card:nth-child(6) { animation-delay: 130ms; }
+  .contents > .item-card:nth-child(n + 7) { animation-delay: 156ms; }
+}
+
+/* Slot vật phẩm trong dải quay: rung nhẹ khi trúng. */
+@keyframes voxel-win-pop {
+  0% { scale: 0.88; filter: brightness(1.6); }
+  55% { scale: 1.14; filter: brightness(1.25); }
+  100% { scale: 1.06; filter: none; }
+}
+.tile.win { animation: voxel-win-pop 0.62s var(--ease-spring) both; }
+
+/* Vòng quay thắng: halo vang kim lan ra. */
+@keyframes voxel-reel-glow {
+  0% { box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.18); }
+  30% {
+    box-shadow:
+      inset 2px 2px 0 hsl(0 0% 0% / 0.18),
+      inset 0 0 70px -10px hsl(var(--mc-gold) / 0.4),
+      0 0 30px hsl(var(--mc-gold) / 0.35);
+  }
+  100% { box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.18); }
+}
+.reel.fx-win { animation: voxel-reel-glow 0.9s ease-out both; }
+
+/* Ket qua mo ruong: "hop ra" tu trong ra. */
+@keyframes voxel-result-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+.result-banner.fx-result-enter { animation: voxel-result-in 0.5s var(--ease-spring) both; }
+
+/* Bánh xe bonus: vang kim lan. */
+@keyframes voxel-wheel-win {
+  0% { box-shadow: 0 0 0 4px hsl(var(--surface-raised)), 0 20px 50px hsl(var(--accent) / 0.12); }
+  40% {
+    box-shadow:
+      0 0 0 4px hsl(var(--surface-raised)),
+      0 0 0 12px hsl(var(--positive) / 0.4),
+      0 0 70px hsl(var(--positive) / 0.55);
+  }
+  100% { box-shadow: 0 0 0 4px hsl(var(--surface-raised)), 0 20px 50px hsl(var(--accent) / 0.12); }
+}
+.wheel.fx-wheel-win { animation: voxel-wheel-win 1s var(--ease-spring) both; }
+
+/* So du: nhay len khi Coin tang. */
+@keyframes voxel-coin-up {
+  0% { scale: 1; }
+  30% { scale: 1.08; box-shadow: 0 0 0 4px hsl(var(--positive) / 0.32); }
+  100% { scale: 1; box-shadow: none; }
+}
+.coin-chip.coin-pop-up { animation: voxel-coin-up 0.7s var(--ease-spring) both; }
+
+/* Nang cap thang / thua: manh bang mau cua he Minecraft. */
+.upgrade-stage.fx-stage-win {
+  animation: voxel-stage-win 0.9s var(--ease-spring) both;
+}
+.upgrade-stage.fx-stage-lose {
+  animation: voxel-stage-lose 0.6s var(--ease-out) both;
+}
+@keyframes voxel-stage-win {
+  0% { transform: scale(1); }
+  35% {
+    transform: scale(1.025);
+    box-shadow: 0 0 0 4px hsl(var(--positive) / 0.35), 0 0 40px hsl(var(--positive) / 0.4);
+  }
+  100% { transform: scale(1); box-shadow: none; }
+}
+@keyframes voxel-stage-lose {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  55% { transform: translateX(4px); }
+  80% { transform: translateX(-2px); }
+}
+
+/* Thay the animation cu trong style.css (do voxel.css nap sau). */
+.case-card.is-launching { animation: voxel-launch 0.44s var(--ease-out) both; }
+.tile.win { animation: voxel-win-pop 0.62s var(--ease-spring) both; }
+.reel.fx-win { animation: voxel-reel-glow 0.9s ease-out both; }
+.result-banner.fx-result-enter { animation: voxel-result-in 0.5s var(--ease-spring) both; }
+.wheel.fx-wheel-win { animation: voxel-wheel-win 1s var(--ease-spring) both; }
+.coin-chip.coin-pop-up { animation: voxel-coin-up 0.7s var(--ease-spring) both; }
+.upgrade-stage.fx-stage-win { animation: voxel-stage-win 0.9s var(--ease-spring) both; }
+.upgrade-stage.fx-stage-lose { animation: voxel-stage-lose 0.6s var(--ease-out) both; }
+
+/* ---------------------------------------------------------------------------
+   20. LOGIN / VI
+   ------------------------------------------------------------------------ */
+.login-card { padding: 28px; }
+.login-form { display: grid; gap: 14px; margin-top: 18px; }
+.login-form label { display: grid; gap: 6px; }
+.login-form input { inline-size: 100%; }
+.login-form button { inline-size: 100%; margin-top: 4px; padding: 12px 20px; }
+.login-note {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 2px solid hsl(var(--border-subtle));
+  font-size: 12px;
+}
+
+.wallet-card { padding: 24px; }
+.wallet-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.wallet-head .avatar {
+  inline-size: 42px;
+  block-size: 42px;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.wallet-head h1 { margin: 0; font-size: 22px; }
+.wallet-card .amount { font-size: 30px; font-family: var(--font-display); font-weight: 400; }
+
+/* ---------------------------------------------------------------------------
+   21. TIEN ICH (form bar, field, them trang)
+   ------------------------------------------------------------------------ */
+
+/* Thanh cong cu: dung chung cho search + sort o catalogue/upgrade. */
+.form-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: hsl(var(--surface-raised));
+  border: 2px solid hsl(var(--border-strong));
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark);
+}
+.form-bar .field-search {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+.form-bar .field-select { flex: 0 0 auto; }
+.form-bar .grow { flex: 1; }
+
+/* Ket qua tim kiem: "hien X / Y ruong". */
+.result-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: hsl(var(--text-muted));
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Trang rong: "moi nghi" -> huong dan hanh dong. */
+.empty-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 18px;
+  background: hsl(var(--accent));
+  border: 2px solid hsl(var(--accent-strong));
+  color: hsl(var(--text-invert));
+  font-family: var(--font-display);
+  font-size: 13px;
+  text-decoration: none;
+  box-shadow:
+    inset 2px 2px 0 hsl(0 0% 100% / 0.28),
+    inset -2px -2px 0 hsl(0 0% 0% / 0.22),
+    0 3px 0 hsl(var(--accent-strong));
+  transition: filter 0.12s ease, translate 0.08s var(--ease-out);
+}
+.empty-cta:hover {
+  filter: brightness(1.08);
+  translate: 0 -1px;
+  text-decoration: none;
+}
+.empty-cta:active { translate: 0 3px; box-shadow: inset 0 0 0 hsl(var(--accent-strong)); }
+
+/* Header: don gon hon, gom phan danh tinh. */
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+.header-brand .brand-mark {
+  inline-size: 28px;
+  block-size: 28px;
+  display: grid;
+  place-items: center;
+  background: hsl(var(--accent));
+  border: 2px solid hsl(var(--accent-strong));
+  color: hsl(var(--text-invert));
+  font-family: var(--font-display);
+  font-size: 13px;
+  box-shadow: inset 2px 2px 0 hsl(0 0% 100% / 0.3);
+}
+
+/* ---------------------------------------------------------------------------
+   23. BATTLE / BONUS / SETUP — TINH CHINH LAY CUOI
+   ------------------------------------------------------------------------ */
+
+/* Tieu de panel: chu nho + gach cham ben duoi. */
+.panel-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  margin: 0 0 14px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid hsl(var(--border-subtle));
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.panel-title::before { display: none; }
+
+/* Panel tao battle / cau hinh phong. */
+.battle-create-panel,
+.config-panel,
+.rematch-panel {
+  padding: 18px;
+  margin-bottom: 24px;
+}
+/* Panel "đánh tiếp": mac dinh an, JS bat khi du dieu kien. */
+.rematch-panel { display: none; }
+
+/* Khoi "danh sach ruong": o slot trong panel. */
+.lines-block { margin-top: 14px; }
+.lines-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.lines-head strong { font-size: 13px; }
+.lines-head .meta { font-variant-numeric: tabular-nums; }
+.line-add-btn {
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* Hang them ruong: luoi 4 cot -> cot cuoi nut "Xoa" can phai. */
+.line-row { margin-bottom: 8px; }
+.line-del-wrap {
+  justify-content: flex-end;
+  display: flex;
+  align-items: flex-end;
+}
+.line-del {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+.cfg-grid { margin-top: 12px; }
+
+/* Nhom nut hanh dong can nhau. */
+.battle-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.battle-actions-row { margin-top: 14px; }
+.battle-create-panel .battle-actions {
+  justify-content: flex-start;
+  gap: 12px;
+  margin-top: 16px;
+}
+.battle-create-panel .check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-weight: 600;
+}
+
+/* The nho danh sach ruong trong card. */
+.line-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.line-tag {
+  border: 2px solid hsl(var(--border-subtle));
+  background: hsl(var(--surface-sunken));
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: hsl(var(--text-muted));
+}
+.battle-card-status { margin-left: auto; }
+.seat-avatar {
+  inline-size: 22px;
+  block-size: 22px;
+  font-size: 9px;
+  margin-right: 4px;
+}
+.battle-foot-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.battle-cta {
+  padding: 7px 16px;
+  font-size: 13px;
+}
+
+/* Toolbar tren trang battle. */
+.battle-toolbar { align-items: flex-start; }
+.battle-lines { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; }
+.round-label { min-height: 1.4em; }
+
+/* Ghế trong arena. */
+.seat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.seat-price { margin-left: auto; }
+.seat-empty {
+  text-align: center;
+  padding: 44px 0;
+}
+.kick-btn {
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+/* Ket qua: dong chu "Thang: <ten>". */
+.winner-line {
+  display: none;
+  text-align: center;
+  font-size: 28px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  color: hsl(var(--mc-gold));
+  text-shadow: 2px 2px 0 hsl(0 0% 0% / 0.25);
+  margin: 18px 0 4px;
+}
+
+/* Trang bonus: vong quay can giua. */
+.bonus-panel {
+  padding: 32px;
+  text-align: center;
+  max-width: 460px;
+  margin: 0 auto;
+}
+.bonus-wheel-wrap {
+  position: relative;
+  width: 280px;
+  margin: 0 auto 24px;
+}
+.bonus-prize {
+  font-size: 28px;
+  min-height: 1.2em;
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+/* Trang setup. */
+.setup-card { max-width: 760px; margin: 0 auto; }
+.setup-card .steps { line-height: 1.75; }
+.setup-card pre {
+  overflow-x: auto;
+  padding: 12px;
+  background: hsl(var(--surface-sunken));
+  border: 2px solid hsl(var(--border-strong));
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.setup-test-form { margin-top: 20px; }
+
+/* Nhan "OP tren server". */
+.tag-positive {
+  color: hsl(var(--positive));
+  font-weight: 800;
+}
+.tag-negative {
+  color: hsl(var(--negative));
+  font-weight: 800;
+}
+.text-positive { color: hsl(var(--positive)); font-weight: 800; }
+.text-negative { color: hsl(var(--negative)); font-weight: 800; }
+.text-accent { color: hsl(var(--accent-text)); font-weight: 800; }
+.admin-toolbar { margin-bottom: 16px; }
+
+/* Hop nho giua cac so lieu tong hop. */
+.result-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+.result-actions {
+  margin-top: 16px;
+  justify-content: center;
+}
+
+/* Nhip phan nho khac: slot, tieu de luoi, hieu ung danh sach. */
+.slot-eyebrow { margin: 0; }
+.upgrade-title { margin: 0; flex: 1; }
+.up-result {
+  text-align: center;
+  min-height: 1.4em;
+  font-weight: 700;
+}
+.stake-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 12px;
+}
+.case-hint {
+  text-align: center;
+  margin: 14px 0 0;
+}
+.case-meta { margin-top: 6px; }
+.promo-cta {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+.wallet-amount { font-size: 14px; }
+
+/* ---------------------------------------------------------------------------
+   24. RESPONSIVE
+   ------------------------------------------------------------------------ */
+@media (max-width: 900px) {
+  .upgrade-stage { grid-template-columns: 1fr; }
+  .upgrade-lists { grid-template-columns: 1fr; }
+  .create-grid { grid-template-columns: 1fr 1fr; }
+  .grid.stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 620px) {
+  .split { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .grid.stats { grid-template-columns: 1fr 1fr; }
+  .case-head { padding: 14px; }
+  .case-head-art { width: 92px; height: 92px; }
+  .preview-frame { width: 96px; height: 96px; }
+  /* Toolbar gom ve 1 cot: nut cham het be ngang, khong tran. */
+  .toolbar { padding: 10px; gap: 8px; }
+  .toolbar .grow { display: none; }
+  .toolbar > .cf-chip,
+  .toolbar > .amount { flex: 1 1 auto; }
+  .toolbar .cf-btn,
+  .toolbar .cf-btn-ghost,
+  .toolbar .cf-btn-primary {
+    flex: 1 1 calc(50% - 4px);
+    text-align: center;
+  }
+  .battle-actions { width: 100%; }
+  .battle-actions .cf-btn,
+  .battle-actions .cf-btn-ghost,
+  .battle-actions .cf-btn-primary { flex: 1 1 auto; text-align: center; }
+  .bonus-panel { padding: 18px; }
+  .bonus-wheel-wrap { width: 240px; }
+  .wheel { width: 240px; height: 240px; }
+  .result-summary { gap: 10px; font-size: 13px; }
+}

@@ -3,7 +3,7 @@
 {% block page_class %}narrow{% endblock %}
 {% block content %}
 <section class="login-card">
-  <p class="eyebrow"><i></i> JellyVale · Case</p>
+  <p class="eyebrow"><i></i> JellyVale</p>
   <h1>Đăng nhập Minecraft</h1>
   {% if need_login %}
   <div class="alert alert-info" role="status">
@@ -19,7 +19,7 @@
   {% if error == "rate" %}<div class="alert">Thử quá nhiều lần.</div>{% endif %}
   {% if error == "phien" %}<div class="alert">Phiên hết hạn.</div>{% endif %}
   {% if error == "pika" %}<div class="alert">Không đọc được dữ liệu PikaMC.</div>{% endif %}
-  <form method="post" action="/login">
+  <form method="post" action="/login" class="login-form">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <input type="hidden" name="next" value="{{ next_url }}">
     <label for="username">Tên nhân vật
@@ -30,5 +30,6 @@
     </label>
     <button class="cf-btn-primary" type="submit" {% if not pika_ready %}disabled{% endif %}>Vào rương</button>
   </form>
+  <p class="meta login-note">Dùng đúng tài khoản bạn dùng để vào server. Web kiểm tra qua AuthMe trên chính server — không cần API key.</p>
 </section>
 {% endblock %}

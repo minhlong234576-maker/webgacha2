@@ -47,7 +47,7 @@
     <button type="button" class="preset-btn" data-count="5">×5</button>
   </div>
 
-  <p id="hint" class="meta" style="text-align:center;margin:14px 0 0">Chọn số lượng rương và bấm Mở — dải dừng đúng món server roll, đồ vào túi.</p>
+  <p id="hint" class="meta case-hint">Chọn số lượng rương và bấm Mở — dải dừng đúng món server roll, đồ vào túi.</p>
 
   <!-- DROP RESULTS -->
   <div id="result" class="result-banner" hidden></div>
@@ -237,10 +237,10 @@
     const profitSign = profit >= 0 ? "+" : "";
 
     let html = `
-      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:18px;margin-bottom:14px;font-size:14px">
+      <div class="result-summary">
         <span>Chi: <strong>${spent.toLocaleString("vi-VN")} Coin</strong></span>
-        <span>Nhận: <strong style="color:hsl(var(--accent-text, var(--accent)))">${totalWon.toLocaleString("vi-VN")} Coin</strong></span>
-        <span>Chênh lệch: <strong style="color:${profit >= 0 ? 'hsl(var(--positive))' : 'hsl(var(--negative))'}">${profitSign}${profit.toLocaleString("vi-VN")} Coin</strong></span>
+        <span>Nhận: <strong class="text-accent">${totalWon.toLocaleString("vi-VN")} Coin</strong></span>
+        <span>Chênh lệch: <strong class="${profitClass}">${profitSign}${profit.toLocaleString("vi-VN")} Coin</strong></span>
       </div>
       <div class="drop-results-grid">
     `;
@@ -261,7 +261,7 @@
 
     html += `
       </div>
-      <div class="actions" style="margin-top:14px">
+      <div class="actions result-actions">
         <button id="sell-all-won" class="cf-btn-primary" type="button">Bán tất cả (${openings.length} món) · ${totalWon.toLocaleString("vi-VN")} Coin</button>
         <a class="cf-btn-ghost" href="/inventory">Xem túi đồ</a>
       </div>

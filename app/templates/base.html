@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#12151d" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f7f3ea" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1a1b22" media="(prefers-color-scheme: dark)">
   <script>
     (function() {
       try {
@@ -21,8 +21,9 @@
   <title>{% block title %}JellyVale{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Chakra+Petch:wght@400;500;600;700&family=Chivo+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/voxel.css">
   <link rel="stylesheet" href="/static/roulette.css">
   {% if landing %}<link rel="stylesheet" href="/static/landing.css">{% endif %}
   {% if csrf %}<meta name="csrf" content="{{ csrf }}">{% endif %}
@@ -32,7 +33,10 @@
   <div id="live-drops" class="live-strip" aria-label="Drop trực tiếp"></div>
   <header class="site-header">
     <div class="header-inner">
-      <a class="brand" href="/gacha">Jelly<span>Vale</span></a>
+      <a class="brand header-brand" href="/gacha">
+        <span class="brand-mark" aria-hidden="true">JV</span>
+        <span>Jelly<span>Vale</span></span>
+      </a>
       <nav aria-label="Chính">
         {% set p = request.url.path %}
         {% if player %}

@@ -7,16 +7,16 @@
 
 <div class="upgrade-stage">
   <div id="stake-slot" class="slot-card">
-    <span class="eyebrow" style="margin:0">Cược</span>
+    <span class="eyebrow slot-eyebrow">Cược</span>
     <span class="meta" id="stake-info">Chọn 2 món</span>
   </div>
   <div class="gauge-wrap">
     <div id="gauge"></div>
     <button id="go" class="cf-btn-primary" type="button" disabled>Nâng cấp</button>
-    <p id="up-result" class="meta" role="status" aria-live="polite" style="text-align:center;min-height:1.4em"></p>
+    <p id="up-result" class="meta up-result" role="status" aria-live="polite"></p>
   </div>
   <div id="target-slot" class="slot-card">
-    <span class="eyebrow" style="margin:0">Đích</span>
+    <span class="eyebrow slot-eyebrow">Đích</span>
     <span class="meta">Chọn món đắt hơn</span>
   </div>
 </div>
@@ -24,11 +24,11 @@
 <div class="upgrade-lists">
   <section>
     <div class="upgrade-head">
-      <h2 style="margin:0;flex:1">Đồ của tôi</h2>
+      <h2 class="upgrade-title">Đồ của tôi</h2>
       <label for="stake-search" class="visually-hidden">Tìm đồ cược</label>
-      <input id="stake-search" type="search" placeholder="Tìm đồ cược..." autocomplete="off" spellcheck="false" style="width:150px;padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px">
+      <input id="stake-search" type="search" placeholder="Tìm đồ cược..." autocomplete="off" spellcheck="false">
     </div>
-    <fieldset id="stake-fieldset" style="border:0;padding:0;margin:0 0 12px">
+    <fieldset id="stake-fieldset" class="stake-fieldset">
       <legend class="visually-hidden">Chọn món cược để nâng cấp</legend>
       <div class="pick-grid" id="stakes">
         {% for item in items %}
@@ -47,14 +47,14 @@
   </section>
   <section>
     <div class="upgrade-head">
-      <h2 style="margin:0;flex:1">Nâng thành</h2>
+      <h2 class="upgrade-title">Nâng thành</h2>
       <label for="target-sort" class="visually-hidden">Sắp xếp món đích</label>
-      <select id="target-sort" style="padding:6px 10px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px">
+      <select id="target-sort">
         <option value="low">Giá: Thấp → Cao</option>
         <option value="high">Giá: Cao → Thấp</option>
       </select>
       <label for="target-search" class="visually-hidden">Tìm món đích</label>
-      <input id="target-search" type="search" placeholder="🔍" autocomplete="off" spellcheck="false" style="width:36px;padding:6px 8px;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);font-size:12px;text-align:center" title="Tìm đồ nâng">
+      <input id="target-search" type="search" placeholder="🔍" autocomplete="off" spellcheck="false" title="Tìm đồ nâng">
     </div>
     <div class="pick-grid" id="targets"><p class="meta">Chọn 2 món cược trước.</p></div>
   </section>
@@ -317,15 +317,14 @@
 
   targetSort.addEventListener("change", renderTargets);
   targetSearch.addEventListener("input", renderTargets);
+  // Ô tìm món đích thu gọn khi chưa focus, nở rộng khi người chơi gõ.
   targetSearch.addEventListener("focus", () => {
     targetSearch.placeholder = "Tìm đồ nâng...";
-    targetSearch.style.width = "150px";
-    targetSearch.style.textAlign = "left";
+    targetSearch.classList.add("is-expanded");
   });
   targetSearch.addEventListener("blur", () => {
     targetSearch.placeholder = "🔍";
-    targetSearch.style.width = "36px";
-    targetSearch.style.textAlign = "center";
+    targetSearch.classList.remove("is-expanded");
     targetSearch.value = "";
     renderTargets();
   });
@@ -365,8 +364,8 @@
         document.querySelector(".upgrade-stage")?.classList.remove("fx-stage-win", "fx-stage-lose");
         if (won) celebrate({ wins: 1, tone: "mint" });
         result.innerHTML = won
-          ? `<span style="color:hsl(var(--positive))">Thắng — ${esc(data.target.name)}</span>`
-          : `<span style="color:hsl(var(--negative))">Thua · roll ${esc(data.roll)} / ${esc(data.chance)}%</span>`;
+          ? `<span class="tag-positive">Thắng — ${esc(data.target.name)}</span>`
+          : `<span class="tag-negative">Thua · roll ${esc(data.roll)} / ${esc(data.chance)}%</span>`;
         setTimeout(() => location.reload(), 1400);
       });
     } catch {

@@ -46,7 +46,7 @@
       <strong>{% if not player %}Đăng nhập để quay{% elif bonus_ready %}Sẵn sàng quay{% else %}Đã nhận hôm nay{% endif %}</strong>
       <span>Vòng miễn phí, Coin vào ví web</span>
     </div>
-    {% if bonus_ready %}<span class="cf-btn-primary" style="padding:8px 14px;font-size:13px">Quay</span>{% endif %}
+    {% if bonus_ready %}<span class="cf-btn-primary promo-cta">Quay</span>{% endif %}
   </a>
   <a class="promo-card" href="/battles">
     <div class="copy">
@@ -66,13 +66,14 @@
 
 <section id="cases">
   <h2>Rương</h2>
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-    <input id="case-search" type="search" aria-label="Tìm rương" placeholder="Tìm rương..." style="flex:1;min-width:200px;padding:8px 12px;border-radius:8px;border:1px solid hsl(var(--border-subtle));background:hsl(var(--surface-raised))">
-    <select id="case-sort" aria-label="Sắp xếp rương" style="padding:8px 12px;border-radius:8px;border:1px solid hsl(var(--border-subtle));background:hsl(var(--surface-raised))">
+  <div class="form-bar">
+    <input id="case-search" class="field-search" type="search" aria-label="Tìm rương" placeholder="Tìm rương...">
+    <select id="case-sort" class="field-select" aria-label="Sắp xếp rương">
       <option value="low">Giá: Ít → Cao</option>
       <option value="high">Giá: Cao → Ít</option>
       <option value="name">Tên A-Z</option>
     </select>
+    <span id="case-count" class="result-count" role="status"></span>
   </div>
   <div class="case-grid" id="cases-grid">
     {% for case in cases %}
@@ -83,7 +84,7 @@
       <div class="case-line" style="--glow: {{ case.glow }}"></div>
       <div class="body">
         <div>{{ case.name }}</div>
-        <div class="meta" style="margin-top:6px">
+        <div class="meta case-meta">
           <span class="price">{{ case.cost_fmt }} Coin</span>
           <span class="count">{{ case.loot|length }} món</span>
         </div>
@@ -98,6 +99,7 @@
       Danh mục hiện đang trống. Quản trị viên cần tạo rương và thêm sản phẩm
       ở trang <a href="/admin/products">Quản lý sản phẩm</a> trước khi quay được.
     </p>
+    <a class="empty-cta" href="/admin/products">Tạo rương đầu tiên</a>
   </div>
   {% endif %}
 </section>
@@ -106,6 +108,7 @@
   const grid = document.getElementById("cases-grid");
   const searchInput = document.getElementById("case-search");
   const sortSelect = document.getElementById("case-sort");
+  const countLabel = document.getElementById("case-count");
 
   // Chọn số cột để lưới gần kín hàng: desktop ưu tiên 4 (chia hết), rồi 3; mobile 2.
   (function fitCaseColumns() {
@@ -140,6 +143,14 @@
     
     // Reorder in DOM
     visible.forEach(el => grid.appendChild(el));
+
+    // Bao cao so luong hien thi — nguoi choi biet dang xem bao nhieu ruong.
+    if (countLabel) {
+      const total = cases.length;
+      countLabel.textContent = visible.length === total
+        ? `${total} rương`
+        : `${visible.length}/${total} rương`;
+    }
   }
 
   // Bấm mở rương: phát sáng + nghiêng thẻ, nhưng điều hướng gần như tức thì
@@ -154,5 +165,6 @@
   
   searchInput.addEventListener("input", sortCases);
   sortSelect.addEventListener("change", sortCases);
+  sortCases();
 </script>
 {% endblock %}

@@ -1,4 +1,8 @@
-/* CSGOEMPIRE COINFLIP ROULETTE STYLES */
+/* =============================================================================
+   ROULETTE — "VOXEL VAULT"
+   Ghi de tren style.css + voxel.css. Vong quay giu nguyen hanh thuc chay
+   (roulette.js) — chi doi cach trong.
+   ========================================================================== */
 
 .roulette-container {
   max-width: 1200px;
@@ -6,7 +10,8 @@
   padding: 16px 20px 48px;
 }
 
-/* TOP BAR & HISTORY */
+/* ---------- TOP BAR & HISTORY ---------- */
+
 .roulette-top-bar {
   display: flex;
   align-items: center;
@@ -17,27 +22,27 @@
 }
 .roulette-title-wrap h1 {
   margin: 2px 0 0;
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
+/* Dải lich su: khung slot vuot soc, khong bo tron. */
 .history-strip-wrap {
   display: flex;
   align-items: center;
   gap: 12px;
   background: hsl(var(--surface-raised));
   padding: 8px 14px;
-  border-radius: 999px;
-  border: 1px solid hsl(var(--border-subtle));
-  box-shadow: var(--card-shadow);
+  border: 2px solid hsl(var(--border-strong));
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark);
 }
 .history-label {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 10.5px;
+  font-weight: 800;
   color: hsl(var(--text-muted));
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
 }
 .history-strip {
   display: flex;
@@ -47,113 +52,87 @@
   max-width: 480px;
   scrollbar-width: none;
 }
-.history-strip::-webkit-scrollbar {
-  display: none;
-}
+.history-strip::-webkit-scrollbar { display: none; }
 .hist-badge {
   width: 32px;
   height: 32px;
   flex-shrink: 0;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 2px solid transparent;
   transition: transform 0.15s ease;
 }
-.hist-badge:hover {
-  transform: scale(1.15);
-}
-.hist-badge img {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-}
+.hist-badge:hover { transform: scale(1.12); }
+.hist-badge img { width: 24px; height: 24px; object-fit: contain; }
 .hist-badge.hist-village {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: #10b981;
+  background: hsl(var(--positive) / 0.16);
+  border-color: hsl(var(--positive));
 }
 .hist-badge.hist-pillager {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: #ef4444;
+  background: hsl(var(--negative) / 0.16);
+  border-color: hsl(var(--negative));
 }
 .hist-badge.hist-steve {
-  background: rgba(6, 182, 212, 0.2);
-  border-color: #06b6d4;
-  box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+  background: hsl(var(--accent) / 0.2);
+  border-color: hsl(var(--accent));
+  box-shadow: 0 0 10px hsl(var(--accent) / 0.45);
 }
 
-/* KHUNG PANEL VÒNG QUAY */
+/* ---------- KHUNG PANEL VÒNG QUAY ---------- */
+
 .roulette-wheel-card {
-  padding: 20px;
-  margin-bottom: 24px;
+  padding: 18px;
+  margin-bottom: 22px;
   background: hsl(var(--surface-raised));
-  border: 1px solid hsl(var(--border-subtle));
-  border-radius: var(--radius);
-  box-shadow: var(--card-shadow);
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark), var(--card-shadow);
 }
 
 .wheel-status-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
-.status-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.round-indicator {
-  font-size: 13px;
-  color: hsl(var(--text-muted));
-  font-weight: 600;
-}
-.round-indicator strong {
-  color: hsl(var(--text-primary));
-}
+.status-left { display: flex; align-items: center; gap: 10px; }
+.round-indicator { font-size: 13px; color: hsl(var(--text-muted)); font-weight: 600; }
+.round-indicator strong { color: hsl(var(--text-primary)); }
+
+/* Badge trang thai: nhat mau vuot soc, chu in hoa. */
 .state-badge {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
   text-transform: uppercase;
-  padding: 3px 8px;
-  border-radius: 6px;
-  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border: 2px solid currentColor;
+  letter-spacing: 0.08em;
 }
 .badge-betting {
-  background: rgba(16, 185, 129, 0.18);
-  color: #059669;
-}
-html.dark .badge-betting {
-  color: #34d399;
+  background: hsl(var(--positive) / 0.16);
+  color: hsl(var(--positive));
 }
 .badge-rolling {
-  background: rgba(6, 182, 212, 0.2);
-  color: #0891b2;
-}
-html.dark .badge-rolling {
-  color: #38bdf8;
+  background: hsl(var(--accent) / 0.18);
+  color: hsl(var(--info));
 }
 .badge-settled {
-  background: rgba(245, 158, 11, 0.2);
-  color: #d97706;
-}
-html.dark .badge-settled {
-  color: #fbbf24;
+  background: hsl(var(--warning) / 0.18);
+  color: hsl(var(--warning));
 }
 
-.status-center {
-  text-align: center;
-}
+.status-center { text-align: center; }
 .timer-countdown {
   font-size: 26px;
-  font-weight: 900;
+  font-weight: 400;
+  font-family: var(--font-display);
   color: hsl(var(--accent-text));
-  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
-html.dark .timer-countdown {
-  color: hsl(var(--accent));
-}
+html.dark .timer-countdown { color: hsl(var(--accent)); }
 
 .status-right .fair-hash {
   display: flex;
@@ -165,38 +144,41 @@ html.dark .timer-countdown {
   cursor: help;
 }
 
-/* THANH TIẾN ĐỘ THỜI GIAN */
+/* ---------- THANH TIẾN ĐỘ ---------- */
+
 .progress-track {
   width: 100%;
-  height: 6px;
-  background: hsl(var(--surface-overlay));
-  border-radius: 999px;
+  height: 8px;
+  background: hsl(var(--surface-sunken));
+  border: 2px solid hsl(var(--border-subtle));
+  border-radius: 0;
   overflow: hidden;
   margin-bottom: 16px;
+  box-shadow: inset 1px 1px 0 hsl(0 0% 0% / 0.15);
 }
 .progress-fill {
   height: 100%;
   width: 100%;
-  background: #10b981;
-  border-radius: 999px;
+  background: hsl(var(--positive));
   transition: width 0.15s linear, background-color 0.2s ease;
 }
 
-/* KHUNG VIEWPORT DẢI QUAY NẰM NGANG CHUẨN CSGOEMPIRE */
+/* ---------- VIEWPORT DẢI QUAY ---------- */
+
 .roulette-viewport {
   position: relative;
   width: 100%;
   height: 130px;
   overflow: hidden;
-  background: hsl(var(--surface-overlay));
-  border-radius: 14px;
-  border: 2px solid hsl(var(--border-subtle));
-  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.15);
+  background: hsl(var(--surface-sunken));
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.18);
   display: flex;
   align-items: center;
 }
 
-/* KIM CHỈ TRUNG TÂM */
+/* Kim chỉ trung tâm: vang kim, goc vuong. */
 .roulette-pointer {
   position: absolute;
   top: 0;
@@ -204,9 +186,9 @@ html.dark .timer-countdown {
   left: 50%;
   width: 4px;
   transform: translateX(-50%);
-  background: #f59e0b;
+  background: hsl(var(--mc-gold));
   z-index: 30;
-  box-shadow: 0 0 14px rgba(245, 158, 11, 0.95);
+  box-shadow: 0 0 14px hsl(var(--mc-gold) / 0.9);
   pointer-events: none;
 }
 .roulette-pointer::before {
@@ -217,8 +199,8 @@ html.dark .timer-countdown {
   transform: translateX(-50%);
   border-left: 9px solid transparent;
   border-right: 9px solid transparent;
-  border-top: 13px solid #f59e0b;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  border-top: 13px solid hsl(var(--mc-gold));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
 }
 .roulette-pointer::after {
   content: "";
@@ -228,11 +210,12 @@ html.dark .timer-countdown {
   transform: translateX(-50%);
   border-left: 9px solid transparent;
   border-right: 9px solid transparent;
-  border-bottom: 13px solid #f59e0b;
-  filter: drop-shadow(0 -2px 4px rgba(0,0,0,0.3));
+  border-bottom: 13px solid hsl(var(--mc-gold));
+  filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.35));
 }
 
-/* DẢI BĂNG CUỘN TRƯỢT NGANG (HOÀN TOÀN NẰM NGANG) */
+/* ---------- DẢI BĂNG CUỘN ---------- */
+
 .roulette-track {
   display: flex !important;
   flex-direction: row !important;
@@ -246,7 +229,8 @@ html.dark .timer-countdown {
   will-change: transform;
 }
 
-/* TỪNG Ô THẺ COINFLIP */
+/* ---------- Ô THẺ COINFLIP ---------- */
+
 .roulette-card {
   display: inline-flex !important;
   flex-direction: column !important;
@@ -257,11 +241,11 @@ html.dark .timer-countdown {
   height: 102px !important;
   margin: 0 5px !important;
   background: hsl(var(--surface-raised));
-  border-radius: 10px;
-  border: 1px solid hsl(var(--border-subtle));
+  border-radius: 0;
+  border: 2px solid hsl(var(--border-strong));
   border-bottom-width: 4px;
   box-sizing: border-box;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark);
   user-select: none;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
@@ -275,12 +259,13 @@ html.dark .timer-countdown {
   font-size: 13px;
   font-weight: 800;
   margin-top: 4px;
+  font-family: var(--font-mono);
 }
 .roulette-card.winner-highlight {
-  border-color: #f59e0b !important;
-  border-bottom-color: #f59e0b !important;
+  border-color: hsl(var(--mc-gold)) !important;
+  border-bottom-color: hsl(var(--mc-gold)) !important;
   transform: scale(1.08);
-  box-shadow: 0 0 22px rgba(245, 158, 11, 0.7);
+  box-shadow: 0 0 22px hsl(var(--mc-gold) / 0.7);
   z-index: 10;
 }
 .roulette-card.winner-highlight .card-icon {
@@ -292,13 +277,13 @@ html.dark .timer-countdown {
   100% { transform: scale(1) rotate(0); }
 }
 
-/* Vòng đang quay: kim chỉ và dải có nhịp thở nhẹ, badge nhấp nháy */
+/* Vong dang quay: kim chi nhip tho + badge nhay. */
 .roulette-viewport.is-rolling .roulette-pointer {
   animation: pointer-pulse 0.9s ease-in-out infinite;
 }
 @keyframes pointer-pulse {
-  0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.7); }
-  50% { box-shadow: 0 0 22px rgba(245, 158, 11, 1), 0 0 34px rgba(245, 158, 11, 0.5); }
+  0%, 100% { box-shadow: 0 0 10px hsl(var(--mc-gold) / 0.7); }
+  50% { box-shadow: 0 0 22px hsl(var(--mc-gold) / 1), 0 0 34px hsl(var(--mc-gold) / 0.5); }
 }
 .state-badge.badge-rolling { animation: badge-blink 1.2s ease-in-out infinite; }
 @keyframes badge-blink {
@@ -306,9 +291,10 @@ html.dark .timer-countdown {
   50% { opacity: 0.55; }
 }
 
-/* Cột có người đặt cược: viền nhẹ sáng lên */
 .roulette-col.has-bets { border-color: hsl(var(--border-strong)); }
-.roulette-col.is-settled-winner { animation: col-win 1s var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) both; }
+.roulette-col.is-settled-winner {
+  animation: col-win 1s var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) both;
+}
 @keyframes col-win {
   0% { transform: scale(1); }
   40% { transform: scale(1.015); }
@@ -316,19 +302,22 @@ html.dark .timer-countdown {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bet-row, .roulette-card.winner-highlight .card-icon,
-  .state-badge.badge-rolling, .roulette-viewport.is-rolling .roulette-pointer,
+  .bet-row,
+  .roulette-card.winner-highlight .card-icon,
+  .state-badge.badge-rolling,
+  .roulette-viewport.is-rolling .roulette-pointer,
   .roulette-col.is-settled-winner { animation: none; }
 }
 
-/* BẢNG ĐIỀU KHIỂN CƯỢC */
+/* ---------- BẢNG ĐIỀU KHIỂN CƯỢC ---------- */
+
 .bet-controls-panel {
-  padding: 16px 20px;
-  margin-bottom: 24px;
+  padding: 16px 18px;
+  margin-bottom: 22px;
   background: hsl(var(--surface-raised));
-  border: 1px solid hsl(var(--border-subtle));
-  border-radius: var(--radius);
-  box-shadow: var(--card-shadow);
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark), var(--card-shadow);
 }
 .bet-input-row {
   display: flex;
@@ -339,17 +328,15 @@ html.dark .timer-countdown {
 .bet-input-wrap {
   display: flex;
   align-items: center;
-  background: hsl(var(--surface-overlay));
-  border: 1px solid hsl(var(--border-subtle));
-  border-radius: 10px;
+  background: hsl(var(--surface-sunken));
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
   padding: 6px 12px;
   flex: 1;
   min-width: 180px;
+  box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.14);
 }
-.input-icon {
-  font-size: 18px;
-  margin-right: 8px;
-}
+.input-icon { font-size: 17px; margin-right: 8px; }
 .bet-input-wrap input {
   background: transparent;
   border: none;
@@ -358,6 +345,7 @@ html.dark .timer-countdown {
   font-size: 16px;
   font-weight: 700;
   width: 100%;
+  font-family: var(--font-mono);
 }
 
 .quick-chips,
@@ -365,69 +353,74 @@ html.dark .timer-countdown {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 .chip-btn,
 .action-btn {
   background: hsl(var(--surface-overlay));
-  border: 1px solid hsl(var(--border-subtle));
+  border: 2px solid hsl(var(--border-strong));
   color: hsl(var(--text-primary));
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 800;
   padding: 8px 13px;
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
-  transition: all 0.15s ease;
+  box-shadow: 0 2px 0 hsl(var(--border-strong));
+  transition: filter 0.12s ease, translate 0.1s var(--ease-out), box-shadow 0.1s ease;
 }
 .chip-btn:hover,
 .action-btn:hover {
   background: hsl(var(--surface-hover));
-  border-color: hsl(var(--border-strong));
-  transform: translateY(-1px);
+  border-color: hsl(var(--accent));
+  filter: brightness(1.03);
+  translate: 0 -1px;
 }
 .chip-btn:active,
 .action-btn:active {
-  transform: translateY(0);
+  translate: 0 2px;
+  box-shadow: 0 0 0 hsl(var(--accent));
 }
 
-/* 3 CỘT CƯỢC */
+/* ---------- 3 CỘT CƯỢC ---------- */
+
 .roulette-columns-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 20px;
+  gap: 16px;
   align-items: start;
-  margin-bottom: 32px;
+  margin-bottom: 30px;
 }
 @media (max-width: 860px) {
-  .roulette-columns-grid {
-    grid-template-columns: 1fr;
-  }
+  .roulette-columns-grid { grid-template-columns: 1fr; }
 }
 
 .roulette-col {
   background: hsl(var(--surface-raised));
-  border: 1px solid hsl(var(--border-subtle));
-  border-radius: var(--radius);
-  padding: 16px;
+  border: 2px solid hsl(var(--border-strong));
+  border-radius: 0;
+  padding: 15px;
   display: flex;
   flex-direction: column;
-  box-shadow: var(--card-shadow);
+  box-shadow: inset 2px 2px 0 var(--bevel-light), inset -2px -2px 0 var(--bevel-dark), var(--card-shadow);
   transition: border-color 0.2s ease;
 }
 
-/* NÚT CƯỢC CỦA MỖI CỘT */
+/* ---------- NÚT CƯỢC ---------- */
+
 .bet-btn {
   width: 100%;
-  padding: 14px 16px;
-  border-radius: 12px;
+  padding: 13px 16px;
+  border-radius: 0;
   border: 2px solid transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: filter 0.14s ease, translate 0.12s var(--ease-out), box-shadow 0.12s ease;
   margin-bottom: 14px;
   font-family: inherit;
+  box-shadow: 0 3px 0 hsl(0 0% 0% / 0.28);
 }
 .bet-btn:disabled {
   opacity: 0.55;
@@ -445,60 +438,59 @@ html.dark .timer-countdown {
   text-align: left;
 }
 .bet-btn .side-name {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
 }
 .bet-btn .side-mult {
   font-size: 18px;
   font-weight: 900;
+  font-family: var(--font-display);
 }
 
-/* MÀU SẮC RIÊNG CHO 3 NÚT CƯỢC */
+/* Mau rieng cho 3 nut cuoc: nen nhat, khi hover nen dat + chu trang. */
 .btn-village {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.25));
-  border-color: #10b981;
-  color: #065f46;
+  background: hsl(var(--positive) / 0.16);
+  border-color: hsl(var(--positive));
+  color: hsl(var(--positive));
 }
-html.dark .btn-village {
-  color: #34d399;
-}
+html.dark .btn-village { color: hsl(var(--positive)); }
 .btn-village:hover:not(:disabled) {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
-  transform: translateY(-2px);
+  background: hsl(var(--positive));
+  color: hsl(var(--text-invert));
+  filter: brightness(1.08);
+  translate: 0 -2px;
+  box-shadow: 0 5px 0 hsl(var(--positive) / 0.55);
 }
 
 .btn-pillager {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(185, 28, 28, 0.25));
-  border-color: #ef4444;
-  color: #7f1d1d;
+  background: hsl(var(--negative) / 0.16);
+  border-color: hsl(var(--negative));
+  color: hsl(var(--negative));
 }
-html.dark .btn-pillager {
-  color: #f87171;
-}
+html.dark .btn-pillager { color: hsl(var(--negative)); }
 .btn-pillager:hover:not(:disabled) {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
-  transform: translateY(-2px);
+  background: hsl(var(--negative));
+  color: hsl(var(--text-invert));
+  filter: brightness(1.08);
+  translate: 0 -2px;
+  box-shadow: 0 5px 0 hsl(var(--negative) / 0.55);
 }
 
 .btn-steve {
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(245, 158, 11, 0.25));
-  border-color: #06b6d4;
-  color: #0e7490;
-  box-shadow: 0 0 14px rgba(6, 182, 212, 0.25);
+  background: hsl(var(--accent) / 0.18);
+  border-color: hsl(var(--accent));
+  color: hsl(var(--info));
+  box-shadow: 0 3px 0 hsl(var(--accent) / 0.5), 0 0 14px hsl(var(--accent) / 0.25);
 }
-html.dark .btn-steve {
-  color: #38bdf8;
-}
+html.dark .btn-steve { color: hsl(var(--accent)); }
 .btn-steve:hover:not(:disabled) {
-  background: linear-gradient(135deg, #06b6d4, #f59e0b);
-  color: #fff;
-  box-shadow: 0 4px 20px rgba(6, 182, 212, 0.5);
-  transform: translateY(-2px);
+  background: hsl(var(--accent));
+  color: hsl(var(--text-invert));
+  filter: brightness(1.08);
+  translate: 0 -2px;
+  box-shadow: 0 5px 0 hsl(var(--accent-strong) / 0.7);
 }
 
 .col-head {
@@ -506,15 +498,12 @@ html.dark .btn-steve {
   align-items: center;
   justify-content: space-between;
   padding-bottom: 10px;
-  border-bottom: 1px solid hsl(var(--border-subtle));
+  border-bottom: 2px solid hsl(var(--border-subtle));
   margin-bottom: 10px;
   font-size: 13px;
   color: hsl(var(--text-muted));
 }
-.col-head strong {
-  color: hsl(var(--text-primary));
-  font-size: 14px;
-}
+.col-head strong { color: hsl(var(--text-primary)); font-size: 14px; }
 
 .bets-list {
   display: flex;
@@ -524,6 +513,7 @@ html.dark .btn-steve {
   overflow-y: auto;
   scrollbar-width: thin;
   padding-right: 4px;
+  overscroll-behavior: contain;
 }
 .bet-empty-hint {
   text-align: center;
@@ -537,10 +527,10 @@ html.dark .btn-steve {
   justify-content: space-between;
   padding: 8px 12px;
   background: hsl(var(--surface-overlay));
-  border: 1px solid hsl(var(--border-subtle));
-  border-radius: 8px;
+  border: 2px solid hsl(var(--border-subtle));
+  border-radius: 0;
   font-size: 13px;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease;
   animation: bet-row-in 0.3s var(--ease-out, ease-out) both;
 }
 @keyframes bet-row-in {
@@ -560,24 +550,20 @@ html.dark .btn-steve {
   padding: 2px 5px;
   background: hsl(var(--surface-base));
   border: 1px solid hsl(var(--border-subtle));
-  border-radius: 4px;
   color: hsl(var(--text-muted));
 }
 .bet-row .bet-val {
   font-weight: 700;
   color: hsl(var(--accent-text));
+  font-variant-numeric: tabular-nums;
 }
-html.dark .bet-row .bet-val {
-  color: hsl(var(--accent));
-}
+html.dark .bet-row .bet-val { color: hsl(var(--accent)); }
 .bet-row.is-me {
-  background: rgba(245, 158, 11, 0.12);
-  border-color: #f59e0b;
+  background: hsl(var(--mc-gold) / 0.14);
+  border-color: hsl(var(--mc-gold));
 }
 .bet-row.is-me .player-name {
   color: hsl(var(--accent-text, var(--accent)));
   font-weight: 800;
 }
-html.dark .bet-row.is-me .player-name {
-  color: hsl(var(--accent));
-}
+html.dark .bet-row.is-me .player-name { color: hsl(var(--mc-gold)); }

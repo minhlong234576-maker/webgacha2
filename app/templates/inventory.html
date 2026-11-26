@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Túi đồ · JellyVale{% endblock %}
 {% block content %}
-<p class="eyebrow"><i></i> Inventory</p>
+<p class="eyebrow"><i></i> Túi đồ</p>
 <h1>Túi đồ</h1>
 <p class="lead">Đồ mở rương / thắng battle nằm đây. Bán lấy Coin, hoặc mang sang nâng cấp.</p>
 <div class="toolbar">
   <span class="cf-chip on">Khả dụng {{ items|length }}</span>
-  <strong style="color:hsl(var(--accent))">{{ worth_fmt }} Coin</strong>
+  <strong class="amount">{{ worth_fmt }} Coin</strong>
   <div class="grow"></div>
   <button id="sell-selected" class="cf-btn-ghost" type="button">Bán món chọn</button>
-  <button id="sell-all" class="cf-btn-primary" type="button" style="padding:8px 16px">Bán hết</button>
+  <button id="sell-all" class="cf-btn-primary" type="button">Bán hết</button>
 </div>
 <div id="hint" class="meta"></div>
 <div class="contents" id="bag">
@@ -22,7 +22,7 @@
     </label>
     <div class="meta-row">
       <span class="price">{{ item.value_fmt }} Coin</span>
-      <span class="chance" style="color:hsl(var(--positive))">Giữ</span>
+      <span class="chance tag-positive">Giữ</span>
     </div>
     <div class="inv-actions">
       <button class="cf-btn-ghost sell-one" type="button" data-id="{{ item.id }}">Bán</button>
@@ -36,7 +36,11 @@
     </div>
   </article>
   {% else %}
-  <p class="lead" style="grid-column:1/-1;text-align:center;padding:48px 0;color:hsl(var(--text-faint))">Túi trống. <a href="/gacha">Mở rương</a> hoặc vào <a href="/battles">battle</a>.</p>
+  <div class="empty-state">
+    <h3>Túi đồ đang trống</h3>
+    <p class="meta">Mở một rương hoặc thắng một trận battle để có đồ. Mọi món trúng thắng đều nằm ở đây.</p>
+    <a class="empty-cta" href="/gacha">Mở rương</a>
+  </div>
   {% endfor %}
 </div>
 <script>

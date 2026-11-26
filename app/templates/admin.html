@@ -5,7 +5,7 @@
   <p class="eyebrow"><i></i> CRM</p>
   <h1>Thông số gacha</h1>
   <p class="lead">Sổ local. Bot cũng ghi drop / battle. Dry-run không trừ Coin in-game.</p>
-  <div class="toolbar">
+  <div class="toolbar admin-toolbar">
     <a class="cf-btn-primary" href="/admin/products">Quản lý sản phẩm &amp; ảnh</a>
   </div>
   <div class="grid stats">
@@ -20,46 +20,52 @@
   </div>
   <h2>Quản trị viên</h2>
   <p class="lead">Đọc trực tiếp từ <code>ops.json</code> trên server — ai có OP là có quyền admin web. Tự cập nhật mỗi 60 giây.</p>
-  <table>
-    <thead><tr><th>Tên</th><th>Nguồn</th></tr></thead>
-    <tbody>
-      {% for row in admins %}
-      <tr>
-        <td>{{ row.name }}</td>
-        <td>{% if row.source == 'server-op' %}<span style="color:hsl(var(--positive))">OP trên server</span>{% else %}<span class="meta">khai báo trong .env</span>{% endif %}</td>
-      </tr>
-      {% else %}
-      <tr><td colspan="2">Chưa đọc được danh sách OP. Kiểm tra kết nối PikaMC.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Tên</th><th>Nguồn</th></tr></thead>
+      <tbody>
+        {% for row in admins %}
+        <tr>
+          <td>{{ row.name }}</td>
+          <td>{% if row.source == 'server-op' %}<span class="tag-positive">OP trên server</span>{% else %}<span class="meta">khai báo trong .env</span>{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="2">Chưa đọc được danh sách OP. Kiểm tra kết nối PikaMC.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
   <h2>Theo độ hiếm</h2>
-  <table>
-    <thead><tr><th>Rarity</th><th>Lượt</th><th>Giá trị</th></tr></thead>
-    <tbody>
-      {% for row in stats.by_rarity %}
-      <tr><td>{{ row.rarity }}</td><td>{{ row.n }}</td><td>{{ row.paid_fmt }}</td></tr>
-      {% else %}
-      <tr><td colspan="3">Chưa có lượt quay.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Rarity</th><th>Lượt</th><th>Giá trị</th></tr></thead>
+      <tbody>
+        {% for row in stats.by_rarity %}
+        <tr><td>{{ row.rarity }}</td><td>{{ row.n }}</td><td>{{ row.paid_fmt }}</td></tr>
+        {% else %}
+        <tr><td colspan="3">Chưa có lượt quay.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
   <h2>40 lượt gần nhất</h2>
-  <table>
-    <thead><tr><th>Thời gian</th><th>Player</th><th>Rương</th><th>Giải</th><th>Giá</th></tr></thead>
-    <tbody>
-      {% for row in stats.recent %}
-      <tr>
-        <td>{{ row.when }}</td>
-        <td>{{ row.player }}</td>
-        <td>{{ row.case_id }}</td>
-        <td>{{ row.prize_name }}</td>
-        <td>{{ row.prize_fmt }}</td>
-      </tr>
-      {% else %}
-      <tr><td colspan="5">Chưa có lượt quay.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Thời gian</th><th>Player</th><th>Rương</th><th>Giải</th><th>Giá</th></tr></thead>
+      <tbody>
+        {% for row in stats.recent %}
+        <tr>
+          <td>{{ row.when }}</td>
+          <td>{{ row.player }}</td>
+          <td>{{ row.case_id }}</td>
+          <td>{{ row.prize_name }}</td>
+          <td>{{ row.prize_fmt }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5">Chưa có lượt quay.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </section>
 {% endblock %}
