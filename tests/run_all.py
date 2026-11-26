@@ -36,6 +36,8 @@ SUITES = [
     ("Bao mat + regression (cookie 500, Nexo, input)", "test_security_and_fixes.py", False, None),
     ("Duong dan test (khong hardcode)", "test_paths_static.py", False, None),
     ("Chatbot - tra loi lenh console", "test_chatbot.py", False, None),
+    ("10 bot QA - toan bo chuc nang web", "test_qa_bots.py", False, None),
+    ("Mo ruong - count sai kieu -> 400", "test_open_case_count.py", False, None),
     ("Battle - chi winner nhan do", "test_battle_winner_only.py", False, None),
     ("FX + Battle exit (animation, thoat phong)", "test_fx_and_battle_exit.py", False, None),
     ("Battle - chay song song (race)", "test_concurrent_battles.py", False, None),

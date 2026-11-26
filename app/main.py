@@ -658,11 +658,14 @@ async def open_case(request: Request, slug: str):
         return user
     count = 1
     try:
-        body = await request.json()
-        if isinstance(body, dict) and "count" in body:
-            count = int(body["count"])
-    except Exception:
-        count = 1
+        body = await read_json_dict(request)
+        if "count" in body:
+            # `parse_int` -> `count` sai (chuỗi, số thực...) trả 400 thay vì
+            # bị nuốt âm thầm thành 1 (người chơi tưởng mở 5 lượt, thực ra
+            # chỉ mở 1 và vẫn bị tính tiền).
+            count = parse_int(body.get("count"), 1, field="Số lượng mở")
+    except game.GameError as exc:
+        return json_error(exc)
     case = get_case(slug)
     if not case:
         return JSONResponse({"detail": "Không có rương này."}, status_code=404)
