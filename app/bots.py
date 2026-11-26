@@ -16,6 +16,43 @@ def _cases():
     return cases or []
 
 
+def _cleanup_bot_only_rooms(waiting: list[dict]) -> None:
+    """Hủy các phòng WAITING chỉ còn bot, trả lại tiền ghế cho bot.
+
+    Khi người chơi rời phòng mà phòng còn bot ngồi, phòng sẽ treo ở WAITING
+    vô hạn (bot không tự rời) -> lobby lấp phòng rác, và mỗi tick lại quét lại.
+    Ở đây ta hủy phòng đó và hoàn tiền ghế cho các bot.
+
+    - Bỏ qua phòng còn người THẬT: đó là phòng đang chơi bình thường.
+    - Bỏ qua phòng mới tạo (< 30s): người chơi vừa vào, bot còn đang vào.
+    """
+    now = store.now()
+    for battle in waiting:
+        battle_id = battle.get("id")
+        if battle_id is None:
+            continue
+        if now - int(battle.get("created_at") or 0) < 30:
+            continue
+        detail = store.get_battle(battle_id)
+        if not detail:
+            continue
+        players = detail.get("players") or []
+        if not players:
+            continue
+        if any(not row["is_bot"] for row in players):
+            continue  # còn người thật -> giữ phòng
+        try:
+            members = store.cancel_battle_room(battle_id, detail["host"])
+        except ValueError:
+            log.debug("bot: khong huy duoc phong #%s", battle_id)
+            continue
+        for member in members:
+            refund = int(member.get("paid") or 0)
+            if refund > 0:
+                store.credit(member["player"], refund, "refund", f"hủy phòng #{battle_id}")
+        log.info("bot: huy phong chi con bot #%s", battle_id)
+
+
 def _tick() -> None:
     cases = _cases()
     if not cases:
@@ -32,7 +69,11 @@ def _tick() -> None:
         for stale in store.stale_running_battles():
             store.reset_battle_to_waiting(stale["id"])
     except Exception:
-        pass
+        log.exception("bot: khong doc duoc danh sach phong ket RUNNING")
+
+    # Dọn phòng chỉ còn bot (người thật đã rời hết) -> hủy phòng, trả tiền ghế
+    # cho bot. Không làm thì phòng treo ở WAITING vô hạn và lobby lấp rác.
+    _cleanup_bot_only_rooms(waiting)
 
     # Bot-hosted rooms that are full: host bot presses Start after a short wait.
     for battle in waiting:
@@ -46,7 +87,7 @@ def _tick() -> None:
         try:
             game.start_battle(battle["id"], battle["host"])
         except game.GameError:
-            pass
+            log.debug("bot: khong bat dau duoc phong #%s", battle["id"])
         return
 
     if waiting and roll < 0.5:
@@ -60,7 +101,7 @@ def _tick() -> None:
             try:
                 game.join_existing_battle(bot, battle["id"], is_bot=True)
             except game.GameError:
-                pass
+                log.debug("bot: khong ngoi duoc vao phong #%s", battle["id"])
         return
 
     if (not waiting or len(waiting) < 3) and roll < 0.55:
@@ -83,7 +124,7 @@ def _tick() -> None:
             if random.random() < 0.7:
                 game.fill_bots(created["id"])
         except game.GameError:
-            pass
+            log.debug("bot: khong tao duoc phong moi")
         return
 
     bot = random.choice(store.BOT_NAMES)
@@ -102,7 +143,7 @@ def _tick() -> None:
             try:
                 game.sell_items(bot, cheap)
             except game.GameError:
-                pass
+                log.debug("bot: khong ban duoc %s mon cho %s", len(cheap), bot)
 
 
 async def loop() -> None:

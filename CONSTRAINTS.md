@@ -23,6 +23,7 @@ Read this file before writing code. Do not weaken thresholds or delete checks to
 | Frontend Web Standards | Zero legacy-pattern findings across `app/` | `npx.cmd -y modern-web-guidance@latest legacy-scan app --json` | HTML/CSS/JS edit |
 | Chatbot Knowledge Base | `app/commands_data.json` loads, offline matching resolves, Claude path is optional and degrades gracefully | `.\.venv\Scripts\python.exe tests\test_chatbot.py` | chatbot edit |
 | Chatbot Route Safety | CSRF enforced, empty/oversized input rejected, no raw exception strings leak, per-IP rate limit returns 429 | `.\.venv\Scripts\python.exe tests\test_chatbot.py` | chatbot edit |
+| FX & Battle Exit | Templates import every FX symbol they call; FX CSS classes have rules; leaving a bot-only room cancels it and refunds seats | `.\.venv\Scripts\python.exe tests\test_fx_and_battle_exit.py` | FX / battle edit |
 | Secrets | Zero tracked `.env` or credential prefixes | `git diff --cached` / `Select-String -Path app\*,tests\* -Pattern "ghp_|c7sp_|PIKA_API_KEY=."` | pre-commit |
 
 ## Exceptions

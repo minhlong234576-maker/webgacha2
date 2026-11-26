@@ -1842,6 +1842,25 @@ html.dark .case-card::after {
   z-index: 90;
 }
 
+/* Glow toàn màn hình khi mở nhiều rương (stagePerspective({ intense: true })).
+ * Dùng radial-gradient phủ trang + animation opacity để không gây layout shift. */
+html.fx-glow-up::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 89;
+  background:
+    radial-gradient(120% 90% at 50% 40%, hsl(var(--accent) / 0.22), transparent 62%),
+    radial-gradient(90% 70% at 50% 100%, hsl(var(--accent) / 0.12), transparent 60%);
+  animation: fx-glow-up-fade 1.2s var(--ease-out) both;
+}
+@keyframes fx-glow-up-fade {
+  0% { opacity: 0; }
+  35% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* Chuyển cảnh giữa trang (Cross-document View Transitions) */
 @media (prefers-reduced-motion: no-preference) {
   @view-transition {

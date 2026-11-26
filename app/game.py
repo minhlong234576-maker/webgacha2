@@ -516,6 +516,24 @@ def leave_battle(player: str, battle_id: int) -> dict:
     if info.get("battle_deleted"):
         return {"deleted": True, "id": battle_id, "balance": store.get_balance(player)}
     fresh = store.get_battle(battle_id)
+    # Không còn người THẬT nào trong phòng -> hủy phòng cho gọn lobby.
+    # Nếu không, phòng chỉ toàn bot sẽ treo ở WAITING tới khi bot tự quay
+    # (vô hạn nếu bot không rời), người chơi thấy rác trong danh sách phòng.
+    if fresh and not any(not row["is_bot"] for row in (fresh.get("players") or [])):
+        try:
+            members = store.cancel_battle_room(battle_id, fresh["host"])
+        except ValueError:
+            members = []
+        for member in members:
+            refund = int(member.get("paid") or 0)
+            if refund > 0:
+                store.credit(member["player"], refund, "refund", f"hủy phòng #{battle_id}")
+        return {
+            "deleted": True,
+            "id": battle_id,
+            "balance": store.get_balance(player),
+            "cancelled": True,
+        }
     return {"deleted": False, "balance": store.get_balance(player), "battle": fresh}
 
 

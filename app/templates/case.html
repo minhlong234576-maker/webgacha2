@@ -80,6 +80,7 @@
 {% if player %}
 <script type="module">
   import { spinReel } from "/static/roulette.js";
+  import { celebrate } from "/static/fx.js";
 
   const btn = document.getElementById("open-btn");
   const result = document.getElementById("result");
@@ -273,9 +274,15 @@
     void result.offsetWidth;
     result.classList.add("fx-result-enter");
     // Ăn mừng khi ván này lãi thực sự (nhận > chi); nhiều món thắng thì mạnh hơn.
+    // Bọc try/catch: animation là phần trang trí, lỗi ở đây KHÔNG được chặn
+    // việc đăng ký handler bán hàng phía dưới (nút "Bán" / "Bán tất cả").
     if (profit > 0) {
       const wins = openings.filter((o) => (o.winner.coin || 0) > 0).length || 1;
-      celebrate({ wins, tone: openings.length > 1 ? "rose" : "gold", big: profit >= spent });
+      try {
+        celebrate({ wins, tone: openings.length > 1 ? "rose" : "gold", big: profit >= spent });
+      } catch (err) {
+        console.warn("Khong bat duoc hieu ung an mung:", err);
+      }
     }
     hint.textContent = "Các món đã vào túi đồ. Bạn có thể bán ngay lấy Coin hoặc giữ lại.";
 
