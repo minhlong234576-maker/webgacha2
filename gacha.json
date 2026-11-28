@@ -1,5 +1,344 @@
 {
   "take_command": "eco take {player} {amount}",
   "give_command": "eco give {player} {amount}",
-  "cases": []
+  "cases": [
+    {
+      "id": "jelly-starter",
+      "name": "Rương Jelly Starter",
+      "description": "Rương cơ bản cho người mới. Tỉ lệ dễ trúng, thích hợp test mở rương và nâng cấp.",
+      "pull_cost": 3500,
+      "items": [
+        {
+          "id": "starter_dust",
+          "name": "Bụi Vàng",
+          "rarity": "consumer",
+          "weight": 26.0,
+          "coin": 500,
+          "nexo_amount": 1,
+          "image": "/static/items/dust.svg"
+        },
+        {
+          "id": "starter_apple",
+          "name": "Táo Vàng",
+          "rarity": "consumer",
+          "weight": 22.0,
+          "coin": 900,
+          "nexo_amount": 1,
+          "image": "/static/items/apple.svg"
+        },
+        {
+          "id": "starter_pouch",
+          "name": "Túi Coin Nhỏ",
+          "rarity": "industrial",
+          "weight": 18.0,
+          "coin": 2000,
+          "nexo_amount": 1,
+          "image": "/static/items/pouch.svg"
+        },
+        {
+          "id": "starter_iron",
+          "name": "Thỏi Sắt Tinh Luyện",
+          "rarity": "industrial",
+          "weight": 14.0,
+          "coin": 3200,
+          "nexo_amount": 1,
+          "image": "/static/items/iron.svg"
+        },
+        {
+          "id": "starter_scroll",
+          "name": "Cuộn Phép Trắng",
+          "rarity": "milspec",
+          "weight": 10.0,
+          "coin": 5500,
+          "nexo_amount": 1,
+          "image": "/static/items/scroll.png"
+        },
+        {
+          "id": "starter_book",
+          "name": "Sách Phù Phép",
+          "rarity": "restricted",
+          "weight": 6.0,
+          "coin": 9500,
+          "nexo_amount": 1,
+          "image": "/static/items/book.png"
+        },
+        {
+          "id": "starter_netherite",
+          "name": "Phôi Netherite",
+          "rarity": "classified",
+          "weight": 3.0,
+          "coin": 18000,
+          "nexo_amount": 1,
+          "image": "/static/items/netherite.png"
+        },
+        {
+          "id": "starter_jackpot",
+          "name": "Jackpot Starter",
+          "rarity": "extraordinary",
+          "weight": 1.0,
+          "coin": 45000,
+          "nexo_amount": 1,
+          "image": "/static/items/jackpot.png"
+        },
+        {
+          "id": "opp",
+          "name": "opp",
+          "rarity": "consumer",
+          "weight": 1.0,
+          "coin": 1000,
+          "nexo_amount": 1,
+          "image": "/static/items/opp.jpg"
+        }
+      ]
+    },
+    {
+      "id": "jelly-magic",
+      "name": "Rương Ma Pháp",
+      "description": "Cổ vật ma pháp, ngọc phù phép, đinh ba và nhẫn thuật Mangekyo.",
+      "pull_cost": 15000,
+      "items": [
+        {
+          "id": "magic_glowstone",
+          "name": "Bụi Ánh Sáng",
+          "rarity": "consumer",
+          "weight": 25.0,
+          "coin": 2500,
+          "nexo_amount": 1,
+          "image": "/static/items/glowstone.svg"
+        },
+        {
+          "id": "magic_amethyst",
+          "name": "Thạch Anh Tím",
+          "rarity": "industrial",
+          "weight": 22.0,
+          "coin": 5500,
+          "nexo_amount": 1,
+          "image": "/static/items/amethyst.svg"
+        },
+        {
+          "id": "magic_ender_pearl",
+          "name": "Ngọc Ender",
+          "rarity": "milspec",
+          "weight": 18.0,
+          "coin": 9500,
+          "nexo_amount": 1,
+          "image": "/static/items/ender_pearl.svg"
+        },
+        {
+          "id": "magic_orb",
+          "name": "Cầu Ma Pháp",
+          "rarity": "milspec",
+          "weight": 14.0,
+          "coin": 14500,
+          "nexo_amount": 1,
+          "image": "/static/items/magic_orb.svg"
+        },
+        {
+          "id": "magic_trident",
+          "name": "Đinh Ba Thủy Thần",
+          "rarity": "restricted",
+          "weight": 10.0,
+          "coin": 24000,
+          "nexo_amount": 1,
+          "image": "/static/items/trident.svg"
+        },
+        {
+          "id": "magic_totem",
+          "name": "Totem Bất Tử",
+          "rarity": "classified",
+          "weight": 6.0,
+          "coin": 42000,
+          "nexo_amount": 1,
+          "image": "/static/items/totem.png"
+        },
+        {
+          "id": "magic_staff",
+          "name": "Trượng Ma Pháp",
+          "rarity": "covert",
+          "weight": 3.5,
+          "coin": 75000,
+          "nexo_amount": 1,
+          "image": "/static/items/magic_staff.svg"
+        },
+        {
+          "id": "magic_susanoo",
+          "name": "Nhãn Thuật Mangekyo",
+          "rarity": "extraordinary",
+          "weight": 1.5,
+          "coin": 150000,
+          "nexo_amount": 1,
+          "image": "/static/items/susanoo.png"
+        }
+      ]
+    },
+    {
+      "id": "jelly-nether",
+      "name": "Rương Hỏa Ngục Nether",
+      "description": "Kho báu địa ngục với Hỏa Kiếm Nether, Sao Địa Ngục và Trứng Rồng.",
+      "pull_cost": 50000,
+      "items": [
+        {
+          "id": "nether_magma",
+          "name": "Kem Dung Nham",
+          "rarity": "consumer",
+          "weight": 24.0,
+          "coin": 8000,
+          "nexo_amount": 1,
+          "image": "/static/items/magma_cream.svg"
+        },
+        {
+          "id": "nether_blaze",
+          "name": "Que Quỷ Lửa",
+          "rarity": "industrial",
+          "weight": 22.0,
+          "coin": 18000,
+          "nexo_amount": 1,
+          "image": "/static/items/blaze_rod.svg"
+        },
+        {
+          "id": "nether_wither",
+          "name": "Đầu Lâu Wither",
+          "rarity": "milspec",
+          "weight": 18.0,
+          "coin": 32000,
+          "nexo_amount": 1,
+          "image": "/static/items/wither_skull.svg"
+        },
+        {
+          "id": "nether_diamond",
+          "name": "Kim Cương Hắc Ám",
+          "rarity": "restricted",
+          "weight": 15.0,
+          "coin": 52000,
+          "nexo_amount": 1,
+          "image": "/static/items/diamond.svg"
+        },
+        {
+          "id": "nether_elytra",
+          "name": "Cánh Elytra",
+          "rarity": "classified",
+          "weight": 10.0,
+          "coin": 85000,
+          "nexo_amount": 1,
+          "image": "/static/items/elytra.png"
+        },
+        {
+          "id": "nether_sword",
+          "name": "Hỏa Kiếm Nether",
+          "rarity": "covert",
+          "weight": 6.0,
+          "coin": 140000,
+          "nexo_amount": 1,
+          "image": "/static/items/inferno_sword.svg"
+        },
+        {
+          "id": "nether_star",
+          "name": "Sao Địa Ngục",
+          "rarity": "covert",
+          "weight": 3.5,
+          "coin": 220000,
+          "nexo_amount": 1,
+          "image": "/static/items/nether_star.svg"
+        },
+        {
+          "id": "nether_dragon",
+          "name": "Trứng Rồng Hỏa Ngục",
+          "rarity": "extraordinary",
+          "weight": 1.5,
+          "coin": 420000,
+          "nexo_amount": 1,
+          "image": "/static/items/dragon.png"
+        }
+      ]
+    },
+    {
+      "id": "jelly-celestial",
+      "name": "Rương Thiên Giới VIP",
+      "description": "Rương cao cấp nhất với Cung Ánh Sáng, Vương Miện và Lõi Thần Bất Tận.",
+      "pull_cost": 150000,
+      "items": [
+        {
+          "id": "celestial_feather",
+          "name": "Lông Vũ Thiên Sứ",
+          "rarity": "industrial",
+          "weight": 25.0,
+          "coin": 28000,
+          "nexo_amount": 1,
+          "image": "/static/items/feather.svg"
+        },
+        {
+          "id": "celestial_dblock",
+          "name": "Khối Kim Cương",
+          "rarity": "milspec",
+          "weight": 22.0,
+          "coin": 55000,
+          "nexo_amount": 1,
+          "image": "/static/items/diamond_block.svg"
+        },
+        {
+          "id": "celestial_bow",
+          "name": "Cung Ánh Sáng",
+          "rarity": "restricted",
+          "weight": 18.0,
+          "coin": 95000,
+          "nexo_amount": 1,
+          "image": "/static/items/celestial_bow.svg"
+        },
+        {
+          "id": "celestial_orb",
+          "name": "Cầu Vũ Trụ",
+          "rarity": "classified",
+          "weight": 14.0,
+          "coin": 160000,
+          "nexo_amount": 1,
+          "image": "/static/items/celestial_orb.svg"
+        },
+        {
+          "id": "celestial_dragon_head",
+          "name": "Đầu Rồng Cổ Đại",
+          "rarity": "classified",
+          "weight": 10.0,
+          "coin": 240000,
+          "nexo_amount": 1,
+          "image": "/static/items/dragon_head.svg"
+        },
+        {
+          "id": "celestial_scepter",
+          "name": "Vương Trượng Hoàng Gia",
+          "rarity": "extraordinary",
+          "weight": 3.5,
+          "coin": 650000,
+          "nexo_amount": 1,
+          "image": "/static/items/royal_scepter.svg"
+        },
+        {
+          "id": "celestial_core",
+          "name": "Lõi Thần Bất Tận",
+          "rarity": "extraordinary",
+          "weight": 1.5,
+          "coin": 1200000,
+          "nexo_amount": 1,
+          "image": "/static/items/god_core.svg"
+        }
+      ]
+    },
+    {
+      "id": "x",
+      "name": "x",
+      "description": "",
+      "pull_cost": 1000,
+      "image": "/static/cases/x.jpg",
+      "items": [
+        {
+          "id": "celestial_crown",
+          "name": "Vương Miện Thiên Giới",
+          "rarity": "covert",
+          "weight": 6.0,
+          "coin": 380000,
+          "nexo_amount": 1,
+          "image": "/static/items/celestial_crown.svg"
+        }
+      ]
+    }
+  ]
 }
