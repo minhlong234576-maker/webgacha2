@@ -534,8 +534,7 @@ input[type="checkbox"], input[type="radio"] {
 }
 .live-strip {
   border-bottom: 3px solid hsl(var(--border-subtle));
-  min-height: 78px;
-  max-height: 78px;
+  min-height: 84px;
   padding: 8px 16px;
 }
 .live-best {
@@ -546,6 +545,10 @@ input[type="checkbox"], input[type="radio"] {
   border: 2px solid hsl(var(--border-subtle));
   border-bottom-width: 4px;
   border-bottom-color: hsl(var(--rarity, 220 30% 76%));
+}
+.live-pause {
+  border: 2px solid hsl(var(--border-subtle));
+  box-shadow: inset 1px 1px 0 var(--bevel-light);
 }
 
 /* ---------------------------------------------------------------------------
@@ -1111,8 +1114,8 @@ thead th {
 .mini strong { display: block; margin-top: 3px; font-family: var(--font-display); font-weight: 400; }
 .split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .preview-frame {
-  inline-size: 140px;
-  block-size: 140px;
+  inline-size: 96px;
+  block-size: 96px;
   display: grid;
   place-items: center;
   background: hsl(var(--surface-sunken));
@@ -1120,7 +1123,8 @@ thead th {
   box-shadow: inset 2px 2px 0 hsl(0 0% 0% / 0.16);
 }
 .preview-frame img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.media-actions { display: grid; gap: 8px; justify-items: start; }
+.media-actions { display: grid; gap: 6px; justify-items: start; }
+.media-buttons { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .upload-btn {
   border: 2px solid hsl(var(--border-strong));
   border-radius: 0;
@@ -1128,14 +1132,21 @@ thead th {
   color: hsl(var(--text-primary));
   font-weight: 700;
   font-size: 13px;
-  padding: 8px 14px;
+  padding: 7px 14px;
   cursor: pointer;
   box-shadow: 0 2px 0 hsl(var(--border-strong));
 }
 .upload-btn:hover { background: hsl(var(--surface-raised)); }
-.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.form-grid label { display: grid; gap: 5px; font-weight: 600; font-size: 13px; }
-.form-grid .meta { font-weight: 400; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.form-grid label { display: grid; gap: 5px; font-weight: 600; font-size: 13px; align-content: start; }
+.form-grid .span-2 { grid-column: 1 / -1; }
+.form-grid .meta { font-weight: 400; font-size: 12px; }
+.form-advanced {
+  border: 2px solid hsl(var(--border-subtle));
+  border-radius: 0;
+  padding: 10px 12px;
+  background: hsl(var(--surface-sunken));
+}
 
 /* Toolbar cua admin: o loc + nut hanh dong. */
 .admin-card .toolbar { gap: 8px; }
@@ -1688,7 +1699,8 @@ thead th {
 }
 @media (max-width: 700px), (pointer: coarse) {
   .theme-btn,
-  .signout {
+  .signout,
+  .live-pause {
     min-width: 44px;
     min-height: 44px;
   }

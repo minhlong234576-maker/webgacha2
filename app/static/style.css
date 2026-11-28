@@ -152,101 +152,102 @@ button, select, input { font-family: inherit; }
 .skip-link:focus { top: 12px; }
 
 .live-strip {
+  --live-card-w: 168px;
+  --live-gap: 8px;
+  --live-duration: 48s;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: 10px;
   overflow: hidden;
   /* `body` la flex column -> flex item mac dinh `min-width: auto` nen bi
-     NOI rộng theo noi dung con (danh sach `live-card` dai). Ep `min-width: 0`
-     + `align-self: stretch` de strip luon dung bang viewport. */
+     noi rong theo noi dung con. Ep `min-width: 0` + `align-self: stretch`
+     de strip luon dung bang viewport. */
   min-width: 0;
   align-self: stretch;
   width: 100%;
   max-width: 100%;
-  padding: 10px 16px;
+  padding: 8px 16px;
   background: var(--live-bg);
   border-bottom: 1px solid hsl(var(--border-subtle));
-  min-height: 96px;
+  min-height: 84px;
   box-sizing: border-box;
   backdrop-filter: blur(10px);
-  /* Dải drop là carousel cuộn ngang có chủ ý. `overflow: hidden` trên chính
-     nó chưa đủ: nội dung tràn ra vẫn làm `documentElement.scrollWidth` lớn
-     hơn viewport -> trang cuộn ngang ngoài ý muốn trên mobile. */
   contain: paint;
-  max-height: 96px;
 }
 .live-best {
   display: flex;
-  width: 252px;
+  width: 248px;
   flex-shrink: 0;
   align-items: center;
   gap: 10px;
   border-radius: 12px;
-  padding: 8px 10px;
+  padding: 6px 10px;
   background:
     linear-gradient(120deg, hsl(var(--rarity, 38 95% 55%) / 0.16), transparent 75%),
     hsl(var(--surface-raised));
   border: 1px solid hsl(var(--rarity, 38 95% 55%) / 0.35);
   overflow: hidden;
 }
-.live-best img { width: 66px; height: 52px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.18)); }
-.live-best-copy { min-width: 0; display: grid; gap: 1px; }
+.live-best img { width: 48px; height: 48px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.18)); }
+.live-best-copy { min-width: 0; display: grid; gap: 1px; line-height: 1.2; }
 .live-kicker {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  line-height: 1.15;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: hsl(var(--rarity, 38 95% 40%));
 }
-.live-kicker i { width: 6px; height: 6px; border-radius: 99px; background: currentColor; animation: live-pulse 2.4s ease-in-out infinite; }
+.live-kicker i { width: 6px; height: 6px; border-radius: 99px; background: currentColor; }
+@media (prefers-reduced-motion: no-preference) {
+  .live-kicker i { animation: live-pulse 2.4s ease-in-out infinite; }
+}
 .live-best .name, .live-card .name { font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .live-best .who, .live-card .who { font-size: 11px; color: hsl(var(--text-faint)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .live-best .price, .live-card .price { font-size: 12px; font-weight: 700; font-style: normal; color: hsl(var(--accent-text, var(--accent))); display: block; }
-/* DAI DROP — DUNG `position: absolute` + `transform` THAY VI FLEX.
- *
- * Ly do: khi co luot mo moi, the moi chui vao DAU danh sach. Neu the duoc
- * xep bang `flex`, cac the sau bi DAY SANG PHAI -> trinh duyet bao "layout
- * shift" -> man hinh rung (CLS). Chi khi dung `transform` (translateX) thi
- * vi tri thay doi ma KHONG doi layout -> khong con layout shift, va con
- * chuyen dong "truot" rat mat.
- *
- * `--live-card-w` / `--live-gap` de JS tinh dung pixel offset cho tung the.
- */
-.live-strip {
-  --live-card-w: 156px;
-  --live-gap: 8px;
-}
-.live-row {
-  position: relative;
-  min-width: 0;
+
+/* Khung nhìn banner chạy ngang liên tục từ trái qua phải (compositor-only `transform`). */
+.live-viewport {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
-  height: 60px;
+  display: flex;
+  align-items: center;
+  mask-image: linear-gradient(90deg, transparent, #000 22px, #000 calc(100% - 22px), transparent);
 }
-.live-row > [role="listitem"] {
-  position: absolute;
-  top: 0;
-  left: 0;
+.live-marquee {
+  display: flex;
+  align-items: center;
+  width: max-content;
+}
+.live-half {
+  display: flex;
+  align-items: center;
+  gap: var(--live-gap);
+  padding-right: var(--live-gap);
+  flex-shrink: 0;
+}
+.live-row,
+.live-fill {
+  display: flex;
+  align-items: center;
+  gap: var(--live-gap);
+  flex-shrink: 0;
+}
+.live-row > [role="listitem"],
+.live-fill > .live-slot,
+.live-half-clone > .live-slot {
   width: var(--live-card-w);
-  transform: translateX(var(--x, 0px));
-  transition: transform 0.34s var(--ease-out);
-}
-.live-row > [role="listitem"] > .live-card {
-  width: 100%;
-}
-/* The moi: xuat hien tu ben phai roi "truot" vao vi tri cuoi.
- * Chi dung `opacity` + `transform` -> khong anh huong layout. */
-.live-row > [role="listitem"].is-entering {
-  opacity: 0;
+  flex-shrink: 0;
 }
 .live-card {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 156px;
+  width: 100%;
   flex-shrink: 0;
   border-radius: 10px;
   border: 1px solid hsl(var(--border-subtle));
@@ -257,14 +258,61 @@ button, select, input { font-family: inherit; }
 }
 .live-card > div { min-width: 0; flex: 1; }
 .live-card img { height: 42px; width: 42px; object-fit: contain; flex-shrink: 0; }
-/* Thẻ mới chỉ "mờ dần" — KHÔNG translate/scale.
- *
- * `translateX` + `scale` tren `.live-card` (flex row ngang) lam cac the sau
- * bi day lui theo moi lan poll -> toan bo dai duoi chuyen -> CLS (layout
- * shift) = man hinh rung. Chi doi `opacity` khong lam doi kich thuoc nen
- * khong anh huong layout.
- */
 .live-card.is-new { animation: live-fade 420ms var(--ease-out) both; }
+.live-pause {
+  flex-shrink: 0;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid hsl(var(--border-subtle));
+  background: hsl(var(--surface-raised));
+  color: hsl(var(--text-muted));
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+.live-pause:hover {
+  border-color: hsl(var(--accent));
+  color: hsl(var(--text-primary));
+}
+.live-pause:focus-visible {
+  outline: 2px solid hsl(var(--accent));
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .live-marquee.is-running {
+    animation: live-marquee-ltr var(--live-duration, 48s) linear infinite;
+    will-change: transform;
+  }
+  .live-viewport:hover .live-marquee.is-running,
+  .live-viewport:focus-within .live-marquee.is-running,
+  .live-strip[data-paused="true"] .live-marquee.is-running {
+    animation-play-state: paused;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-viewport {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    mask-image: none;
+  }
+  .live-half-clone,
+  .live-fill {
+    display: none;
+  }
+  .live-pause {
+    display: none;
+  }
+}
+@keyframes live-marquee-ltr {
+  from { transform: translate3d(-50%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
 @keyframes live-fade {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -273,7 +321,7 @@ button, select, input { font-family: inherit; }
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.45; transform: scale(0.82); }
 }
-.live-empty { margin: auto; color: hsl(var(--text-faint)); font-size: 13px; }
+.live-empty { margin: 0; padding: 6px 12px; color: hsl(var(--text-faint)); font-size: 13px; white-space: nowrap; }
 
 .site-header {
   position: sticky;
@@ -1490,22 +1538,23 @@ th { color: hsl(var(--text-muted)); font-size: 12px; font-weight: 600; letter-sp
 }
 .modal-media {
   display: grid;
-  grid-template-columns: 128px 1fr;
-  gap: 16px;
-  align-items: start;
+  grid-template-columns: 96px 1fr;
+  gap: 14px;
+  align-items: center;
 }
 .preview-frame {
-  width: 128px;
-  height: 128px;
+  width: 96px;
+  height: 96px;
   border-radius: 12px;
   border: 1px solid hsl(var(--border-subtle));
   background: hsl(var(--surface-base));
   display: grid;
   place-items: center;
-  padding: 10px;
+  padding: 8px;
 }
 .preview-frame img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.media-actions { display: grid; gap: 8px; justify-items: start; }
+.media-actions { display: grid; gap: 6px; justify-items: start; }
+.media-buttons { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .upload-btn {
   display: inline-block;
   padding: 7px 14px;
@@ -1514,16 +1563,32 @@ th { color: hsl(var(--text-muted)); font-size: 12px; font-weight: 600; letter-sp
   background: hsl(var(--surface-overlay));
   cursor: pointer;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
 }
 .upload-btn:hover { background: hsl(var(--surface-raised)); }
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  align-items: start;
 }
-.form-grid label { display: grid; gap: 5px; font-weight: 600; font-size: 13px; }
-.form-grid .meta { font-weight: 400; }
+.form-grid label { display: grid; gap: 5px; font-weight: 600; font-size: 13px; align-content: start; }
+.form-grid .span-2 { grid-column: 1 / -1; }
+.form-grid .meta { font-weight: 400; font-size: 12px; }
+.form-advanced {
+  border: 1px solid hsl(var(--border-subtle));
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: hsl(var(--surface-base) / 0.5);
+}
+.form-advanced summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: hsl(var(--text-muted));
+  user-select: none;
+}
+.form-advanced[open] summary { margin-bottom: 10px; color: hsl(var(--text-primary)); }
 .form-error {
   margin: 0;
   padding: 10px 14px;
@@ -1987,13 +2052,6 @@ html.fx-glow-up::after {
   html, body { overflow-x: clip; }
 }
 
-/* Thẻ từ vựng trôi vào dải "drop trực tiếp" chỉ khi thẻ nằm trong vùng nhìn thấy */
-@supports ((animation-timeline: view()) and (animation-range: entry)) {
-  @media (prefers-reduced-motion: no-preference) {
-    .live-card.is-new { animation-range: entry 0% entry 60%; }
-  }
-}
-
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
@@ -2048,7 +2106,6 @@ html.fx-glow-up::after {
   .grid.stats, .stats-bar, .promo-row { grid-template-columns: 1fr 1fr; }
   .live-best { display: none; }
   .live-strip { min-height: 72px; padding: 8px 12px; --live-card-w: 140px; }
-  .live-card { width: 140px; }
   .hide-sm { display: none; }
   .page.narrow { padding-top: 4vh; }
   .case-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
