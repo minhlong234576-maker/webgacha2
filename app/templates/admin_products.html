@@ -100,54 +100,55 @@
           <img id="f-preview" src="/static/items/_placeholder.svg" alt="Ảnh xem trước">
         </div>
         <div class="media-actions">
-          <label class="upload-btn" for="f-file">Chọn ảnh…</label>
-          <input id="f-file" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
-          <p class="meta">PNG / JPG / WebP / SVG · tối đa 5 MB. Tên file được sinh tự động từ id sản phẩm.</p>
-          <p class="meta" id="f-file-name"></p>
-          <button type="button" class="btn-ghost-danger" id="btn-clear-image">Xoá ảnh đã lưu</button>
+          <div class="media-buttons">
+            <label class="upload-btn" for="f-file">Chọn ảnh…</label>
+            <input id="f-file" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+            <button type="button" class="btn-ghost-danger" id="btn-clear-image">Xoá ảnh</button>
+          </div>
+          <p class="meta" id="f-file-name">PNG, JPG, WebP, SVG · tối đa 5 MB</p>
         </div>
       </div>
 
       <div class="form-grid">
-        <label>Tên sản phẩm
-          <input id="f-name" type="text" required maxlength="120" placeholder="Ví dụ: Kiếm Bạc">
+        <label class="span-2" for="f-name">Tên sản phẩm
+          <input id="f-name" name="name" type="text" required maxlength="120" placeholder="Ví dụ: Kiếm Bạc" autocomplete="off">
         </label>
-        <label>Id sản phẩm
-          <input id="f-id" type="text" required maxlength="64" placeholder="vd: silver_sword" spellcheck="false" autocapitalize="none">
-          <span class="meta">Chữ thường, số, gạch dưới, gạch ngang.</span>
-        </label>
-        <label>Rương
-          <select id="f-case" required {% if not cases %}disabled{% endif %}>
+        <label for="f-case">Rương
+          <select id="f-case" name="case" required {% if not cases %}disabled{% endif %}>
             {% for c in cases %}
             <option value="{{ c.id }}">{{ c.name }}</option>
             {% endfor %}
           </select>
-          {% if not cases %}
-          <span class="meta">Chưa có rương nào — hãy tạo rương ở tab “Rương” trước.</span>
-          {% endif %}
         </label>
-        <label>Rarity
-          <select id="f-rarity">
+        <label for="f-rarity">Rarity
+          <select id="f-rarity" name="rarity">
             {% for r in rarities %}
             <option value="{{ r }}">{{ r }}</option>
             {% endfor %}
           </select>
         </label>
-        <label>Tỉ lệ trúng (weight)
-          <input id="f-weight" type="number" step="0.001" min="0.001" required value="1">
-          <span class="meta">Càng lớn càng dễ trúng. Tổng mỗi rương phải &gt; 0.</span>
+        <label for="f-weight">Tỉ lệ trúng
+          <input id="f-weight" name="weight" type="number" step="0.001" min="0.001" required value="1">
         </label>
-        <label>Giá trị (Coin)
-          <input id="f-coin" type="number" step="1" min="0" required value="1000">
-        </label>
-        <label>Nexo id (đồ trong game)
-          <input id="f-nexo" type="text" maxlength="64" placeholder="vd: silver_sword" spellcheck="false" autocapitalize="none">
-          <span class="meta">Dùng để rút đồ vào Minecraft. Để trống nếu chỉ bán Coin.</span>
-        </label>
-        <label>Số lượng khi rút
-          <input id="f-nexo-amount" type="number" step="1" min="1" value="1">
+        <label for="f-coin">Giá trị (Coin)
+          <input id="f-coin" name="coin" type="number" step="1" min="0" required value="1000" inputmode="numeric">
         </label>
       </div>
+
+      <details class="form-advanced" id="f-advanced">
+        <summary>Tuỳ chọn nâng cao (ID &amp; NexoMC)</summary>
+        <div class="form-grid">
+          <label class="span-2" for="f-id">Id sản phẩm
+            <input id="f-id" name="id" type="text" required maxlength="64" placeholder="Tự tạo từ tên (vd: kiem_bac)" spellcheck="false" autocapitalize="none">
+          </label>
+          <label for="f-nexo">Nexo id (trong game)
+            <input id="f-nexo" name="nexo_id" type="text" maxlength="64" placeholder="vd: silver_sword" spellcheck="false" autocapitalize="none">
+          </label>
+          <label for="f-nexo-amount">Số lượng khi rút
+            <input id="f-nexo-amount" name="nexo_amount" type="number" step="1" min="1" value="1" inputmode="numeric">
+          </label>
+        </div>
+      </details>
 
       <p class="form-error" id="form-error" role="alert" hidden></p>
 
@@ -175,33 +176,38 @@
           <img id="cf-preview" src="/static/cases/_placeholder.svg" alt="Ảnh xem trước">
         </div>
         <div class="media-actions">
-          <label class="upload-btn" for="cf-file">Chọn ảnh…</label>
-          <input id="cf-file" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
-          <p class="meta">PNG / JPG / WebP / SVG · tối đa 5 MB. Tên file được sinh tự động từ id rương.</p>
-          <p class="meta" id="cf-file-name"></p>
-          <button type="button" class="btn-ghost-danger" id="btn-case-clear-image">Xoá ảnh đã lưu</button>
+          <div class="media-buttons">
+            <label class="upload-btn" for="cf-file">Chọn ảnh…</label>
+            <input id="cf-file" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden>
+            <button type="button" class="btn-ghost-danger" id="btn-case-clear-image">Xoá ảnh</button>
+          </div>
+          <p class="meta" id="cf-file-name">PNG, JPG, WebP, SVG · tối đa 5 MB</p>
         </div>
       </div>
 
       <div class="form-grid">
-        <label>Tên rương
-          <input id="cf-name" type="text" required maxlength="120" placeholder="Ví dụ: Rương Bạc">
+        <label class="span-2" for="cf-name">Tên rương
+          <input id="cf-name" name="name" type="text" required maxlength="120" placeholder="Ví dụ: Rương Bạc" autocomplete="off">
         </label>
-        <label>Id rương
-          <input id="cf-id" type="text" required maxlength="64" placeholder="vd: jelly-bac" spellcheck="false" autocapitalize="none">
-          <span class="meta">Chữ thường, số và gạch ngang (vd: jelly-bac).</span>
+        <label for="cf-cost">Giá quay (Coin)
+          <input id="cf-cost" name="pull_cost" type="number" step="1" min="0" required value="1000" inputmode="numeric">
         </label>
-        <label>Giá quay (Coin)
-          <input id="cf-cost" type="number" step="1" min="0" required value="1000">
-        </label>
-        <label>Nexo id (rương trong game)
-          <input id="cf-nexo" type="text" maxlength="64" placeholder="vd: jelly_bac" spellcheck="false" autocapitalize="none">
-          <span class="meta">Dùng để lấy ảnh từ texture NexoMC trên server.</span>
-        </label>
-        <label class="span-2">Mô tả
-          <textarea id="cf-desc" rows="3" maxlength="400" placeholder="Giới thiệu ngắn gọn cho rương…"></textarea>
+        <label for="cf-id">Id rương
+          <input id="cf-id" name="id" type="text" required maxlength="64" placeholder="vd: ruong-bac" spellcheck="false" autocapitalize="none">
         </label>
       </div>
+
+      <details class="form-advanced" id="cf-advanced">
+        <summary>Tuỳ chọn nâng cao (Mô tả &amp; NexoMC)</summary>
+        <div class="form-grid">
+          <label class="span-2" for="cf-nexo">Nexo id (rương trong game)
+            <input id="cf-nexo" name="nexo_id" type="text" maxlength="64" placeholder="vd: jelly_bac" spellcheck="false" autocapitalize="none">
+          </label>
+          <label class="span-2" for="cf-desc">Mô tả
+            <textarea id="cf-desc" name="description" rows="2" maxlength="400" placeholder="Giới thiệu ngắn gọn cho rương…"></textarea>
+          </label>
+        </div>
+      </details>
 
       <p class="form-error" id="case-form-error" role="alert" hidden></p>
 
@@ -243,6 +249,53 @@ const RARITY_LABEL = {
 let editing = null;      // null = them moi, {case_id, id} = sua
 let pendingFile = null; // File moi chon, chua upload
 let savedImage = "";    // Duong dan anh da luu cua item dang sua
+let idTouched = false;
+let imgVersion = 0;
+
+const DEFAULT_MEDIA_HINT = "PNG, JPG, WebP, SVG · tối đa 5 MB";
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+
+function slugify(text, sep = "_") {
+  const clean = String(text || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, sep)
+    .replace(new RegExp(`^\\${sep}+|\\${sep}+$`, "g"), "");
+  return clean.slice(0, 64);
+}
+
+function withBust(url) {
+  if (!url || !imgVersion || url.startsWith("data:") || url.startsWith("blob:")) return url;
+  const join = url.includes("?") ? "&" : "?";
+  return `${url}${join}v=${imgVersion}`;
+}
+
+function loadImagePreview(file, previewEl, hintEl, onError, fallbackUrl) {
+  if (!file) {
+    hintEl.textContent = DEFAULT_MEDIA_HINT;
+    previewEl.src = fallbackUrl;
+    return false;
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    onError("Ảnh vượt quá giới hạn 5 MB.");
+    hintEl.textContent = DEFAULT_MEDIA_HINT;
+    previewEl.src = fallbackUrl;
+    return false;
+  }
+  hintEl.textContent = `${file.name} · ${Math.max(1, Math.round(file.size / 1024))} KB`;
+  const reader = new FileReader();
+  reader.onload = () => {
+    if (typeof reader.result === "string") previewEl.src = reader.result;
+  };
+  reader.onerror = () => {
+    onError("Không đọc được file ảnh đã chọn.");
+    previewEl.src = fallbackUrl;
+  };
+  reader.readAsDataURL(file);
+  return true;
+}
 
 // --- Render bang ------------------------------------------------------------
 function filtered() {
@@ -293,7 +346,7 @@ function render() {
     const tdImg = document.createElement("td");
     const img = document.createElement("img");
     img.className = "thumb";
-    img.src = it.image_url || "/static/items/_placeholder.svg";
+    img.src = withBust(it.image_url || "/static/items/_placeholder.svg");
     img.alt = it.name || it.id;
     img.loading = "lazy";
     img.width = 40;
@@ -383,26 +436,29 @@ function closeModal() {
   editing = null;
   pendingFile = null;
   savedImage = "";
+  idTouched = false;
   els.file.value = "";
-  els.fileName.textContent = "";
+  els.fileName.textContent = DEFAULT_MEDIA_HINT;
 }
 
 function setPreview(url) {
-  els.preview.src = url || "/static/items/_placeholder.svg";
+  els.preview.src = url ? withBust(url) : "/static/items/_placeholder.svg";
 }
 
 function openNew() {
   editing = null;
   pendingFile = null;
   savedImage = "";
+  idTouched = false;
   els.form.reset();
   document.getElementById("f-orig-id").value = "";
   document.getElementById("f-id").value = "";
   document.getElementById("f-weight").value = "1";
   document.getElementById("f-coin").value = "1000";
   document.getElementById("f-nexo-amount").value = "1";
+  document.getElementById("f-advanced").open = false;
   els.file.value = "";
-  els.fileName.textContent = "";
+  els.fileName.textContent = DEFAULT_MEDIA_HINT;
   setPreview("/static/items/_placeholder.svg");
   openModal("Thêm sản phẩm");
   document.getElementById("f-name").focus();
@@ -412,6 +468,7 @@ function openEdit(it) {
   editing = { case_id: it.case_id, id: it.id };
   pendingFile = null;
   savedImage = it.image || "";
+  idTouched = true;
   document.getElementById("f-orig-id").value = it.id;
   document.getElementById("f-case-id").value = it.case_id;
   document.getElementById("f-name").value = it.name || "";
@@ -422,8 +479,9 @@ function openEdit(it) {
   document.getElementById("f-coin").value = it.coin ?? 0;
   document.getElementById("f-nexo").value = it.nexo_id || "";
   document.getElementById("f-nexo-amount").value = it.nexo_amount ?? 1;
+  document.getElementById("f-advanced").open = Boolean(it.nexo_id || (it.nexo_amount && it.nexo_amount !== 1));
   els.file.value = "";
-  els.fileName.textContent = "";
+  els.fileName.textContent = DEFAULT_MEDIA_HINT;
   setPreview(it.image_url);
   openModal("Sửa sản phẩm");
   document.getElementById("f-name").focus();
@@ -439,16 +497,25 @@ async function saveProduct(e) {
   e.preventDefault();
   const btn = document.getElementById("btn-save");
   btn.disabled = true;
+  els.err.hidden = true;
   try {
+    const name = document.getElementById("f-name").value.trim();
+    const idInput = document.getElementById("f-id");
+    let itemId = idInput.value.trim().toLowerCase();
+    if (!itemId && name) {
+      itemId = slugify(name, "_") || `item_${Date.now()}`;
+      idInput.value = itemId;
+    }
+
     const payload = {
       case_id: document.getElementById("f-case").value,
-      id: document.getElementById("f-id").value.trim().toLowerCase(),
-      name: document.getElementById("f-name").value.trim(),
+      id: itemId,
+      name,
       rarity: document.getElementById("f-rarity").value,
       weight: Number(document.getElementById("f-weight").value),
       coin: Number(document.getElementById("f-coin").value),
       nexo_id: document.getElementById("f-nexo").value.trim(),
-      nexo_amount: Number(document.getElementById("f-nexo-amount").value),
+      nexo_amount: Number(document.getElementById("f-nexo-amount").value || 1),
     };
 
     const origId = document.getElementById("f-orig-id").value;
@@ -464,9 +531,17 @@ async function saveProduct(e) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
+      if ((data.detail || "").toLowerCase().includes("id")) {
+        document.getElementById("f-advanced").open = true;
+      }
       showError(data.detail || "Không lưu được sản phẩm.");
       return;
     }
+
+    // Dong bo trang thai edit moi phong truong hop buoc upload anh sau do loi.
+    editing = { case_id: payload.case_id, id: payload.id };
+    document.getElementById("f-orig-id").value = payload.id;
+    document.getElementById("f-case-id").value = payload.case_id;
 
     // Upload anh (neu co chon file moi).
     if (pendingFile) {
@@ -482,6 +557,7 @@ async function saveProduct(e) {
         await reload();
         return;
       }
+      imgVersion = Date.now();
       data.item.image = upData.image;
       data.item.image_url = upData.image;
     }
@@ -544,6 +620,22 @@ async function reload() {
 
 // --- Su kien ----------------------------------------------------------------
 els.form.addEventListener("submit", saveProduct);
+document.getElementById("f-name").addEventListener("input", (e) => {
+  if (!idTouched && !editing) {
+    document.getElementById("f-id").value = slugify(e.target.value, "_");
+  }
+});
+document.getElementById("f-id").addEventListener("input", () => {
+  idTouched = true;
+});
+document.getElementById("f-id").addEventListener("invalid", () => {
+  document.getElementById("f-advanced").open = true;
+});
+els.preview.addEventListener("error", () => {
+  if (!els.preview.src.endsWith("/static/items/_placeholder.svg")) {
+    els.preview.src = "/static/items/_placeholder.svg";
+  }
+});
 document.getElementById("btn-new").addEventListener("click", openNew);
 document.getElementById("btn-close").addEventListener("click", closeModal);
 document.getElementById("btn-cancel").addEventListener("click", closeModal);
@@ -553,16 +645,24 @@ els.filterCase.addEventListener("change", render);
 els.filterText.addEventListener("input", render);
 
 els.file.addEventListener("change", () => {
+  els.err.hidden = true;
   const f = els.file.files[0];
-  pendingFile = f || null;
-  els.fileName.textContent = f ? `${f.name} · ${(f.size / 1024).toFixed(0)} KB` : "";
-  if (f) setPreview(URL.createObjectURL(f));
+  const ok = loadImagePreview(
+    f,
+    els.preview,
+    els.fileName,
+    showError,
+    editing ? withBust(savedImage || "/static/items/_placeholder.svg") : "/static/items/_placeholder.svg"
+  );
+  pendingFile = ok ? f : null;
+  if (!ok && f) els.file.value = "";
 });
 
 document.getElementById("btn-clear-image").addEventListener("click", async () => {
   if (!editing) {
     setPreview("/static/items/_placeholder.svg");
-    els.fileName.textContent = "";
+    els.fileName.textContent = DEFAULT_MEDIA_HINT;
+    els.file.value = "";
     pendingFile = null;
     return;
   }
@@ -572,12 +672,16 @@ document.getElementById("btn-clear-image").addEventListener("click", async () =>
       { method: "POST", headers: { "X-CSRF": CSRF } }
     );
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) { alert(data.detail || "Không xoá được ảnh."); return; }
+    if (!res.ok) { showError(data.detail || "Không xoá được ảnh."); return; }
+    imgVersion = Date.now();
+    savedImage = "";
+    pendingFile = null;
+    els.file.value = "";
     setPreview("/static/items/_placeholder.svg");
-    els.fileName.textContent = "";
+    els.fileName.textContent = DEFAULT_MEDIA_HINT;
     await reload();
   } catch (err) {
-    alert("Lỗi mạng: " + err.message);
+    showError("Lỗi mạng: " + err.message);
   }
 });
 
@@ -602,6 +706,7 @@ const caseEls = {
 
 let editingCase = null;      // null = tạo mới, "id" = sửa
 let pendingCaseFile = null;  // File ảnh mới chọn, chưa upload
+let caseIdTouched = false;
 
 function caseImageUrl(c) {
   const explicit = String(c.image || "").trim();
@@ -636,7 +741,7 @@ function renderCases() {
     const tdImg = document.createElement("td");
     const img = document.createElement("img");
     img.className = "thumb";
-    img.src = caseImageUrl(c);
+    img.src = withBust(caseImageUrl(c));
     img.alt = c.name || c.id;
     img.loading = "lazy";
     img.width = 40;
@@ -717,19 +822,22 @@ function closeCaseModal() {
   document.body.classList.remove("modal-open");
   editingCase = null;
   pendingCaseFile = null;
+  caseIdTouched = false;
   caseEls.file.value = "";
-  caseEls.fileName.textContent = "";
+  caseEls.fileName.textContent = DEFAULT_MEDIA_HINT;
 }
 
 function openCaseNew() {
   editingCase = null;
   pendingCaseFile = null;
+  caseIdTouched = false;
   caseEls.form.reset();
   document.getElementById("cf-orig-id").value = "";
   document.getElementById("cf-id").value = "";
   document.getElementById("cf-cost").value = "1000";
+  document.getElementById("cf-advanced").open = false;
   caseEls.file.value = "";
-  caseEls.fileName.textContent = "";
+  caseEls.fileName.textContent = DEFAULT_MEDIA_HINT;
   caseEls.preview.src = "/static/cases/_placeholder.svg";
   openCaseModal("Thêm rương");
   document.getElementById("cf-name").focus();
@@ -738,15 +846,17 @@ function openCaseNew() {
 function openCaseEdit(c) {
   editingCase = c.id;
   pendingCaseFile = null;
+  caseIdTouched = true;
   document.getElementById("cf-orig-id").value = c.id;
   document.getElementById("cf-id").value = c.id || "";
   document.getElementById("cf-name").value = c.name || "";
   document.getElementById("cf-desc").value = c.description || "";
   document.getElementById("cf-cost").value = c.pull_cost ?? 0;
   document.getElementById("cf-nexo").value = c.nexo_id || "";
+  document.getElementById("cf-advanced").open = Boolean(c.description || c.nexo_id);
   caseEls.file.value = "";
-  caseEls.fileName.textContent = "";
-  caseEls.preview.src = caseImageUrl(c);
+  caseEls.fileName.textContent = DEFAULT_MEDIA_HINT;
+  caseEls.preview.src = withBust(caseImageUrl(c));
   openCaseModal("Sửa rương");
   document.getElementById("cf-name").focus();
 }
@@ -800,6 +910,7 @@ async function saveCase(e) {
         await reload();
         return;
       }
+      imgVersion = Date.now();
     }
 
     await reload();
@@ -857,20 +968,41 @@ document.getElementById("btn-case-close").addEventListener("click", closeCaseMod
 document.getElementById("btn-case-cancel").addEventListener("click", closeCaseModal);
 caseEls.modal.addEventListener("click", (e) => { if (e.target === caseEls.modal) closeCaseModal(); });
 caseEls.form.addEventListener("submit", saveCase);
+document.getElementById("cf-name").addEventListener("input", (e) => {
+  if (!caseIdTouched && !editingCase) {
+    document.getElementById("cf-id").value = slugify(e.target.value, "-");
+  }
+});
+document.getElementById("cf-id").addEventListener("input", () => {
+  caseIdTouched = true;
+});
+caseEls.preview.addEventListener("error", () => {
+  if (!caseEls.preview.src.endsWith("/static/cases/_placeholder.svg")) {
+    caseEls.preview.src = "/static/cases/_placeholder.svg";
+  }
+});
 caseEls.filter.addEventListener("input", renderCases);
 
 caseEls.file.addEventListener("change", () => {
+  caseEls.err.hidden = true;
   const f = caseEls.file.files[0];
-  pendingCaseFile = f || null;
-  caseEls.fileName.textContent = f ? `${f.name} · ${(f.size / 1024).toFixed(0)} KB` : "";
-  if (f) caseEls.preview.src = URL.createObjectURL(f);
+  const ok = loadImagePreview(
+    f,
+    caseEls.preview,
+    caseEls.fileName,
+    showCaseError,
+    "/static/cases/_placeholder.svg"
+  );
+  pendingCaseFile = ok ? f : null;
+  if (!ok && f) caseEls.file.value = "";
 });
 
 document.getElementById("btn-case-clear-image").addEventListener("click", async () => {
   const caseId = editingCase || document.getElementById("cf-id").value.trim();
   if (!caseId) {
     caseEls.preview.src = "/static/cases/_placeholder.svg";
-    caseEls.fileName.textContent = "";
+    caseEls.fileName.textContent = DEFAULT_MEDIA_HINT;
+    caseEls.file.value = "";
     pendingCaseFile = null;
     return;
   }
@@ -880,12 +1012,15 @@ document.getElementById("btn-case-clear-image").addEventListener("click", async 
       { method: "POST", headers: { "X-CSRF": CSRF } }
     );
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) { alert(data.detail || "Không xoá được ảnh."); return; }
+    if (!res.ok) { showCaseError(data.detail || "Không xoá được ảnh."); return; }
+    imgVersion = Date.now();
+    pendingCaseFile = null;
+    caseEls.file.value = "";
     caseEls.preview.src = "/static/cases/_placeholder.svg";
-    caseEls.fileName.textContent = "";
+    caseEls.fileName.textContent = DEFAULT_MEDIA_HINT;
     await reload();
   } catch (err) {
-    alert("Lỗi mạng: " + err.message);
+    showCaseError("Lỗi mạng: " + err.message);
   }
 });
 

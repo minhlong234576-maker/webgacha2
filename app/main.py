@@ -224,7 +224,7 @@ async def add_security_headers(request: Request, call_next):
         f"script-src 'self' 'nonce-{nonce}'; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; "
-        "img-src 'self' data:; "
+        "img-src 'self' data: blob:; "
         "media-src 'self'; "
         "connect-src 'self'; "
         "object-src 'none'; "
@@ -1328,6 +1328,16 @@ async def api_drops():
 @app.get("/api/admins")
 async def api_admins():
     """Danh sách quản trị viên, đọc realtime từ OP trên server PikaMC."""
+    return {"admins": await admins.admin_list()}
+
+
+@app.post("/api/admin/ops/refresh")
+async def api_admin_ops_refresh(request: Request):
+    """Làm mới danh sách OP từ PikaMC ngay lập tức (bỏ qua cache 60s)."""
+    err = require_admin_api(request)
+    if err is not None:
+        return err
+    await admins.refresh()
     return {"admins": await admins.admin_list()}
 
 

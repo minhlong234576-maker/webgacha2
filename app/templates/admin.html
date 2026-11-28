@@ -18,12 +18,15 @@
     <div class="mini"><span>Đồ đang giữ</span><strong>{{ stats.held }}</strong></div>
     <div class="mini"><span>Nâng cấp thắng</span><strong>{{ stats.upgrade_wins }}/{{ stats.upgrades }}</strong></div>
   </div>
-  <h2>Quản trị viên</h2>
-  <p class="lead">Đọc trực tiếp từ <code>ops.json</code> trên server — ai có OP là có quyền admin web. Tự cập nhật mỗi 60 giây.</p>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <h2 style="margin:0">Quản trị viên</h2>
+    <button id="refresh-ops-btn" class="cf-btn-ghost" type="button" style="padding:6px 12px;font-size:13px">Làm mới danh sách OP</button>
+  </div>
+  <p class="lead">Đọc trực tiếp từ <code>ops.json</code> trên server — ai có OP là có quyền admin web. Tự cập nhật mỗi 60 giây. <span id="ops-status" class="meta"></span></p>
   <div class="table-scroll">
     <table>
       <thead><tr><th>Tên</th><th>Nguồn</th></tr></thead>
-      <tbody>
+      <tbody id="ops-tbody">
         {% for row in admins %}
         <tr>
           <td>{{ row.name }}</td>
@@ -68,4 +71,61 @@
     </table>
   </div>
 </section>
+<script nonce="{{ csp_nonce }}">
+  (function() {
+    const btn = document.getElementById("refresh-ops-btn");
+    const tbody = document.getElementById("ops-tbody");
+    const status = document.getElementById("ops-status");
+    const csrf = document.querySelector("meta[name=csrf]")?.content || "";
+    if (!btn || !tbody) return;
+
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      if (status) status.textContent = "Đang làm mới...";
+      try {
+        const res = await fetch("/api/admin/ops/refresh", {
+          method: "POST",
+          headers: { "X-CSRF": csrf },
+          credentials: "same-origin",
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          if (status) status.textContent = data.detail || "Không làm mới được danh sách OP.";
+          return;
+        }
+        const rows = (data.admins || []).map((row) => {
+          const tr = document.createElement("tr");
+          const tdName = document.createElement("td");
+          tdName.textContent = row.name;
+          const tdSource = document.createElement("td");
+          const span = document.createElement("span");
+          if (row.source === "server-op") {
+            span.className = "tag-positive";
+            span.textContent = "OP trên server";
+          } else {
+            span.className = "meta";
+            span.textContent = "khai báo trong .env";
+          }
+          tdSource.appendChild(span);
+          tr.append(tdName, tdSource);
+          return tr;
+        });
+        if (!rows.length) {
+          const tr = document.createElement("tr");
+          const td = document.createElement("td");
+          td.colSpan = 2;
+          td.textContent = "Chưa đọc được danh sách OP. Kiểm tra kết nối PikaMC.";
+          tr.appendChild(td);
+          rows.push(tr);
+        }
+        tbody.replaceChildren(...rows);
+        if (status) status.textContent = `Đã cập nhật (${(data.admins || []).length} admin).`;
+      } catch (err) {
+        if (status) status.textContent = "Lỗi kết nối khi làm mới danh sách OP.";
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  })();
+</script>
 {% endblock %}

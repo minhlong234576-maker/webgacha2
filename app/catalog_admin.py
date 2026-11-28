@@ -382,7 +382,7 @@ def create_item(case_id: str, raw: dict[str, Any]) -> dict[str, Any]:
 
 
 def update_item(case_id: str, item_id: str, raw: dict[str, Any]) -> dict[str, Any]:
-    """Sua item trong ruong."""
+    """Sua item trong ruong (ho tro chuyen sang ruong khac neu doi case_id)."""
     with _write_lock:
         _guard_write()
         data = load_raw()
@@ -393,14 +393,26 @@ def update_item(case_id: str, item_id: str, raw: dict[str, Any]) -> dict[str, An
         for index, item in enumerate(items):
             if isinstance(item, dict) and str(item.get("id")) == item_id:
                 merged = validate_item(raw, existing=item)
-                # Neu doi id -> phai dam bao khong trung id khac trong ruong.
-                if merged["id"] != item_id and any(
-                    isinstance(i, dict) and str(i.get("id")) == merged["id"]
-                    for i in items
-                ):
-                    raise CatalogError(f"Id '{merged['id']}' đã tồn tại trong rương này.")
-                items[index] = merged
-                _validate_case_weights(case)
+                target_case_id = str(raw.get("case_id") or case_id).strip() or case_id
+                if target_case_id != case_id:
+                    target_case = _find_case(data, target_case_id)
+                    if not target_case:
+                        raise CatalogError(f"Không tìm thấy rương '{target_case_id}'.")
+                    target_items = target_case.setdefault("items", [])
+                    if any(isinstance(i, dict) and str(i.get("id")) == merged["id"] for i in target_items):
+                        raise CatalogError(f"Id '{merged['id']}' đã tồn tại trong rương đích.")
+                    items.pop(index)
+                    target_items.append(merged)
+                    _validate_case_weights(target_case)
+                else:
+                    # Neu doi id -> phai dam bao khong trung id khac trong ruong.
+                    if merged["id"] != item_id and any(
+                        isinstance(i, dict) and str(i.get("id")) == merged["id"]
+                        for i in items
+                    ):
+                        raise CatalogError(f"Id '{merged['id']}' đã tồn tại trong rương này.")
+                    items[index] = merged
+                    _validate_case_weights(case)
                 _atomic_write(data)
                 return merged
     raise CatalogError(f"Không tìm thấy item '{item_id}' trong rương '{case_id}'.")
@@ -491,9 +503,26 @@ def delete_case(case_id: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def _safe_image_name(item_id: str, filename: str) -> str:
+def _infer_image_ext(content: bytes) -> str:
+    head = content[:512].lstrip(b"\xef\xbb\xbf \t\r\n")
+    if head.startswith(b"<svg") or (head.startswith(b"<?xml") and b"<svg" in content[:2048]):
+        return ".svg"
+    if content.startswith(b"\x89PNG\r\n\x1a\n"):
+        return ".png"
+    if content.startswith(b"\xff\xd8\xff"):
+        return ".jpg"
+    if content[:4] == b"RIFF" and content[8:12] == b"WEBP":
+        return ".webp"
+    return ""
+
+
+def _safe_image_name(item_id: str, filename: str, content: bytes = b"") -> str:
     """Sinh ten file an toan tu id + extension cua file tai len."""
     ext = Path(filename or "").suffix.lower()
+    if ext == ".jfif":
+        ext = ".jpg"
+    if ext not in IMAGE_EXTS and content:
+        ext = _infer_image_ext(content)
     if ext not in IMAGE_EXTS:
         raise CatalogError(f"Định dạng ảnh không hợp lệ. Chỉ nhận: {', '.join(IMAGE_EXTS)}.")
     return f"{item_id}{ext}"
@@ -517,7 +546,7 @@ def save_item_image(item_id: str, filename: str, content: bytes) -> str:
     if not _looks_like_image(content):
         raise CatalogError("File không phải ảnh hợp lệ (PNG/JPG/WebP/SVG).")
 
-    name = _safe_image_name(item_id, filename)
+    name = _safe_image_name(item_id, filename, content)
     ITEMS_DIR.mkdir(parents=True, exist_ok=True)
     target = ITEMS_DIR / name
     # Xoa anh cu cua item (khac duoi) de tranh ton tai 2 anh cho 1 item.
@@ -535,7 +564,7 @@ def save_item_image(item_id: str, filename: str, content: bytes) -> str:
 
 def _looks_like_image(content: bytes) -> bool:
     """Kiem tra magic bytes cua anh. SVG la text nen check them payload doc hai."""
-    head = content[:512].lstrip()
+    head = content[:512].lstrip(b"\xef\xbb\xbf \t\r\n")
     if head.startswith(b"<svg") or (head.startswith(b"<?xml") and b"<svg" in content[:2048]):
         return not bool(_SVG_FORBIDDEN_RE.search(content))
     if content.startswith(b"\x89PNG\r\n\x1a\n"):
@@ -575,7 +604,7 @@ def save_case_image(case_id: str, filename: str, content: bytes) -> str:
     if not _looks_like_image(content):
         raise CatalogError("File không phải ảnh hợp lệ (PNG/JPG/WebP/SVG).")
 
-    name = _safe_image_name(case_id, filename)
+    name = _safe_image_name(case_id, filename, content)
     CASES_DIR.mkdir(parents=True, exist_ok=True)
     target = CASES_DIR / name
     for old in CASES_DIR.glob(f"{case_id}.*"):
