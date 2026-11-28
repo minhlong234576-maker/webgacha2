@@ -447,6 +447,49 @@ async def run_tests() -> None:
         check("db.py does not copy live WAL DB with shutil.copy2", "shutil.copy2" not in db_src)
         store.close_all()
 
+        print()
+        print("=== 10. ADMIN OP REFRESH ENDPOINT ===")
+        from app import admins as web_admins  # noqa: E402
+
+        r_ops_user = await client.post("/api/admin/ops/refresh", headers=headers, cookies=cookies)
+        check("POST /api/admin/ops/refresh non-admin -> 403", r_ops_user.status_code == 403, str(r_ops_user.status_code))
+
+        orig_op_names = web_admins.server_op_names
+
+        async def fake_op_names():
+            return {"qa_op_admin"}
+
+        web_admins.server_op_names = fake_op_names
+        try:
+            await web_admins.refresh()
+            op_cookie = make_cookie({"user": "qa_op_admin", "login_name": "qa_op_admin"})
+            r_ops_admin = await client.post(
+                "/api/admin/ops/refresh",
+                headers=headers,
+                cookies={"jv_session": op_cookie},
+            )
+            check("POST /api/admin/ops/refresh admin -> 200", r_ops_admin.status_code == 200, str(r_ops_admin.status_code))
+            names_returned = [a["name"] for a in r_ops_admin.json().get("admins", [])]
+            check("refresh returns updated OP list", "qa_op_admin" in names_returned, str(names_returned))
+            r_admin_page = await client.get("/admin", cookies={"jv_session": op_cookie})
+            check("GET /admin -> 200 with nonce script", r_admin_page.status_code == 200 and 'id="refresh-ops-btn"' in r_admin_page.text)
+            admin_tpl = (ROOT / "app" / "templates" / "admin.html").read_text(encoding="utf-8")
+            check("admin.html inline script carries csp_nonce", '<script nonce="{{ csp_nonce }}">' in admin_tpl)
+        finally:
+            web_admins.server_op_names = orig_op_names
+            web_admins._ops_cache = None
+            web_admins._ops_at = 0.0
+
+        print()
+        print("=== 11. ADMIN PRODUCT IMAGE & MINIMAL FORM REGRESSIONS ===")
+        csp_val = r_battles.headers.get("content-security-policy", "")
+        check("CSP img-src allows blob: for previews", "img-src 'self' data: blob:" in csp_val, csp_val)
+        check("catalog_admin infers .png from magic bytes", catalog_admin._safe_image_name("test_img", "pasted", b"\x89PNG\r\n\x1a\nxxxx") == "test_img.png")
+        check("catalog_admin accepts UTF-8 BOM SVG", catalog_admin._looks_like_image(b"\xef\xbb\xbf<svg xmlns='http://www.w3.org/2000/svg'/>"))
+        admin_prod_tpl = (ROOT / "app" / "templates" / "admin_products.html").read_text(encoding="utf-8")
+        check("admin_products uses FileReader preview (no CSP blob fail)", "readAsDataURL" in admin_prod_tpl and "createObjectURL" not in admin_prod_tpl)
+        check("admin_products groups advanced fields in <details>", 'id="f-advanced"' in admin_prod_tpl and "slugify(" in admin_prod_tpl)
+
 
 asyncio.run(run_tests())
 shutil.rmtree(TMP, ignore_errors=True)
